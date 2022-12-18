@@ -126,7 +126,8 @@ func main() {
 			for _, cmd := range cmds {
 				if cmd.Process != nil {
 					log.Printf("killing pid=%d...", cmd.Process.Pid)
-					_ = cmd.Process.Kill()
+					err := syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+					log.Printf("err=%v", err)
 				}
 			}
 		case processExitedEvent:
