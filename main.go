@@ -16,6 +16,11 @@ import (
 	"time"
 )
 
+func init() {
+	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
+}
+
 type event = any
 
 type signalEvent struct{}
@@ -56,7 +61,7 @@ func main() {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid: true, // attach to myself
+			Setpgid: true,
 		}
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("HOSTALIASES=hosts"))
@@ -112,12 +117,17 @@ func main() {
 
 	waitingFor := len(pod.Spec.Containers)
 
+	defer log.Println("done")
+
 	for event := range events {
 		switch obj := event.(type) {
 		case signalEvent:
 			log.Printf("exiting...")
 			for _, cmd := range cmds {
-				_ = cmd.Process.Kill()
+				if cmd.Process != nil {
+					log.Printf("killing pid=%d...", cmd.Process.Pid)
+					_ = cmd.Process.Kill()
+				}
 			}
 		case processExitedEvent:
 			log.Printf("name=%s err=%q", obj.name, obj.err)
@@ -127,6 +137,7 @@ func main() {
 			}
 		}
 	}
+	log.Println("no more events")
 }
 
 func ok(err error) {
