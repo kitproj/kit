@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/fatih/color"
+	"io"
 	"k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"sigs.k8s.io/yaml"
 	"strings"
@@ -30,13 +33,25 @@ type processExitedEvent struct {
 	err  error
 }
 
+const escape = "\x1b"
+
+type state struct {
+	err   error
+	phase string
+	msg   string
+	cmd   *exec.Cmd
+}
+
+func (s *state) Write(p []byte) (n int, err error) {
+	s.msg = strings.TrimSpace(string(p))
+	return 0, nil
+}
+
+var states = map[string]*state{}
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
-	pwd, err := os.Getwd()
-	ok(err)
-
-	log.Printf("pwd=%q", pwd)
 
 	in, err := os.ReadFile("dev.yaml")
 	ok(err)
@@ -46,40 +61,68 @@ func main() {
 	hosts, err := os.Create("hosts")
 	ok(err)
 	for _, c := range pod.Spec.Containers {
-		_, err := hosts.WriteString(fmt.Sprintf("127.0.0.1 %s\n", c.Name))
+		_, err := hosts.WriteString(fmt.Sprintf("%s 127.0.0.1\n", c.Name))
 		ok(err)
 	}
 	ok(hosts.Close())
 
 	events := make(chan event)
-	var cmds []*exec.Cmd
+	for _, c := range pod.Spec.Containers {
+		states[c.Name] = &state{}
+	}
+
+	go func() {
+		for {
+			log.Printf("%s[2J", escape)
+			log.Printf("%s[H", escape)
+			for _, c := range pod.Spec.Containers {
+				name := c.Name
+				state := states[name]
+				r := map[string]string{
+					"creating": "▓",
+					"starting": "▓",
+					"ready":    color.GreenString("▓"),
+					"unready":  color.YellowString("▓"),
+					"killing":  "▓",
+				}[state.phase]
+				m := state.msg
+				if state.err != nil {
+					r = color.RedString("▓")
+					m = color.RedString(state.err.Error())
+				}
+				log.Printf("%s %s [%s] %s, %v", r, name, state.phase, m, state.err)
+			}
+			time.Sleep(time.Second)
+		}
+	}()
 
 	for _, c := range pod.Spec.Containers {
+		states[c.Name].phase = "creating"
+		log, err := os.Create(filepath.Join("logs", c.Name+".log"))
+		ok(err)
+		defer log.Close()
+
 		cmd := exec.Command(c.Command[0], append(c.Command[1:], c.Args...)...)
 		cmd.Dir = c.WorkingDir
 		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = io.MultiWriter(log, states[c.Name])
+		cmd.Stderr = io.MultiWriter(log, states[c.Name])
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid: true,
 		}
 		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, fmt.Sprintf("HOSTALIASES=hosts"))
 
 		for _, e := range c.Env {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", e.Name, e.Value))
 		}
 
-		log.Printf("name=%s path=%s args=%q", c.Name, cmd.Path, cmd.Args)
-
-		cmds = append(cmds, cmd)
+		states[c.Name].cmd = cmd
 
 		go func(name string, cmd *exec.Cmd) {
+			states[name].phase = "starting"
 			err := cmd.Run()
 			events <- processExitedEvent{name, err}
 		}(c.Name, cmd)
-
-		log.Printf("readinessProbe=%v", c.ReadinessProbe != nil)
 
 		if c.ReadinessProbe != nil {
 			go func(name string, probe *v1.Probe) {
@@ -88,7 +131,6 @@ func main() {
 				if period == 0 {
 					period = 10 * time.Second
 				}
-				log.Printf("name=%s initialDelay=%v, period=%v", name, initialDelay, period)
 				time.Sleep(initialDelay)
 				for {
 					if httpGet := probe.HTTPGet; httpGet != nil {
@@ -97,10 +139,17 @@ func main() {
 							proto = "http"
 						}
 						resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
-						ready := resp != nil && resp.StatusCode == http.StatusOK
-						log.Printf("name=%s ready=%v err=%v", name, ready, err)
+						if err != nil {
+							states[name].phase = "unready"
+							states[name].err = err
+						} else if resp.StatusCode == 200 {
+							states[name].phase = "ready"
+						} else {
+							states[name].phase = "unready"
+							states[name].err = fmt.Errorf(resp.Status)
+						}
 					} else {
-						log.Fatalf("only httpGet supported: %s", c.Name)
+						states[name].msg = "httpGet not supported"
 					}
 					time.Sleep(period)
 				}
@@ -113,32 +162,32 @@ func main() {
 		events <- signalEvent{}
 	}()
 
-	log.Printf("running...")
-
 	waitingFor := len(pod.Spec.Containers)
-
-	defer log.Println("done")
 
 	for event := range events {
 		switch obj := event.(type) {
 		case signalEvent:
-			log.Printf("exiting...")
-			for _, cmd := range cmds {
+			for name, state := range states {
+				cmd := state.cmd
 				if cmd.Process != nil {
-					log.Printf("killing pid=%d...", cmd.Process.Pid)
-					err := syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-					log.Printf("err=%v", err)
+					states[name].phase = "killing"
+					pgid, _ := syscall.Getpgid(cmd.Process.Pid)
+					err := syscall.Kill(-pgid, syscall.SIGTERM)
+					if err != nil {
+						states[name].msg = err.Error()
+					}
+					time.Sleep(time.Second)
 				}
 			}
 		case processExitedEvent:
-			log.Printf("name=%s err=%q", obj.name, obj.err)
+			states[obj.name].phase = "exited"
+			states[obj.name].err = obj.err
 			waitingFor--
 			if waitingFor == 0 {
 				return
 			}
 		}
 	}
-	log.Println("no more events")
 }
 
 func ok(err error) {

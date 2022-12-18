@@ -5,16 +5,13 @@ metadata:
 spec:
   containers:
     - name: foo
-      command: [ go, run, ./internal/server ]
-      env:
-        - name: PORT
-          value: "8080"
+      command: [ go, run, ./demo/foo ]
       readinessProbe:
         initialDelaySeconds: 10
         httpGet:
           port: 8080
     - name: bar
-      command: [ go, run, ./internal/server ]
+      command: [ go, run, ./demo/bar ]
       env:
         - name: PORT
           value: "9090"
