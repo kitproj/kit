@@ -42,9 +42,30 @@ type state struct {
 	cmd   *exec.Cmd
 }
 
-func (s *state) Write(p []byte) (n int, err error) {
-	s.msg = strings.TrimSpace(string(p))
-	return 0, nil
+type WriteFunc func(p []byte) (n int, err error)
+
+func (w WriteFunc) Write(p []byte) (n int, err error) {
+	return w(p)
+}
+
+func (s *state) Stdout() io.Writer {
+	return WriteFunc(func(p []byte) (n int, err error) {
+		s.msg = last(p)
+		return len(p), nil
+	})
+}
+
+func last(p []byte) string {
+	parts := strings.Split(strings.TrimSpace(string(p)), "\n")
+	last := parts[len(parts)-1]
+	return last
+}
+
+func (s *state) Stderr() io.Writer {
+	return WriteFunc(func(p []byte) (n int, err error) {
+		s.err = fmt.Errorf(last(p))
+		return len(p), nil
+	})
 }
 
 var states = map[string]*state{}
@@ -85,16 +106,24 @@ func main() {
 					"unready":  color.YellowString("▓"),
 					"killing":  "▓",
 				}[state.phase]
-				m := state.msg
-				if state.err != nil {
-					r = color.RedString("▓")
-					m = color.RedString(state.err.Error())
+				msg := state.msg
+				if len(msg) > 64 {
+					msg = state.msg[0:63]
 				}
-				log.Printf("%s %s [%s] %s, %v", r, name, state.phase, m, state.err)
+				err := ""
+				if state.err != nil {
+					err = state.err.Error()
+				}
+				if len(msg) > 64 {
+					msg = state.msg[0:63]
+				}
+				log.Printf("%s %-8s [%-8s] %s | %v", r, name, state.phase, msg, color.YellowString(err))
 			}
 			time.Sleep(time.Second)
 		}
 	}()
+
+	_ = os.Mkdir("logs", 0777)
 
 	for _, c := range pod.Spec.Containers {
 		states[c.Name].phase = "creating"
@@ -105,8 +134,8 @@ func main() {
 		cmd := exec.Command(c.Command[0], append(c.Command[1:], c.Args...)...)
 		cmd.Dir = c.WorkingDir
 		cmd.Stdin = os.Stdin
-		cmd.Stdout = io.MultiWriter(log, states[c.Name])
-		cmd.Stderr = io.MultiWriter(log, states[c.Name])
+		cmd.Stdout = io.MultiWriter(log, states[c.Name].Stdout())
+		cmd.Stderr = io.MultiWriter(log, states[c.Name].Stderr())
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid: true,
 		}
@@ -141,12 +170,10 @@ func main() {
 						resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
 						if err != nil {
 							states[name].phase = "unready"
-							states[name].err = err
 						} else if resp.StatusCode == 200 {
 							states[name].phase = "ready"
 						} else {
 							states[name].phase = "unready"
-							states[name].err = fmt.Errorf(resp.Status)
 						}
 					} else {
 						states[name].msg = "httpGet not supported"
