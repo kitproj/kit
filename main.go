@@ -59,12 +59,12 @@ func main() {
 		}
 	}
 
-	width, _, err := terminal.GetSize(0)
-	must(err)
-
 	go func() {
 		defer runtime.HandleCrash()
 		for {
+			width, _, err := terminal.GetSize(0)
+			must(err)
+
 			log.Printf("%s[2J", escape)
 			log.Printf("%s[H", escape)
 			for _, c := range pod.Spec.Containers {
@@ -78,7 +78,7 @@ func main() {
 					r = v
 				}
 				line := fmt.Sprintf("%s %-10s [%-8s] %s | %s", r, name, state.phase, color.BlueString(state.msg), state.log.String())
-				if len(line) > width {
+				if len(line) > width && width > 0 {
 					line = line[0 : width-1]
 				}
 				log.Println(line)
@@ -103,7 +103,7 @@ func main() {
 	for _, c := range pod.Spec.Containers {
 		states[c.Name].phase = creatingPhase
 
-		go func(c corev1.Container) {
+		startFunc := func(c corev1.Container) {
 			err := func() error {
 				logFile, err := os.Create(filepath.Join("logs", c.Name+".log"))
 				if err != nil {
@@ -270,58 +270,98 @@ func main() {
 					}(c.Name, logs)
 				}
 
-				if c.ReadinessProbe != nil {
-					go func(name string, probe *corev1.Probe) {
-						defer runtime.HandleCrash()
-						initialDelay := time.Duration(probe.InitialDelaySeconds) * time.Second
-						period := time.Duration(probe.PeriodSeconds) * time.Second
-						if period == 0 {
-							period = 10 * time.Second
-						}
-						time.Sleep(initialDelay)
-						for {
-							if states[name].phase.isTerminal() {
-								return
-							}
-							if tcp := probe.TCPSocket; tcp != nil {
-								_, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", tcp.Port.IntVal))
-								if err != nil {
-									states[name].phase = unreadyPhase
-									states[name].msg = err.Error()
-								} else {
-									states[name].phase = readyPhase
-									states[name].msg = ""
-								}
-							} else if httpGet := probe.HTTPGet; httpGet != nil {
-								proto := strings.ToLower(string(httpGet.Scheme))
-								if proto == "" {
-									proto = "http"
-								}
-								resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
-								if err != nil {
-									states[name].phase = unreadyPhase
-									states[name].msg = err.Error()
-								} else if resp.StatusCode < 300 {
-									states[name].phase = readyPhase
-									states[name].msg = ""
-								} else {
-									states[name].phase = unreadyPhase
-									states[name].msg = resp.Status
-								}
-							} else {
-								states[c.Name].log = logEntry{"error", "probe not supported"}
-							}
-							time.Sleep(period)
-						}
-					}(c.Name, c.ReadinessProbe)
-				}
 				return nil
 			}()
 			if err != nil {
 				states[c.Name].phase = errorPhase
 				states[c.Name].msg = err.Error()
 			}
-		}(c)
+
+		}
+		go startFunc(c)
+		probeFunc := func(name string, probe *corev1.Probe, callback func(ok bool, err error)) {
+			defer runtime.HandleCrash()
+			initialDelay := time.Duration(probe.InitialDelaySeconds) * time.Second
+			period := time.Duration(probe.PeriodSeconds) * time.Second
+			if period == 0 {
+				period = 10 * time.Second
+			}
+			time.Sleep(initialDelay)
+			successes, failures := 0, 0
+			for {
+				if states[name].phase.isTerminal() {
+					return
+				}
+				if tcp := probe.TCPSocket; tcp != nil {
+					_, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp.Port.IntVal))
+					callback(err == nil, err)
+				} else if httpGet := probe.HTTPGet; httpGet != nil {
+					proto := strings.ToLower(string(httpGet.Scheme))
+					if proto == "" {
+						proto = "http"
+					}
+					resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
+					ok := err == nil && resp.StatusCode < 300
+
+					if ok {
+						successes++
+						failures = 0
+					} else {
+						successes = 0
+						failures++
+					}
+					if successes > int(probe.SuccessThreshold) {
+						callback(ok, nil)
+					} else if failures >= int(probe.FailureThreshold) {
+						if err != nil {
+							callback(ok, err)
+						} else {
+							callback(ok, fmt.Errorf("%s", resp.Status))
+						}
+					}
+				} else {
+					callback(false, fmt.Errorf("probe not supported"))
+				}
+				time.Sleep(period)
+			}
+		}
+		if probe := c.LivenessProbe; probe != nil {
+			liveFunc := func(live bool, err error) {
+				if live {
+					states[c.Name].phase = livePhase
+				} else {
+					states[c.Name].phase = deadPhase
+				}
+				if err != nil {
+					states[c.Name].msg = err.Error()
+				} else {
+					states[c.Name].msg = ""
+				}
+				if !live {
+					err := states[c.Name].kill()
+					if err != nil {
+						states[c.Name].msg = err.Error()
+					}
+					startFunc(c)
+				}
+			}
+			go probeFunc(c.Name, probe, liveFunc)
+		}
+		if probe := c.ReadinessProbe; probe != nil {
+			readyFunc := func(ready bool, err error) {
+				if ready {
+					states[c.Name].phase = readyPhase
+				} else {
+					states[c.Name].phase = unreadyPhase
+				}
+				if err != nil {
+					states[c.Name].msg = err.Error()
+				} else {
+					states[c.Name].msg = ""
+				}
+			}
+			go probeFunc(c.Name, probe, readyFunc)
+		}
 	}
 
 	<-ctx.Done()

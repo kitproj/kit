@@ -7,7 +7,7 @@ spec:
       # no image? this is a host process
     - name: foo
       command: [ go, run, ./demo/foo ]
-      readinessProbe:
+      livenessProbe:
         tcpSocket:
           port: 8080
       # no image? this is a host process

@@ -16,6 +16,8 @@ const (
 	pullingPhase  phase = "pulling"
 	startingPhase phase = "starting"
 	runningPhase  phase = "running"
+	livePhase     phase = "live"
+	deadPhase     phase = "dead"
 	readyPhase    phase = "ready"
 	unreadyPhase  phase = "unready"
 	exitedPhase   phase = "exited"
