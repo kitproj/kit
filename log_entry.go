@@ -8,12 +8,8 @@ type logEntry struct {
 }
 
 func (e logEntry) String() string {
-	msg := e.msg
-	if len(msg) > 100 {
-		msg = msg[0:99]
-	}
 	if e.level == "error" {
-		return color.YellowString(msg)
+		return color.YellowString(e.msg)
 	}
-	return msg
+	return e.msg
 }
