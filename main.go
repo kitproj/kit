@@ -3,16 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/docker/docker/api/types"
+	container "github.com/docker/docker/api/types/container"
+	network "github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/fatih/color"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"io"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"runtime/debug"
 	"sigs.k8s.io/yaml"
 	"strings"
 	"syscall"
@@ -24,202 +31,281 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-type event = any
-
-type signalEvent struct{}
-
-type processExitedEvent struct {
-	name string
-	err  error
-}
-
 const escape = "\x1b"
 
-type state struct {
-	err   error
-	phase string
-	msg   string
-	cmd   *exec.Cmd
-}
-
-type WriteFunc func(p []byte) (n int, err error)
-
-func (w WriteFunc) Write(p []byte) (n int, err error) {
-	return w(p)
-}
-
-func (s *state) Stdout() io.Writer {
-	return WriteFunc(func(p []byte) (n int, err error) {
-		s.msg = last(p)
-		return len(p), nil
-	})
-}
-
-func last(p []byte) string {
-	parts := strings.Split(strings.TrimSpace(string(p)), "\n")
-	last := parts[len(parts)-1]
-	return last
-}
-
-func (s *state) Stderr() io.Writer {
-	return WriteFunc(func(p []byte) (n int, err error) {
-		s.err = fmt.Errorf(last(p))
-		return len(p), nil
-	})
-}
-
-var states = map[string]*state{}
-
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
 	in, err := os.ReadFile("dev.yaml")
-	ok(err)
-	pod := &v1.Pod{}
-	ok(yaml.UnmarshalStrict(in, pod))
+	must(err)
+	pod := &corev1.Pod{}
+	must(yaml.UnmarshalStrict(in, pod))
 
-	hosts, err := os.Create("hosts")
-	ok(err)
-	for _, c := range pod.Spec.Containers {
-		_, err := hosts.WriteString(fmt.Sprintf("%s 127.0.0.1\n", c.Name))
-		ok(err)
-	}
-	ok(hosts.Close())
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	must(err)
+	defer cli.Close()
 
-	events := make(chan event)
 	for _, c := range pod.Spec.Containers {
-		states[c.Name] = &state{}
+		if _, ok := states[c.Name]; ok {
+			must(fmt.Errorf("duplicate name %s", c.Name))
+		}
+		states[c.Name] = &state{
+			kill: func() error {
+				return nil
+			},
+		}
 	}
 
 	go func() {
+		defer runtime.HandleCrash()
 		for {
 			log.Printf("%s[2J", escape)
 			log.Printf("%s[H", escape)
 			for _, c := range pod.Spec.Containers {
 				name := c.Name
 				state := states[name]
-				r := map[string]string{
-					"creating": "▓",
-					"starting": "▓",
-					"ready":    color.GreenString("▓"),
-					"unready":  color.YellowString("▓"),
-					"killing":  "▓",
-				}[state.phase]
-				msg := state.msg
-				if len(msg) > 64 {
-					msg = state.msg[0:63]
+				r := "▓"
+				if v, ok := map[phase]string{
+					readyPhase:   color.GreenString("▓"),
+					unreadyPhase: color.YellowString("▓"),
+				}[state.phase]; ok {
+					r = v
 				}
-				err := ""
-				if state.err != nil {
-					err = state.err.Error()
-				}
-				if len(msg) > 64 {
-					msg = state.msg[0:63]
-				}
-				log.Printf("%s %-8s [%-8s] %s | %v", r, name, state.phase, msg, color.YellowString(err))
+				log.Printf("%s %-10s [%-8s] %s | %s", r, name, state.phase, color.BlueString(state.msg), state.log.String())
 			}
-			time.Sleep(time.Second)
+			time.Sleep(time.Second / 2)
 		}
+	}()
+
+	defer func() {
+		for name, state := range states {
+			states[name].phase = killingPhase
+			defer func() { states[name].phase = killedPhase }()
+			if err := state.kill(); err != nil {
+				states[name].msg = err.Error()
+			}
+		}
+		time.Sleep(time.Second)
 	}()
 
 	_ = os.Mkdir("logs", 0777)
 
 	for _, c := range pod.Spec.Containers {
-		states[c.Name].phase = "creating"
-		log, err := os.Create(filepath.Join("logs", c.Name+".log"))
-		ok(err)
-		defer log.Close()
+		states[c.Name].phase = creatingPhase
 
-		cmd := exec.Command(c.Command[0], append(c.Command[1:], c.Args...)...)
-		cmd.Dir = c.WorkingDir
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = io.MultiWriter(log, states[c.Name].Stdout())
-		cmd.Stderr = io.MultiWriter(log, states[c.Name].Stderr())
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid: true,
-		}
-		cmd.Env = os.Environ()
+		err := func() error {
+			logFile, err := os.Create(filepath.Join("logs", c.Name+".log"))
+			if err != nil {
+				return err
+			}
 
-		for _, e := range c.Env {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", e.Name, e.Value))
-		}
-
-		states[c.Name].cmd = cmd
-
-		go func(name string, cmd *exec.Cmd) {
-			states[name].phase = "starting"
-			err := cmd.Run()
-			events <- processExitedEvent{name, err}
-		}(c.Name, cmd)
-
-		if c.ReadinessProbe != nil {
-			go func(name string, probe *v1.Probe) {
-				initialDelay := time.Duration(probe.InitialDelaySeconds) * time.Second
-				period := time.Duration(probe.PeriodSeconds) * time.Second
-				if period == 0 {
-					period = 10 * time.Second
+			var environ []string
+			for _, e := range c.Env {
+				environ = append(environ, fmt.Sprintf("%s=%s", e.Name, e.Value))
+			}
+			stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
+			stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
+			image := c.Image
+			if image == "" {
+				cmd := exec.Command(c.Command[0], append(c.Command[1:], c.Args...)...)
+				cmd.Dir = c.WorkingDir
+				cmd.Stdin = os.Stdin
+				cmd.Stdout = stdout
+				cmd.Stderr = stderr
+				cmd.SysProcAttr = &syscall.SysProcAttr{
+					Setpgid: true,
 				}
-				time.Sleep(initialDelay)
-				for {
-					if httpGet := probe.HTTPGet; httpGet != nil {
-						proto := strings.ToLower(string(httpGet.Scheme))
-						if proto == "" {
-							proto = "http"
-						}
-						resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
+				cmd.Env = append(os.Environ(), environ...)
+
+				states[c.Name].kill = func() error {
+					if cmd.Process != nil {
+						pgid, _ := syscall.Getpgid(cmd.Process.Pid)
+						err := syscall.Kill(-pgid, syscall.SIGTERM)
 						if err != nil {
-							states[name].phase = "unready"
-						} else if resp.StatusCode == 200 {
-							states[name].phase = "ready"
-						} else {
-							states[name].phase = "unready"
+							return err
 						}
-					} else {
-						states[name].msg = "httpGet not supported"
 					}
-					time.Sleep(period)
+					return logFile.Close()
 				}
-			}(c.Name, c.ReadinessProbe)
-		}
-	}
 
-	go func() {
-		<-ctx.Done()
-		events <- signalEvent{}
-	}()
+				go func(name string, cmd *exec.Cmd) {
+					defer runtime.HandleCrash()
+					defer func() {
+						states[c.Name].phase = exitedPhase
+					}()
 
-	waitingFor := len(pod.Spec.Containers)
-
-	for event := range events {
-		switch obj := event.(type) {
-		case signalEvent:
-			for name, state := range states {
-				cmd := state.cmd
-				if cmd.Process != nil {
-					states[name].phase = "killing"
-					pgid, _ := syscall.Getpgid(cmd.Process.Pid)
-					err := syscall.Kill(-pgid, syscall.SIGTERM)
-					if err != nil {
+					states[c.Name].phase = runningPhase
+					if err := cmd.Run(); err != nil {
+						states[name].phase = errorPhase
 						states[name].msg = err.Error()
 					}
-					time.Sleep(time.Second)
+				}(c.Name, cmd)
+			} else {
+				_, err := os.Stat(image)
+				if err == nil {
+					states[c.Name].phase = buildingPhase
+					err := build(ctx, c.Name, cli, image, stdout)
+					if err != nil {
+						return err
+					}
+					image = c.Name
+				} else if c.ImagePullPolicy != corev1.PullNever {
+					states[c.Name].phase = pullingPhase
+					r, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
+					if err != nil {
+						return err
+					}
+					_, err = io.Copy(states[c.Name].Stdout(), r)
+					if err != nil {
+						return err
+					}
+					err = r.Close()
+					if err != nil {
+						return err
+					}
 				}
+				states[c.Name].phase = creatingPhase
+				portSet := nat.PortSet{}
+				portBindings := map[nat.Port][]nat.PortBinding{}
+				for _, p := range c.Ports {
+					port, err := nat.NewPort("tcp", fmt.Sprint(p.ContainerPort))
+					if err != nil {
+						return err
+					}
+					portSet[port] = struct{}{}
+					portBindings[port] = []nat.PortBinding{{
+						HostPort: fmt.Sprint(p.HostPort),
+					}}
+				}
+				list, err := cli.ContainerList(ctx, types.ContainerListOptions{
+					All: true,
+				})
+				if err != nil {
+					return err
+				}
+				for _, existing := range list {
+					if existing.Labels["name"] == c.Name {
+						err := cli.ContainerRemove(ctx, existing.ID, types.ContainerRemoveOptions{Force: true})
+						if err != nil {
+							return err
+						}
+					}
+				}
+
+				created, err := cli.ContainerCreate(ctx, &container.Config{
+					Hostname: c.Name,
+					Env:      environ,
+					// TODO support entrypoint
+					Entrypoint:   c.Command,
+					Cmd:          c.Args,
+					Image:        image,
+					WorkingDir:   c.WorkingDir,
+					Tty:          c.TTY,
+					ExposedPorts: portSet,
+					Labels:       map[string]string{"name": c.Name},
+				}, &container.HostConfig{
+					PortBindings: portBindings,
+				}, &network.NetworkingConfig{}, &v1.Platform{}, c.Name)
+				if err != nil {
+					return err
+				}
+				states[c.Name].phase = startingPhase
+				err = cli.ContainerStart(ctx, created.ID, types.ContainerStartOptions{})
+				if err != nil {
+					return err
+				}
+				states[c.Name].kill = func() error {
+					timeout := 3 * time.Second
+					err := cli.ContainerStop(context.Background(), created.ID, &timeout)
+					if err != nil {
+						return err
+					}
+					return logFile.Close()
+				}
+				logs, err := cli.ContainerLogs(ctx, c.Name, types.ContainerLogsOptions{
+					ShowStdout: true,
+					ShowStderr: true,
+					Follow:     true,
+				})
+				if err != nil {
+					return err
+				}
+				go func(name string, closer io.ReadCloser) {
+					defer runtime.HandleCrash()
+					defer func() {
+						states[c.Name].phase = exitedPhase
+					}()
+					defer logs.Close()
+					states[c.Name].phase = runningPhase
+					_, err := io.Copy(stdout, logs)
+					if err != nil {
+						states[c.Name].phase = errorPhase
+						states[name].msg = err.Error()
+					}
+				}(c.Name, logs)
 			}
-		case processExitedEvent:
-			states[obj.name].phase = "exited"
-			states[obj.name].err = obj.err
-			waitingFor--
-			if waitingFor == 0 {
-				return
+
+			if c.ReadinessProbe != nil {
+				go func(name string, probe *corev1.Probe) {
+					defer runtime.HandleCrash()
+					initialDelay := time.Duration(probe.InitialDelaySeconds) * time.Second
+					period := time.Duration(probe.PeriodSeconds) * time.Second
+					if period == 0 {
+						period = 10 * time.Second
+					}
+					time.Sleep(initialDelay)
+					for {
+						if states[name].phase.isTerminal() {
+							return
+						}
+						if tcp := probe.TCPSocket; tcp != nil {
+							_, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", tcp.Port.IntVal))
+							if err != nil {
+								states[name].phase = unreadyPhase
+								states[name].msg = err.Error()
+							} else {
+								states[name].phase = readyPhase
+								states[name].msg = ""
+							}
+						} else if httpGet := probe.HTTPGet; httpGet != nil {
+							proto := strings.ToLower(string(httpGet.Scheme))
+							if proto == "" {
+								proto = "http"
+							}
+							resp, err := http.Get(fmt.Sprintf("%s://localhost:%v%s", proto, httpGet.Port.IntValue(), httpGet.Path))
+							if err != nil {
+								states[name].phase = unreadyPhase
+								states[name].msg = err.Error()
+							} else if resp.StatusCode < 300 {
+								states[name].phase = readyPhase
+								states[name].msg = ""
+							} else {
+								states[name].phase = unreadyPhase
+								states[name].msg = resp.Status
+							}
+						} else {
+							states[c.Name].log = logEntry{"error", "probe not supported"}
+						}
+						time.Sleep(period)
+					}
+				}(c.Name, c.ReadinessProbe)
 			}
+			return nil
+		}()
+		if err != nil {
+			states[c.Name].phase = errorPhase
+			states[c.Name].msg = err.Error()
 		}
 	}
+
+	<-ctx.Done()
+
+	time.Sleep(3 * time.Second)
 }
 
-func ok(err error) {
+func must(err error) {
 	if err != nil {
-		debug.PrintStack()
 		log.Fatal(err)
 	}
 }

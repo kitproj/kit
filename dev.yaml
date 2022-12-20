@@ -4,19 +4,36 @@ metadata:
   name: dev
 spec:
   containers:
+      # no image? this is a host process
     - name: foo
       command: [ go, run, ./demo/foo ]
       readinessProbe:
-        initialDelaySeconds: 10
-        httpGet:
+        tcpSocket:
           port: 8080
+      # no image? this is a host process
     - name: bar
       command: [ go, run, ./demo/bar ]
       env:
         - name: PORT
           value: "9090"
       readinessProbe:
-        initialDelaySeconds: 10
         httpGet:
           port: 9090
-
+    # conventional image? run in Docker
+    - name: baz
+      image: httpd
+      ports:
+        - containerPort: 80
+          hostPort: 7070
+      readinessProbe:
+        httpGet:
+          port: 7070
+    # path image? build and run in Docker
+    - name: qux
+      image: ./demo/qux/Dockerfile
+      ports:
+        - containerPort: 80
+          hostPort: 6060
+      readinessProbe:
+        httpGet:
+          port: 6060
