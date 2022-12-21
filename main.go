@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -33,13 +34,7 @@ func main() {
 	pod := &corev1.Pod{}
 	must(yaml.UnmarshalStrict(in, pod))
 
-	for _, c := range pod.Spec.Containers {
-		if _, ok := states[c.Name]; ok {
-			must(fmt.Errorf("duplicate name %s", c.Name))
-		}
-		states[c.Name] = &State{}
-	}
-
+	var names []string
 	go func() {
 		defer runtime.HandleCrash()
 		for {
@@ -48,8 +43,7 @@ func main() {
 
 			log.Printf("%s[2J", escape)
 			log.Printf("%s[H", escape)
-			for _, c := range pod.Spec.Containers {
-				name := c.Name
+			for _, name := range names {
 				state := states[name]
 				r := "▓"
 				if v, ok := map[Phase]string{
@@ -71,93 +65,124 @@ func main() {
 
 	_ = os.Mkdir("logs", 0777)
 
-	for _, c := range pod.Spec.Containers {
-		name := c.Name
-		state := states[name]
-		state.phase = creatingPhase
+	for _, containers := range [][]corev1.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
+		wg := &sync.WaitGroup{}
 
-		var pd ProcessDef
+		states = map[string]*State{}
+		names = nil
 
-		logFile, err := os.Create(filepath.Join("logs", name+".log"))
-		if err != nil {
+		for _, c := range containers {
+			if _, ok := states[c.Name]; ok {
+				must(fmt.Errorf("duplicate name %s", c.Name))
+			}
+			states[c.Name] = &State{}
+			names = append(names, c.Name)
+		}
+
+		for _, c := range containers {
+			name := c.Name
+			state := states[name]
+			state.phase = creatingPhase
+
+			var pd ProcessDef
+
+			logFile, err := os.Create(filepath.Join("logs", name+".log"))
+			if err != nil {
+				must(err)
+			}
+			stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
+			stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
+			if c.Image == "" {
+				pd = &HostProcess{Container: *c.DeepCopy()}
+			} else {
+				pd = &ContainerProcess{Container: *c.DeepCopy()}
+			}
+
+			err = pd.Init(ctx)
 			must(err)
-		}
-		stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
-		stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
-		if c.Image == "" {
-			pd = &HostProcess{Container: *c.DeepCopy()}
-		} else {
-			pd = &ContainerProcess{Container: *c.DeepCopy()}
-		}
 
-		err = pd.Init(ctx)
-		must(err)
+			go func(state *State) {
+				defer runtime.HandleCrash()
+				wg.Add(1)
+				defer wg.Done()
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						err := func() error {
+							defer func() { state.phase = exitedPhase }()
+							if err := pd.Stop(ctx); err != nil {
+								return fmt.Errorf("failed to stop: %v", err)
+							}
+							state.phase = buildingPhase
+							if err := pd.Build(ctx, stdout, stderr); err != nil {
+								return fmt.Errorf("failed to build: %v", err)
+							}
+							state.phase = runningPhase
+							if err := pd.Run(ctx, stdout, stderr); err != nil {
+								return fmt.Errorf("failed to run: %v", err)
+							}
+							return nil
+						}()
+						if err != nil && err != context.Canceled {
+							state.phase = errorPhase
+							state.log = LogEntry{"error", err.Error()}
+						} else {
+							return
+						}
+						time.Sleep(3 * time.Second)
+					}
+				}
+			}(state)
 
-		go func(state *State) {
-			defer runtime.HandleCrash()
-			for {
+			go func() {
 				select {
 				case <-ctx.Done():
-					_ = pd.Kill(context.Background())
-					return
-				default:
-					err := func() error {
-						defer func() { state.phase = exitedPhase }()
-						if err := pd.Kill(ctx); err != nil {
-							return err
-						}
-						state.phase = buildingPhase
-						if err := pd.Build(ctx, stdout, stderr); err != nil {
-							return err
-						}
-						state.phase = runningPhase
-						return pd.Run(ctx, stdout, stderr)
-					}()
+					err := pd.Stop(context.Background())
 					if err != nil {
 						state.phase = errorPhase
-						state.log = LogEntry{"error", err.Error()}
+						state.log = LogEntry{"error", fmt.Sprintf("failed to stop: %v", err)}
 					}
-					time.Sleep(3 * time.Second)
 				}
-			}
-		}(state)
+			}()
 
-		if p := c.LivenessProbe; p != nil {
-			liveFunc := func(name string, live bool, err error) {
-				if live {
-					states[name].phase = livePhase
-				} else {
-					states[name].phase = deadPhase
+			if p := c.LivenessProbe; p != nil {
+				liveFunc := func(name string, live bool, err error) {
+					if live {
+						states[name].phase = livePhase
+					} else {
+						states[name].phase = deadPhase
+					}
+					if err != nil {
+						state.log = LogEntry{"error", err.Error()}
+					}
+					if !live {
+						if err := pd.Stop(ctx); err != nil {
+							state.log = LogEntry{"error", err.Error()}
+						}
+					}
 				}
-				if err != nil {
-					state.log = LogEntry{"error", err.Error()}
-				}
-				if !live {
-					if err := pd.Kill(ctx); err != nil {
+				go probeLoop(ctx, name, *p.DeepCopy(), liveFunc)
+			}
+			if probe := c.ReadinessProbe; probe != nil {
+				readyFunc := func(name string, ready bool, err error) {
+					if ready {
+						states[name].phase = readyPhase
+					} else {
+						states[name].phase = unreadyPhase
+					}
+					if err != nil {
 						state.log = LogEntry{"error", err.Error()}
 					}
 				}
+				go probeLoop(ctx, name, *probe.DeepCopy(), readyFunc)
 			}
-			go probeLoop(ctx, name, *p.DeepCopy(), liveFunc)
+			time.Sleep(time.Second)
 		}
-		if probe := c.ReadinessProbe; probe != nil {
-			readyFunc := func(name string, ready bool, err error) {
-				if ready {
-					states[name].phase = readyPhase
-				} else {
-					states[name].phase = unreadyPhase
-				}
-				if err != nil {
-					state.log = LogEntry{"error", err.Error()}
-				}
-			}
-			go probeLoop(ctx, name, *probe.DeepCopy(), readyFunc)
-		}
+
+		wg.Wait()
 	}
-
-	<-ctx.Done()
-
-	time.Sleep(3 * time.Second)
 }
 
 func must(err error) {

@@ -128,7 +128,7 @@ func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) er
 	return err
 }
 
-func (h *ContainerProcess) Kill(ctx context.Context) error {
+func (h *ContainerProcess) Stop(ctx context.Context) error {
 	cli := h.cli
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
@@ -136,7 +136,7 @@ func (h *ContainerProcess) Kill(ctx context.Context) error {
 	}
 	for _, existing := range list {
 		if existing.Labels["name"] == h.Name {
-			err := cli.ContainerRemove(ctx, existing.ID, types.ContainerRemoveOptions{Force: true})
+			err = cli.ContainerRemove(ctx, existing.ID, types.ContainerRemoveOptions{Force: true})
 			if err != nil {
 				return err
 			}

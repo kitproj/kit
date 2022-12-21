@@ -3,11 +3,15 @@ kind: Pod
 metadata:
   name: dev
 spec:
+  initContainers:
+    - name: init
+      command: [ sleep, "3" ]
   containers:
-      # no image? this is a host process
+    # no image? this is a host process
     - name: foo
       command: [ go, run, ./demo/foo ]
       livenessProbe:
+        failureThreshold: 3
         tcpSocket:
           port: 8080
       # no image? this is a host process

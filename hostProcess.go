@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 )
 
 type HostProcess struct {
@@ -43,13 +44,23 @@ func (h *HostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return cmd.Wait()
 }
 
-func (h *HostProcess) Kill(ctx context.Context) error {
-	defer func() { h.process = nil }()
+func (h *HostProcess) Stop(ctx context.Context) error {
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
-		return syscall.Kill(-pgid, syscall.SIGTERM)
+		if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil && !isNotPermitted(err) {
+			return err
+		}
+		time.Sleep(3 * time.Second)
+		if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil && !isNotPermitted(err) {
+			return err
+		}
+		return nil
 	}
 	return nil
+}
+
+func isNotPermitted(err error) bool {
+	return err.Error() == "operation not permitted"
 }
 
 var _ ProcessDef = &HostProcess{}
