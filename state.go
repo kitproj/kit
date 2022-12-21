@@ -5,11 +5,9 @@ import (
 	"strings"
 )
 
-type state struct {
+type State struct {
 	phase phase
 	log   logEntry
-	msg   string
-	kill  func() error
 }
 
 type WriteFunc func(p []byte) (n int, err error)
@@ -18,7 +16,7 @@ func (w WriteFunc) Write(p []byte) (n int, err error) {
 	return w(p)
 }
 
-func (s *state) Stdout() io.Writer {
+func (s *State) Stdout() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
 		s.log = logEntry{"info", last(p)}
 		return len(p), nil
@@ -30,11 +28,11 @@ func last(p []byte) string {
 	return parts[len(parts)-1]
 }
 
-func (s *state) Stderr() io.Writer {
+func (s *State) Stderr() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
 		s.log = logEntry{"error", last(p)}
 		return len(p), nil
 	})
 }
 
-var states = map[string]*state{}
+var states = map[string]*State{}
