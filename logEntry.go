@@ -2,12 +2,12 @@ package main
 
 import "github.com/fatih/color"
 
-type logEntry struct {
+type LogEntry struct {
 	level string
 	msg   string
 }
 
-func (e logEntry) String() string {
+func (e LogEntry) String() string {
 	if e.level == "error" {
 		return color.YellowString(e.msg)
 	}

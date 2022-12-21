@@ -52,7 +52,7 @@ func main() {
 				name := c.Name
 				state := states[name]
 				r := "▓"
-				if v, ok := map[phase]string{
+				if v, ok := map[Phase]string{
 					livePhase:    color.BlueString("▓"),
 					readyPhase:   color.GreenString("▓"),
 					unreadyPhase: color.YellowString("▓"),
@@ -76,7 +76,7 @@ func main() {
 		state := states[name]
 		state.phase = creatingPhase
 
-		var pd processDef
+		var pd ProcessDef
 
 		logFile, err := os.Create(filepath.Join("logs", name+".log"))
 		if err != nil {
@@ -85,9 +85,9 @@ func main() {
 		stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
 		stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
 		if c.Image == "" {
-			pd = &hostProcess{Container: *c.DeepCopy()}
+			pd = &HostProcess{Container: *c.DeepCopy()}
 		} else {
-			pd = &containerProcess{Container: *c.DeepCopy()}
+			pd = &ContainerProcess{Container: *c.DeepCopy()}
 		}
 
 		err = pd.Init(ctx)
@@ -115,7 +115,7 @@ func main() {
 					}()
 					if err != nil {
 						state.phase = errorPhase
-						state.log = logEntry{"error", err.Error()}
+						state.log = LogEntry{"error", err.Error()}
 					}
 					time.Sleep(3 * time.Second)
 				}
@@ -130,11 +130,11 @@ func main() {
 					states[name].phase = deadPhase
 				}
 				if err != nil {
-					state.log = logEntry{"error", err.Error()}
+					state.log = LogEntry{"error", err.Error()}
 				}
 				if !live {
 					if err := pd.Kill(ctx); err != nil {
-						state.log = logEntry{"error", err.Error()}
+						state.log = LogEntry{"error", err.Error()}
 					}
 				}
 			}
@@ -148,7 +148,7 @@ func main() {
 					states[name].phase = unreadyPhase
 				}
 				if err != nil {
-					state.log = logEntry{"error", err.Error()}
+					state.log = LogEntry{"error", err.Error()}
 				}
 			}
 			go probeLoop(ctx, name, *probe.DeepCopy(), readyFunc)

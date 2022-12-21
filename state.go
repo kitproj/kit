@@ -6,8 +6,8 @@ import (
 )
 
 type State struct {
-	phase phase
-	log   logEntry
+	phase Phase
+	log   LogEntry
 }
 
 type WriteFunc func(p []byte) (n int, err error)
@@ -18,7 +18,7 @@ func (w WriteFunc) Write(p []byte) (n int, err error) {
 
 func (s *State) Stdout() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.log = logEntry{"info", last(p)}
+		s.log = LogEntry{"info", last(p)}
 		return len(p), nil
 	})
 }
@@ -30,7 +30,7 @@ func last(p []byte) string {
 
 func (s *State) Stderr() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.log = logEntry{"error", last(p)}
+		s.log = LogEntry{"error", last(p)}
 		return len(p), nil
 	})
 }

@@ -16,13 +16,13 @@ import (
 	"path/filepath"
 )
 
-type containerProcess struct {
+type ContainerProcess struct {
 	corev1.Container
 	cli   *client.Client
 	image string
 }
 
-func (h *containerProcess) Init(ctx context.Context) error {
+func (h *ContainerProcess) Init(ctx context.Context) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (h *containerProcess) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *containerProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *ContainerProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	cli := h.cli
 	image := h.Image
 	if _, err := os.Stat(image); err == nil {
@@ -68,7 +68,7 @@ func (h *containerProcess) Build(ctx context.Context, stdout, stderr io.Writer) 
 	return nil
 }
 
-func (h *containerProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	portSet := nat.PortSet{}
 	portBindings := map[nat.Port][]nat.PortBinding{}
@@ -128,7 +128,7 @@ func (h *containerProcess) Run(ctx context.Context, stdout, stderr io.Writer) er
 	return err
 }
 
-func (h *containerProcess) Kill(ctx context.Context) error {
+func (h *ContainerProcess) Kill(ctx context.Context) error {
 	cli := h.cli
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
@@ -145,4 +145,4 @@ func (h *containerProcess) Kill(ctx context.Context) error {
 	return nil
 }
 
-var _ processDef = &containerProcess{}
+var _ ProcessDef = &ContainerProcess{}

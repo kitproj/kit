@@ -10,20 +10,20 @@ import (
 	"syscall"
 )
 
-type hostProcess struct {
+type HostProcess struct {
 	corev1.Container
 	process *os.Process
 }
 
-func (h *hostProcess) Init(ctx context.Context) error {
+func (h *HostProcess) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *hostProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *HostProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	return nil
 }
 
-func (h *hostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *HostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
@@ -43,7 +43,7 @@ func (h *hostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return cmd.Wait()
 }
 
-func (h *hostProcess) Kill(ctx context.Context) error {
+func (h *HostProcess) Kill(ctx context.Context) error {
 	defer func() { h.process = nil }()
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
@@ -52,4 +52,4 @@ func (h *hostProcess) Kill(ctx context.Context) error {
 	return nil
 }
 
-var _ processDef = &hostProcess{}
+var _ ProcessDef = &HostProcess{}

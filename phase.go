@@ -1,15 +1,15 @@
 package main
 
-type phase string
+type Phase string
 
 const (
-	creatingPhase phase = "creating"
-	buildingPhase phase = "building"
-	runningPhase  phase = "running"
-	livePhase     phase = "live"
-	deadPhase     phase = "dead"
-	readyPhase    phase = "ready"
-	unreadyPhase  phase = "unready"
-	exitedPhase   phase = "exited"
-	errorPhase    phase = "error"
+	creatingPhase Phase = "creating"
+	buildingPhase Phase = "building"
+	runningPhase  Phase = "running"
+	livePhase     Phase = "live"
+	deadPhase     Phase = "dead"
+	readyPhase    Phase = "ready"
+	unreadyPhase  Phase = "unready"
+	exitedPhase   Phase = "exited"
+	errorPhase    Phase = "error"
 )
