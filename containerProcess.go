@@ -70,6 +70,10 @@ func (h *ContainerProcess) Build(ctx context.Context, stdout, stderr io.Writer) 
 
 func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
+	if err := h.Stop(ctx); err != nil {
+		return err
+	}
+
 	portSet := nat.PortSet{}
 	portBindings := map[nat.Port][]nat.PortBinding{}
 	for _, p := range h.Ports {

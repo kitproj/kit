@@ -4,6 +4,7 @@ type Phase string
 
 const (
 	creatingPhase Phase = "creating"
+	excludedPhase Phase = "excluded"
 	buildingPhase Phase = "building"
 	runningPhase  Phase = "running"
 	livePhase     Phase = "live"

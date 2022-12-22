@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
@@ -13,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -26,6 +28,13 @@ func init() {
 const escape = "\x1b"
 
 func main() {
+
+	include := ""
+	exclude := ""
+	flag.StringVar(&include, "i", "", "include")
+	flag.StringVar(&exclude, "e", "", "exclude")
+	flag.Parse()
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
@@ -82,6 +91,17 @@ func main() {
 		for _, c := range containers {
 			name := c.Name
 			state := states[name]
+
+			if strings.Contains(","+exclude+",", name) {
+				state.phase = excludedPhase
+				continue
+			}
+
+			if include != "" && !strings.Contains(","+include+",", name) {
+				state.phase = excludedPhase
+				continue
+			}
+
 			state.phase = creatingPhase
 
 			var pd ProcessDef
