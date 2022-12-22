@@ -14,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alexec/joy/internal/proc"
-	"github.com/alexec/joy/internal/types"
+	"github.com/alexec/kit/internal/proc"
+	"github.com/alexec/kit/internal/types"
 
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
@@ -43,9 +43,9 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
-	in, err := os.ReadFile("joy.yaml")
+	in, err := os.ReadFile("kit.yaml")
 	must(err)
-	pod := &types.Joy{}
+	pod := &types.Kit{}
 	must(yaml.UnmarshalStrict(in, pod))
 
 	var names []string

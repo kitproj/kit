@@ -11,7 +11,7 @@ type Metadata struct {
 	Name string `json:"name"`
 }
 
-type Joy struct {
+type Kit struct {
 	Spec       Spec      `json:"spec"`
 	ApiVersion string    `json:"apiVersion,omitempty"`
 	Kind       string    `json:"kind,omitempty"`

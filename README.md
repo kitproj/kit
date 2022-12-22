@@ -1,4 +1,4 @@
-# Joy
+# Kit
 
 This is a tool to enable local development of containerized applications.
 
@@ -24,16 +24,16 @@ You can define probes that test each container and host process is up and runnin
 ## Install
 
 ```bash
-brew tap alexec/joy --custom-remote https://github.com/alexec/joy
-brew install joy
+brew tap alexec/kit --custom-remote https://github.com/alexec/kit
+brew install kit
 ```
 
 ## Usage
 
-Describe you application in a [`joy.yaml`](joy.yaml) file using Kubernetes pod syntax, then start:
+Describe you application in a [`kit.yaml`](kit.yaml) file using Kubernetes pod syntax, then start:
 
 ```bash
-joy -h
+kit -h
 ````
 
 Logs are stored in `./logs`.

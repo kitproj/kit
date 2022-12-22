@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/alexec/joy/internal/types"
+	"github.com/alexec/kit/internal/types"
 	"net"
 	"net/http"
 	"time"

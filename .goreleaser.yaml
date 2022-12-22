@@ -32,12 +32,12 @@ changelog:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 brews:
-  - homepage: "https://github.com/alexec/joy"
-    description: "Joyful local dev."
+  - homepage: "https://github.com/alexec/kit"
+    description: "Kitful local dev."
     folder: Formula
     commit_author:
       name: Alex Collins
       email: alex_collins@intuit.com
     tap:
       owner: alexec
-      name: joy
+      name: kit
