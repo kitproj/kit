@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Kitful local dev."
   homepage "https://github.com/alexec/kit"
-  version "0.0.8"
+  version "0.0.9"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.8/kit_0.0.8_Darwin_x86_64.tar.gz"
-      sha256 "1d97164ad766eead42bbeabc7a4fbb610ffe35e1c8c43d32950d89d597c99f84"
+    if Hardware::CPU.arm?
+      url "https://github.com/alexec/kit/releases/download/v0.0.9/kit_0.0.9_Darwin_arm64.tar.gz"
+      sha256 "8d0b8d33475e2d94583ca4524cf422588eb9464c01d549b8734d2b561b106dd3"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/alexec/kit/releases/download/v0.0.8/kit_0.0.8_Darwin_arm64.tar.gz"
-      sha256 "fd0e67e548c0e414ba630ef78fe4aae5f195b9d7043b032567ac5148d94271d3"
+    if Hardware::CPU.intel?
+      url "https://github.com/alexec/kit/releases/download/v0.0.9/kit_0.0.9_Darwin_x86_64.tar.gz"
+      sha256 "c58bff8db19dc86f616b76b50e57d66db50259c4752663fbd556c8adf7ea84e2"
 
       def install
         bin.install "kit"
@@ -27,17 +27,17 @@ class Kit < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/alexec/kit/releases/download/v0.0.8/kit_0.0.8_Linux_arm64.tar.gz"
-      sha256 "2a120c3ca03282e672eef6b434cad5f8d3bb6c3bf7de71cd456226339670fd9c"
+    if Hardware::CPU.intel?
+      url "https://github.com/alexec/kit/releases/download/v0.0.9/kit_0.0.9_Linux_x86_64.tar.gz"
+      sha256 "52da2a1cb5496b78e3bbca9c8df8fa294984d93351707229a408acdee9f24197"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.8/kit_0.0.8_Linux_x86_64.tar.gz"
-      sha256 "664280d105ab1d7868a0417af06577559381ee6ea0e04e96b9615f4682960a9a"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/alexec/kit/releases/download/v0.0.9/kit_0.0.9_Linux_arm64.tar.gz"
+      sha256 "34174e280ea372dc7039e7340985bd010713e24a7679a227619f2c93f82edf3d"
 
       def install
         bin.install "kit"
