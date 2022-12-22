@@ -13,9 +13,20 @@ Only high-level status is shown to your terminal:
 ▓ qux        [running ]  y[Thu Dec 22 01:48:21.957864 2022] [core:notice] [pid 1:tid 281
 ```
 
+## Install
+
+```bash
+brew tap alexec/joy --custom-remote https://github.com/alexec/joy
+brew install joy
+```
+
 ## Usage
 
-Describe you application in a `joy.yaml` file using Kubernetes pod syntax.
+Describe you application in a [`joy.yaml`](joy.yaml) file using Kubernetes pod syntax, then start:
+
+``bash
+joy
+``
 
 Logs are stored in `./logs`.
 
@@ -62,14 +73,14 @@ If the process is not alive (i.e. "dead"), then it is killed and restarted. Just
 ### Quitting
 
 Enter Ctrl+C to send a `SIGTERM` to the process. Each sub-process is then gets sent `SIGTERM`. If they do not exit
-within 30s, then they get a `SIGKILL`. For local dev you may wish to reduce this number:
+within 30s, then they get a `SIGKILL`. You may wish to reduce this number:
 
 ```yaml
 spec:
   terminationGracePeriodSeconds: 3
 ```
 
-Naturally, you can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
+You can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
 running and you must manually clean up.
 
 ## References
