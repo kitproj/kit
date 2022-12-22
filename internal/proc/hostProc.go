@@ -45,13 +45,13 @@ func (h *HostProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return cmd.Wait()
 }
 
-func (h *HostProc) Stop(ctx context.Context, timeout time.Duration) error {
+func (h *HostProc) Stop(ctx context.Context, grace time.Duration) error {
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
 		if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil && !isNotPermitted(err) {
 			return err
 		}
-		time.Sleep(timeout)
+		time.Sleep(grace)
 		if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil && !isNotPermitted(err) {
 			return err
 		}
