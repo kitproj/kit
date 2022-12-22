@@ -19,7 +19,6 @@ import (
 
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/yaml"
 )
 
@@ -50,7 +49,7 @@ func main() {
 
 	var names []string
 	go func() {
-		defer runtime.HandleCrash()
+		defer handleCrash(stop)
 		for {
 			width, _, err := terminal.GetSize(0)
 			must(err)
@@ -129,7 +128,7 @@ func main() {
 			must(err)
 
 			go func(state *types.State) {
-				defer runtime.HandleCrash()
+				defer handleCrash(stop)
 				wg.Add(1)
 				defer wg.Done()
 				for {
@@ -190,7 +189,7 @@ func main() {
 						}
 					}
 				}
-				go probeLoop(ctx, name, *probe, liveFunc)
+				go probeLoop(ctx, stop, name, *probe, liveFunc)
 			}
 			if probe := c.ReadinessProbe; probe != nil {
 				readyFunc := func(name string, ready bool, err error) {
@@ -203,7 +202,7 @@ func main() {
 						state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 					}
 				}
-				go probeLoop(ctx, name, *probe, readyFunc)
+				go probeLoop(ctx, stop, name, *probe, readyFunc)
 			}
 			time.Sleep(time.Second)
 		}
@@ -215,5 +214,12 @@ func main() {
 func must(err error) {
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func handleCrash(stop func()) {
+	if r := recover(); r != nil {
+		log.Println(r)
+		stop()
 	}
 }

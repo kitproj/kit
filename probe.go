@@ -7,12 +7,10 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
-func probeLoop(ctx context.Context, name string, probe types.Probe, callback func(name string, ok bool, err error)) {
-	defer runtime.HandleCrash()
+func probeLoop(ctx context.Context, stop func(), name string, probe types.Probe, callback func(name string, ok bool, err error)) {
+	defer handleCrash(stop)
 	initialDelay := probe.GetInitialDelay()
 	period := probe.GetPeriod()
 	time.Sleep(initialDelay)
@@ -22,34 +20,36 @@ func probeLoop(ctx context.Context, name string, probe types.Probe, callback fun
 		case <-ctx.Done():
 			return
 		default:
+			var err error
 			if tcp := probe.TCPSocket; tcp != nil {
-				_, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp.Port.IntVal))
-				callback(name, err == nil, err)
+				_, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp.Port.IntVal))
 			} else if httpGet := probe.HTTPGet; httpGet != nil {
-				resp, err := http.Get(httpGet.GetURL())
-				ok := err == nil && resp.StatusCode < 300
-				if ok {
-					successes++
-					failures = 0
-				} else {
-					successes = 0
-					failures++
-				}
-				successThreshold := probe.GetSuccessThreshold()
-				failureThreshold := probe.GetFailureThreshold()
-				if successes == successThreshold {
-					callback(name, ok, nil)
-					successes = 0
-				} else if failures == failureThreshold {
+				err = func() error {
+					resp, err := http.Get(httpGet.GetURL())
 					if err != nil {
-						callback(name, ok, err)
-					} else {
-						callback(name, ok, fmt.Errorf("%s", resp.Status))
+						return err
 					}
-					failures = 0
-				}
+					if resp.StatusCode >= 300 {
+						return fmt.Errorf("%s", resp.Status)
+					}
+					return nil
+				}()
 			} else {
-				callback(name, false, fmt.Errorf("probe not supported"))
+				panic(fmt.Errorf("probe not supported"))
+			}
+
+			if err == nil {
+				failures = 0
+				successes++
+			} else {
+				successes = 0
+				failures++
+			}
+
+			if successes == probe.GetSuccessThreshold() {
+				callback(name, true, nil)
+			} else if failures == probe.GetFailureThreshold() {
+				callback(name, false, err)
 			}
 			time.Sleep(period)
 		}
