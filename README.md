@@ -24,9 +24,9 @@ brew install joy
 
 Describe you application in a [`joy.yaml`](joy.yaml) file using Kubernetes pod syntax, then start:
 
-``bash
-joy
-``
+```bash
+joy -h
+````
 
 Logs are stored in `./logs`.
 
