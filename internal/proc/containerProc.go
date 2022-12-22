@@ -1,4 +1,4 @@
-package main
+package proc
 
 import (
 	"context"
@@ -18,13 +18,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type ContainerProcess struct {
+type ContainerProc struct {
 	corev1.Container
 	cli   *client.Client
 	image string
 }
 
-func (h *ContainerProcess) Init(ctx context.Context) error {
+func (h *ContainerProc) Init(ctx context.Context) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (h *ContainerProcess) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *ContainerProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	cli := h.cli
 	image := h.Image
 	if _, err := os.Stat(image); err == nil {
@@ -70,7 +70,7 @@ func (h *ContainerProcess) Build(ctx context.Context, stdout, stderr io.Writer) 
 	return nil
 }
 
-func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	portSet := nat.PortSet{}
 	portBindings := map[nat.Port][]nat.PortBinding{}
@@ -130,7 +130,7 @@ func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) er
 	return err
 }
 
-func (h *ContainerProcess) Stop(ctx context.Context, timeout time.Duration) error {
+func (h *ContainerProc) Stop(ctx context.Context, timeout time.Duration) error {
 	cli := h.cli
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
@@ -147,4 +147,4 @@ func (h *ContainerProcess) Stop(ctx context.Context, timeout time.Duration) erro
 	return nil
 }
 
-var _ ProcessDef = &ContainerProcess{}
+var _ Proc = &ContainerProc{}

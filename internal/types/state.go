@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"io"
@@ -6,8 +6,8 @@ import (
 )
 
 type State struct {
-	phase Phase
-	log   LogEntry
+	Phase Phase
+	Log   LogEntry
 }
 
 type WriteFunc func(p []byte) (n int, err error)
@@ -18,7 +18,7 @@ func (w WriteFunc) Write(p []byte) (n int, err error) {
 
 func (s *State) Stdout() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.log = LogEntry{"info", last(p)}
+		s.Log = LogEntry{"info", last(p)}
 		return len(p), nil
 	})
 }
@@ -30,9 +30,7 @@ func last(p []byte) string {
 
 func (s *State) Stderr() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.log = LogEntry{"error", last(p)}
+		s.Log = LogEntry{"error", last(p)}
 		return len(p), nil
 	})
 }
-
-var states = map[string]*State{}

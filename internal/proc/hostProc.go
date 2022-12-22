@@ -1,4 +1,4 @@
-package main
+package proc
 
 import (
 	"context"
@@ -12,20 +12,20 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type HostProcess struct {
+type HostProc struct {
 	corev1.Container
 	process *os.Process
 }
 
-func (h *HostProcess) Init(ctx context.Context) error {
+func (h *HostProc) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *HostProcess) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *HostProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	return nil
 }
 
-func (h *HostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *HostProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
@@ -45,7 +45,7 @@ func (h *HostProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return cmd.Wait()
 }
 
-func (h *HostProcess) Stop(ctx context.Context, timeout time.Duration) error {
+func (h *HostProc) Stop(ctx context.Context, timeout time.Duration) error {
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
 		if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil && !isNotPermitted(err) {
@@ -64,4 +64,4 @@ func isNotPermitted(err error) bool {
 	return err.Error() == "operation not permitted"
 }
 
-var _ ProcessDef = &HostProcess{}
+var _ Proc = &HostProc{}

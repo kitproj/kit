@@ -1,4 +1,4 @@
-package main
+package proc
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type ProcessDef interface {
+type Proc interface {
 	Init(ctx context.Context) error
 	Build(ctx context.Context, stdout, stderr io.Writer) error
 	Run(ctx context.Context, stdout, stderr io.Writer) error

@@ -14,6 +14,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexec/joy/internal/proc"
+	"github.com/alexec/joy/internal/types"
+
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +30,8 @@ func init() {
 }
 
 const escape = "\x1b"
+
+var states = map[string]*types.State{}
 
 func main() {
 
@@ -56,14 +61,14 @@ func main() {
 			for _, name := range names {
 				state := states[name]
 				r := "▓"
-				if v, ok := map[Phase]string{
-					livePhase:    color.BlueString("▓"),
-					readyPhase:   color.GreenString("▓"),
-					unreadyPhase: color.YellowString("▓"),
-				}[state.phase]; ok {
+				if v, ok := map[types.Phase]string{
+					types.LivePhase:    color.BlueString("▓"),
+					types.ReadyPhase:   color.GreenString("▓"),
+					types.UnreadyPhase: color.YellowString("▓"),
+				}[state.Phase]; ok {
 					r = v
 				}
-				line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, name, state.phase, state.log.String())
+				line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, name, state.Phase, state.Log.String())
 				if len(line) > width && width > 0 {
 					line = line[0 : width-1]
 				}
@@ -75,22 +80,22 @@ func main() {
 
 	_ = os.Mkdir("logs", 0777)
 
-	terminationGracePeriodSeconds := 30 * time.Second
+	terminationGracePeriod := 30 * time.Second
 	if pod.Spec.TerminationGracePeriodSeconds != nil {
-		terminationGracePeriodSeconds = time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second
+		terminationGracePeriod = time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second
 	}
 
 	for _, containers := range [][]corev1.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 		wg := &sync.WaitGroup{}
 
-		states = map[string]*State{}
+		states = map[string]*types.State{}
 		names = nil
 
 		for _, c := range containers {
 			if _, ok := states[c.Name]; ok {
 				must(fmt.Errorf("duplicate name %s", c.Name))
 			}
-			states[c.Name] = &State{}
+			states[c.Name] = &types.State{}
 			names = append(names, c.Name)
 		}
 
@@ -99,18 +104,18 @@ func main() {
 			state := states[name]
 
 			if strings.Contains(","+exclude+",", name) {
-				state.phase = excludedPhase
+				state.Phase = types.ExcludedPhase
 				continue
 			}
 
 			if include != "" && !strings.Contains(","+include+",", name) {
-				state.phase = excludedPhase
+				state.Phase = types.ExcludedPhase
 				continue
 			}
 
-			state.phase = creatingPhase
+			state.Phase = types.CreatingPhase
 
-			var pd ProcessDef
+			var pd proc.Proc
 
 			logFile, err := os.Create(filepath.Join("logs", name+".log"))
 			if err != nil {
@@ -119,15 +124,15 @@ func main() {
 			stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
 			stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
 			if c.Image == "" {
-				pd = &HostProcess{Container: *c.DeepCopy()}
+				pd = &proc.HostProc{Container: *c.DeepCopy()}
 			} else {
-				pd = &ContainerProcess{Container: *c.DeepCopy()}
+				pd = &proc.ContainerProc{Container: *c.DeepCopy()}
 			}
 
 			err = pd.Init(ctx)
 			must(err)
 
-			go func(state *State) {
+			go func(state *types.State) {
 				defer runtime.HandleCrash()
 				wg.Add(1)
 				defer wg.Done()
@@ -137,23 +142,23 @@ func main() {
 						return
 					default:
 						err := func() error {
-							defer func() { state.phase = exitedPhase }()
-							if err := pd.Stop(ctx, terminationGracePeriodSeconds); err != nil {
+							defer func() { state.Phase = types.ExitedPhase }()
+							if err := pd.Stop(ctx, terminationGracePeriod); err != nil {
 								return fmt.Errorf("failed to stop: %v", err)
 							}
-							state.phase = buildingPhase
+							state.Phase = types.BuildingPhase
 							if err := pd.Build(ctx, stdout, stderr); err != nil {
 								return fmt.Errorf("failed to build: %v", err)
 							}
-							state.phase = runningPhase
+							state.Phase = types.RunningPhase
 							if err := pd.Run(ctx, stdout, stderr); err != nil {
 								return fmt.Errorf("failed to run: %v", err)
 							}
 							return nil
 						}()
 						if err != nil && err != context.Canceled {
-							state.phase = errorPhase
-							state.log = LogEntry{"error", err.Error()}
+							state.Phase = types.ErrorPhase
+							state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 						} else {
 							return
 						}
@@ -165,10 +170,10 @@ func main() {
 			go func() {
 				select {
 				case <-ctx.Done():
-					err := pd.Stop(context.Background(), terminationGracePeriodSeconds)
+					err := pd.Stop(context.Background(), terminationGracePeriod)
 					if err != nil {
-						state.phase = errorPhase
-						state.log = LogEntry{"error", fmt.Sprintf("failed to stop: %v", err)}
+						state.Phase = types.ErrorPhase
+						state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 					}
 				}
 			}()
@@ -176,16 +181,16 @@ func main() {
 			if p := c.LivenessProbe; p != nil {
 				liveFunc := func(name string, live bool, err error) {
 					if live {
-						states[name].phase = livePhase
+						states[name].Phase = types.LivePhase
 					} else {
-						states[name].phase = deadPhase
+						states[name].Phase = types.DeadPhase
 					}
 					if err != nil {
-						state.log = LogEntry{"error", err.Error()}
+						state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 					}
 					if !live {
-						if err := pd.Stop(ctx, terminationGracePeriodSeconds); err != nil {
-							state.log = LogEntry{"error", err.Error()}
+						if err := pd.Stop(ctx, terminationGracePeriod); err != nil {
+							state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 						}
 					}
 				}
@@ -194,12 +199,12 @@ func main() {
 			if probe := c.ReadinessProbe; probe != nil {
 				readyFunc := func(name string, ready bool, err error) {
 					if ready {
-						states[name].phase = readyPhase
+						states[name].Phase = types.ReadyPhase
 					} else {
-						states[name].phase = unreadyPhase
+						states[name].Phase = types.UnreadyPhase
 					}
 					if err != nil {
-						state.log = LogEntry{"error", err.Error()}
+						state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 					}
 				}
 				go probeLoop(ctx, name, *probe.DeepCopy(), readyFunc)
