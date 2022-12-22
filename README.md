@@ -1,10 +1,18 @@
 # Joy
 
-This is a tool to enable local development of containerized applications. It uses conventional Kubernetes Pod YAML, but
-allows
-you to run the process on your host (like `Procfile`), in Docker using just-in-time build (like Docker Compose).
+This is a tool to enable local development of containerized applications.
 
-Only high-level status is shown to your terminal:
+It allows you to specify a set of process (in containers or on the host) that are run concurrently in a single terminal
+window.
+Those processes are managed together as a group. They are all stopped when you're done.
+
+It automatically build containers when needed. It allows you to run init processes before your main processes. It uses
+familiar pod syntax to do this.
+
+Rather than printing logs to the terminal (so you're overwhelmed), logs are saved in files so you can open them in
+your IDE.
+
+You can define probes that test each container and host process is up and running.
 
 ```
 ▓ foo        [dead    ]  2022/12/21 17:48:19 listening on 8080

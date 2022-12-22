@@ -3,12 +3,13 @@ package proc
 import (
 	"context"
 	"fmt"
+	"github.com/alexec/joy/internal/types"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
@@ -19,9 +20,10 @@ import (
 )
 
 type ContainerProc struct {
-	corev1.Container
+	types.Container
 	cli   *client.Client
 	image string
+	TTY   bool
 }
 
 func (h *ContainerProc) Init(ctx context.Context) error {
@@ -42,7 +44,7 @@ func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) err
 			return err
 		}
 		defer r.Close()
-		resp, err := cli.ImageBuild(ctx, r, types.ImageBuildOptions{Dockerfile: filepath.Base(image), Tags: []string{h.Name}})
+		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(image), Tags: []string{h.Name}})
 		if err != nil {
 			return err
 		}
@@ -52,8 +54,8 @@ func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) err
 			return err
 		}
 		h.image = h.Name
-	} else if h.ImagePullPolicy != corev1.PullNever {
-		r, err := cli.ImagePull(ctx, h.Image, types.ImagePullOptions{})
+	} else if h.ImagePullPolicy != string(corev1.PullNever) {
+		r, err := cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return err
 		}
@@ -80,10 +82,7 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 			return err
 		}
 		portSet[port] = struct{}{}
-		hostPort := p.HostPort
-		if hostPort == 0 {
-			hostPort = p.ContainerPort
-		}
+		hostPort := p.GetHostPort()
 		portBindings[port] = []nat.PortBinding{{
 			HostPort: fmt.Sprint(hostPort),
 		}}
@@ -112,12 +111,12 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 		return err
 	}
 
-	err = cli.ContainerStart(ctx, created.ID, types.ContainerStartOptions{})
+	err = cli.ContainerStart(ctx, created.ID, dockertypes.ContainerStartOptions{})
 	if err != nil {
 		return err
 	}
 
-	logs, err := cli.ContainerLogs(ctx, h.Name, types.ContainerLogsOptions{
+	logs, err := cli.ContainerLogs(ctx, h.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -132,13 +131,13 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 
 func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {
 	cli := h.cli
-	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
+	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
 	if err != nil {
 		return err
 	}
 	for _, existing := range list {
 		if existing.Labels["name"] == h.Name {
-			err = cli.ContainerRemove(ctx, existing.ID, types.ContainerRemoveOptions{Force: true})
+			err = cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true})
 			if err != nil {
 				return err
 			}

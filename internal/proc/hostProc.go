@@ -3,17 +3,16 @@ package proc
 import (
 	"context"
 	"fmt"
+	"github.com/alexec/joy/internal/types"
 	"io"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
 type HostProc struct {
-	corev1.Container
+	types.Container
 	process *os.Process
 }
 

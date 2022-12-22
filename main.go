@@ -19,7 +19,6 @@ import (
 
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/yaml"
 )
@@ -46,7 +45,7 @@ func main() {
 
 	in, err := os.ReadFile("joy.yaml")
 	must(err)
-	pod := &corev1.Pod{}
+	pod := &types.Joy{}
 	must(yaml.UnmarshalStrict(in, pod))
 
 	var names []string
@@ -80,12 +79,9 @@ func main() {
 
 	_ = os.Mkdir("logs", 0777)
 
-	terminationGracePeriod := 30 * time.Second
-	if pod.Spec.TerminationGracePeriodSeconds != nil {
-		terminationGracePeriod = time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second
-	}
+	terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
 
-	for _, containers := range [][]corev1.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
+	for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 		wg := &sync.WaitGroup{}
 
 		states = map[string]*types.State{}
@@ -124,9 +120,9 @@ func main() {
 			stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
 			stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
 			if c.Image == "" {
-				pd = &proc.HostProc{Container: *c.DeepCopy()}
+				pd = &proc.HostProc{Container: c}
 			} else {
-				pd = &proc.ContainerProc{Container: *c.DeepCopy()}
+				pd = &proc.ContainerProc{Container: c}
 			}
 
 			err = pd.Init(ctx)
@@ -178,7 +174,7 @@ func main() {
 				}
 			}()
 
-			if p := c.LivenessProbe; p != nil {
+			if probe := c.LivenessProbe; probe != nil {
 				liveFunc := func(name string, live bool, err error) {
 					if live {
 						states[name].Phase = types.LivePhase
@@ -194,7 +190,7 @@ func main() {
 						}
 					}
 				}
-				go probeLoop(ctx, name, *p.DeepCopy(), liveFunc)
+				go probeLoop(ctx, name, *probe, liveFunc)
 			}
 			if probe := c.ReadinessProbe; probe != nil {
 				readyFunc := func(name string, ready bool, err error) {
@@ -207,7 +203,7 @@ func main() {
 						state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 					}
 				}
-				go probeLoop(ctx, name, *probe.DeepCopy(), readyFunc)
+				go probeLoop(ctx, name, *probe, readyFunc)
 			}
 			time.Sleep(time.Second)
 		}
