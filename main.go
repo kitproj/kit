@@ -4,20 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/fatih/color"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/fatih/color"
+	"golang.org/x/crypto/ssh/terminal"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 func init() {

@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -10,11 +15,7 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"io"
 	corev1 "k8s.io/api/core/v1"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 type ContainerProcess struct {

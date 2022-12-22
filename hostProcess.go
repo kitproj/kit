@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	corev1 "k8s.io/api/core/v1"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 type HostProcess struct {

@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
 func probeLoop(ctx context.Context, name string, probe corev1.Probe, callback func(name string, ok bool, err error)) {
