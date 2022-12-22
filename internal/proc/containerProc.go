@@ -130,7 +130,7 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 	return err
 }
 
-func (h *ContainerProc) Stop(ctx context.Context, timeout time.Duration) error {
+func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {
 	cli := h.cli
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
