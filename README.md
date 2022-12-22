@@ -2,6 +2,17 @@
 
 This is a tool to enable local development of containerized applications.
 
+It's arguably the mutant offspring of other tools:
+
+| tool                | container processes | host processes | ctrl+c to stop | terminal mux | log capture | probes |
+|---------------------|---------------------|----------------|----------------|--------------|-------------|--------|
+| `kit`               | ✅                   | ✅              | ✅              | ✅            | ✅           | ✅      |
+| `docker compose up` | ✅                   | ❌              | ❌?             | ✅            | ✅           | ❌      |
+| `podman play kube`  | ✅                   | ❌              | ❌              | ❌            | ✅           | ✅?     |
+| `foreman run`       | ❌                   | ✅              | ✅              | ✅            | ❌           | ❌      |
+
+⚠️ Volumes are not yet supported.
+
 It allows you to specify a set of process (in containers or on the host) that are run concurrently in a single terminal
 window.
 Those processes are managed together as a group. They are all stopped when you're done.
