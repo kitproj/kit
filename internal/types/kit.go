@@ -81,7 +81,7 @@ func (p Probe) GetPeriod() time.Duration {
 
 func (p Probe) GetFailureThreshold() int {
 	if p.FailureThreshold == 0 {
-		return 1
+		return 3
 	}
 	return int(p.FailureThreshold)
 }
