@@ -40,4 +40,4 @@ brews:
       email: alex_collins@intuit.com
     tap:
       owner: alexec
-      name: homebrew-tap
+      name: joy
