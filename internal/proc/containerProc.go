@@ -37,14 +37,14 @@ func (h *ContainerProc) Init(ctx context.Context) error {
 
 func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	cli := h.cli
-	image := h.Image
-	if _, err := os.Stat(image); err == nil {
-		r, err := archive.TarWithOptions(filepath.Dir(image), &archive.TarOptions{})
+	dockerfile := filepath.Join(h.Image, "Dockerfile")
+	if _, err := os.Stat(dockerfile); err == nil {
+		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
 			return err
 		}
 		defer r.Close()
-		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(image), Tags: []string{h.Name}})
+		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Name}})
 		if err != nil {
 			return err
 		}

@@ -54,9 +54,9 @@ Logs are stored in `./logs`.
 The `image` field can be either:
 
 1. An conventional image tag. E.g. `ubunutu`.
-2. A path to a `Dockerfile`, e.g. `foo/Dockerfile`.
+2. A path to a a directory containing contain a `Dockerfile`, e.g. `.foo`.
 
-If it is a path to a `Dockerfile`, that file is built, and tagged with the container name.
+If it is a path to a directory containing `Dockerfile`, that file is built, and tagged with the container name.
 
 ```yaml
     # conventional image? run in Docker
@@ -64,7 +64,7 @@ If it is a path to a `Dockerfile`, that file is built, and tagged with the conta
       image: httpd
     # path image? build and run in Docker
     - name: qux
-      image: ./demo/qux/Dockerfile
+      image: ./demo/qux
 ```
 
 Any container with the same name as the container name in the YAML is stopped and re-created whenever the process

@@ -34,7 +34,7 @@ spec:
           port: 7070
     # path image? build and run in Docker
     - name: qux
-      image: ./demo/qux/Dockerfile
+      image: ./demo/qux
       ports:
         - containerPort: 80
           hostPort: 6060
