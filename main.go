@@ -38,7 +38,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
-	in, err := os.ReadFile("dev.yaml")
+	in, err := os.ReadFile("joy.yaml")
 	must(err)
 	pod := &corev1.Pod{}
 	must(yaml.UnmarshalStrict(in, pod))

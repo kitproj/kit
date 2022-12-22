@@ -1,4 +1,4 @@
-module github.com/alexec/dev
+module github.com/alexec/joy
 
 go 1.19
 

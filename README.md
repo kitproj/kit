@@ -15,7 +15,7 @@ Only high-level status is shown to your terminal:
 
 ## Usage
 
-Describe you application in a `dev.yaml` file using Kubernetes pod syntax.
+Describe you application in a `joy.yaml` file using Kubernetes pod syntax.
 
 Logs are stored in `./logs`.
 
