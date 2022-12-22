@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type ContainerProcess struct {
@@ -69,10 +70,6 @@ func (h *ContainerProcess) Build(ctx context.Context, stdout, stderr io.Writer) 
 }
 
 func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) error {
-
-	if err := h.Stop(ctx); err != nil {
-		return err
-	}
 
 	portSet := nat.PortSet{}
 	portBindings := map[nat.Port][]nat.PortBinding{}
@@ -132,7 +129,7 @@ func (h *ContainerProcess) Run(ctx context.Context, stdout, stderr io.Writer) er
 	return err
 }
 
-func (h *ContainerProcess) Stop(ctx context.Context) error {
+func (h *ContainerProcess) Stop(ctx context.Context, timeout time.Duration) error {
 	cli := h.cli
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {

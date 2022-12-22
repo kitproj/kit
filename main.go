@@ -74,6 +74,11 @@ func main() {
 
 	_ = os.Mkdir("logs", 0777)
 
+	terminationGracePeriodSeconds := 30 * time.Second
+	if pod.Spec.TerminationGracePeriodSeconds != nil {
+		terminationGracePeriodSeconds = time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second
+	}
+
 	for _, containers := range [][]corev1.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 		wg := &sync.WaitGroup{}
 
@@ -132,7 +137,7 @@ func main() {
 					default:
 						err := func() error {
 							defer func() { state.phase = exitedPhase }()
-							if err := pd.Stop(ctx); err != nil {
+							if err := pd.Stop(ctx, terminationGracePeriodSeconds); err != nil {
 								return fmt.Errorf("failed to stop: %v", err)
 							}
 							state.phase = buildingPhase
@@ -159,7 +164,7 @@ func main() {
 			go func() {
 				select {
 				case <-ctx.Done():
-					err := pd.Stop(context.Background())
+					err := pd.Stop(context.Background(), terminationGracePeriodSeconds)
 					if err != nil {
 						state.phase = errorPhase
 						state.log = LogEntry{"error", fmt.Sprintf("failed to stop: %v", err)}
@@ -178,7 +183,7 @@ func main() {
 						state.log = LogEntry{"error", err.Error()}
 					}
 					if !live {
-						if err := pd.Stop(ctx); err != nil {
+						if err := pd.Stop(ctx, terminationGracePeriodSeconds); err != nil {
 							state.log = LogEntry{"error", err.Error()}
 						}
 					}
