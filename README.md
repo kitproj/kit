@@ -16,16 +16,6 @@ It's arguably the mutant offspring of other tools:
 ⚠️ Volumes are not yet supported.
 
 
-It automatically build containers when needed. It allows you to run init processes before your main processes. It uses
-familiar pod syntax to do this.
-
-```
-▓ foo        [dead    ]  2022/12/21 17:48:19 listening on 8080
-▓ bar        [unready ]  2022/12/21 17:48:20 port=9090
-▓ baz        [excluded]  
-▓ qux        [running ]  y[Thu Dec 22 01:48:21.957864 2022] [core:notice] [pid 1:tid 281
-```
-
 ## Install
 
 ```bash
@@ -38,8 +28,17 @@ brew install kit
 Describe you application in a [`kit.yaml`](kit.yaml) file using Kubernetes pod syntax, then start:
 
 ```bash
-kit -h
-````
+kit
+```
+
+You'll see something like this:
+
+```
+▓ foo        [dead    ]  2022/12/21 17:48:19 listening on 8080
+▓ bar        [unready ]  2022/12/21 17:48:20 port=9090
+▓ baz        [excluded]  
+▓ qux        [running ]  y[Thu Dec 22 01:48:21.957864 2022] [core:notice] [pid 1:tid 281
+```
 
 Logs are stored in `./logs`.
 
