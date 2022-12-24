@@ -3,12 +3,13 @@ package proc
 import (
 	"context"
 	"fmt"
-	"github.com/alexec/kit/internal/types"
 	"io"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
+
+	"github.com/alexec/kit/internal/types"
 )
 
 type HostProc struct {

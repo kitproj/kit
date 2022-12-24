@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/alexec/kit/internal/types"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/alexec/kit/internal/types"
 )
 
 func probeLoop(ctx context.Context, stop func(), name string, probe types.Probe, callback func(name string, ok bool, err error)) {

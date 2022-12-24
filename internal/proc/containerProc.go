@@ -3,11 +3,12 @@ package proc
 import (
 	"context"
 	"fmt"
-	"github.com/alexec/kit/internal/types"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/alexec/kit/internal/types"
 
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"

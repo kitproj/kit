@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type Metadata struct {
