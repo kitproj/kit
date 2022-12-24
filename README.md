@@ -2,6 +2,8 @@
 
 This is a tool to enable local development of containerized applications.
 
+It allows you to specify a set of process that run in **containers** or on the **host**. The process are run concurrently and their status is **muxed into a single terminal** window to you're not overwhelmed by output. We **probe** your procoss to see if it's gone wrong, automatically restarting it. When you're done, **ctrl+c** to and they're all cleanly stopped. **Logs are captured** so you can look at the anytime.
+
 It's arguably the mutant offspring of other tools:
 
 | tool                | container processes | host processes | ctrl+c to stop | terminal mux | log capture | probes |
@@ -13,17 +15,9 @@ It's arguably the mutant offspring of other tools:
 
 ⚠️ Volumes are not yet supported.
 
-It allows you to specify a set of process (in containers or on the host) that are run concurrently in a single terminal
-window.
-Those processes are managed together as a group. They are all stopped when you're done.
 
 It automatically build containers when needed. It allows you to run init processes before your main processes. It uses
 familiar pod syntax to do this.
-
-Rather than printing logs to the terminal (so you're overwhelmed), logs are saved in files so you can open them in
-your IDE.
-
-You can define probes that test each container and host process is up and running.
 
 ```
 ▓ foo        [dead    ]  2022/12/21 17:48:19 listening on 8080
