@@ -2,7 +2,7 @@
 
 This is a tool to enable local development of containerized applications.
 
-It allows you to specify a set of process that run in **containers** or on the **host**. The process are run concurrently and their status is **muxed into a single terminal** window to you're not overwhelmed by output. We **probe** your procoss to see if it's gone wrong, automatically restarting it. When you're done, **ctrl+c** to and they're all cleanly stopped. **Logs are captured** so you can look at the anytime.
+It allows you to specify a set of process that run in **containers** or on the **host**. The process are run concurrently and their status is **muxed into a single terminal** window (so you're not overwhelmed by output). It **probe** your processes to see if they've gone wrong, automatically restarting them. When you're done, **ctrl+c** to and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
 
 It's arguably the mutant offspring of other tools:
 
@@ -13,8 +13,7 @@ It's arguably the mutant offspring of other tools:
 | `podman play kube`  | ✔                   | ✖              | ✖              | ✖            | ✔           | ✔?     |
 | `foreman run`       | ✖                   | ✔              | ✔              | ✔            | ✖           | ✖      |
 
-⚠️ Volumes are not yet supported.
-
+Volumes are not yet supported.
 
 ## Install
 
@@ -28,7 +27,7 @@ brew install kit
 Describe you application in a [`kit.yaml`](kit.yaml) file using Kubernetes pod syntax, then start:
 
 ```bash
-kit
+kit up
 ```
 
 You'll see something like this:
@@ -65,7 +64,7 @@ starts.
 
 ### Host Process
 
-The `image` field is empty. The value of `command` is used to start the process.
+If `image` field is omitted, the value of `command` is used to start the process on the host:
 
 ```yaml
     # no image? this is a host process
