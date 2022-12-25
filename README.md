@@ -15,6 +15,8 @@ It's arguably the mutant offspring of other tools:
 
 Volumes are not yet supported.
 
+Tilt, Skaffold, and Garden are in the same problem space.
+
 ## Install
 
 ```bash
