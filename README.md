@@ -8,10 +8,10 @@ It's arguably the mutant offspring of other tools:
 
 | tool                | container processes | host processes | ctrl+c to stop | terminal mux | log capture | probes |
 |---------------------|---------------------|----------------|----------------|--------------|-------------|--------|
-| `kit`               | ✅                   | ✅              | ✅              | ✅            | ✅           | ✅      |
-| `docker compose up` | ✅                   | ❌              | ❌?             | ✅            | ✅           | ❌      |
-| `podman play kube`  | ✅                   | ❌              | ❌              | ❌            | ✅           | ✅?     |
-| `foreman run`       | ❌                   | ✅              | ✅              | ✅            | ❌           | ❌      |
+| `kit`               | ✔                   | ✔              | ✔              | ✔            | ✔           | ✔      |
+| `docker compose up` | ✔                   | ✖              | ✖?             | ✔            | ✔           | ✖      |
+| `podman play kube`  | ✔                   | ✖              | ✖              | ✖            | ✔           | ✔?     |
+| `foreman run`       | ✖                   | ✔              | ✔              | ✔            | ✖           | ✖      |
 
 ⚠️ Volumes are not yet supported.
 
