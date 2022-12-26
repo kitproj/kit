@@ -10,7 +10,7 @@ import (
 	"github.com/alexec/kit/internal/types"
 )
 
-func probeLoop(ctx context.Context, stop func(), name string, probe types.Probe, callback func(name string, ok bool, err error)) {
+func probeLoop(ctx context.Context, stop func(), probe types.Probe, callback func(ok bool, err error)) {
 	defer handleCrash(stop)
 	initialDelay := probe.GetInitialDelay()
 	period := probe.GetPeriod()
@@ -48,9 +48,9 @@ func probeLoop(ctx context.Context, stop func(), name string, probe types.Probe,
 			}
 
 			if successes == probe.GetSuccessThreshold() {
-				callback(name, true, nil)
+				callback(true, nil)
 			} else if failures == probe.GetFailureThreshold() {
-				callback(name, false, err)
+				callback(false, err)
 			}
 			time.Sleep(period)
 		}

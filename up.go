@@ -104,7 +104,7 @@ func up() *cobra.Command {
 
 				for _, c := range containers {
 					name := c.Name
-					state := states[name]
+					state := states[c.Name]
 
 					if slices.Contains(exclude, name) {
 						state.Phase = types.ExcludedPhase
@@ -118,8 +118,6 @@ func up() *cobra.Command {
 
 					state.Phase = types.CreatingPhase
 
-					var pd proc.Proc
-
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
 						if err != nil {
@@ -128,6 +126,7 @@ func up() *cobra.Command {
 					}
 					stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
 					stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
+					var pd proc.Proc
 					if c.Image == "" {
 						pd = &proc.HostProc{Container: c}
 					} else {
@@ -139,7 +138,7 @@ func up() *cobra.Command {
 						return err
 					}
 
-					go func(state *types.State) {
+					go func() {
 						defer handleCrash(stop)
 						wg.Add(1)
 						defer wg.Done()
@@ -172,7 +171,7 @@ func up() *cobra.Command {
 								time.Sleep(3 * time.Second)
 							}
 						}
-					}(state)
+					}()
 
 					go func() {
 						<-ctx.Done()
@@ -184,11 +183,11 @@ func up() *cobra.Command {
 					}()
 
 					if probe := c.LivenessProbe; probe != nil {
-						liveFunc := func(name string, live bool, err error) {
+						liveFunc := func(live bool, err error) {
 							if live {
-								states[name].Phase = types.LivePhase
+								state.Phase = types.LivePhase
 							} else {
-								states[name].Phase = types.DeadPhase
+								state.Phase = types.DeadPhase
 							}
 							if err != nil {
 								state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
@@ -199,20 +198,20 @@ func up() *cobra.Command {
 								}
 							}
 						}
-						go probeLoop(ctx, stop, name, *probe, liveFunc)
+						go probeLoop(ctx, stop, *probe, liveFunc)
 					}
 					if probe := c.ReadinessProbe; probe != nil {
-						readyFunc := func(name string, ready bool, err error) {
+						readyFunc := func(ready bool, err error) {
 							if ready {
-								states[name].Phase = types.ReadyPhase
+								state.Phase = types.ReadyPhase
 							} else {
-								states[name].Phase = types.UnreadyPhase
+								state.Phase = types.UnreadyPhase
 							}
 							if err != nil {
 								state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 							}
 						}
-						go probeLoop(ctx, stop, name, *probe, readyFunc)
+						go probeLoop(ctx, stop, *probe, readyFunc)
 					}
 					time.Sleep(time.Second)
 				}
