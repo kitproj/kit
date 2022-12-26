@@ -175,13 +175,11 @@ func up() *cobra.Command {
 					}(state)
 
 					go func() {
-						select {
-						case <-ctx.Done():
-							err := pd.Stop(context.Background(), terminationGracePeriod)
-							if err != nil {
-								state.Phase = types.ErrorPhase
-								state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
-							}
+						<-ctx.Done()
+						err := pd.Stop(context.Background(), terminationGracePeriod)
+						if err != nil {
+							state.Phase = types.ErrorPhase
+							state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
 					}()
 
