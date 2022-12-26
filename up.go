@@ -32,6 +32,8 @@ func up() *cobra.Command {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 			defer stop()
 
+			_ = os.Mkdir("logs", 0777)
+
 			in, err := os.ReadFile(kitFile)
 			if err != nil {
 				return err
@@ -81,8 +83,6 @@ func up() *cobra.Command {
 					time.Sleep(time.Second / 2)
 				}
 			}()
-
-			_ = os.Mkdir("logs", 0777)
 
 			terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
 
