@@ -32,8 +32,6 @@ func up() *cobra.Command {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 			defer stop()
 
-			var states = map[string]*types.State{}
-
 			in, err := os.ReadFile(kitFile)
 			if err != nil {
 				return err
@@ -53,7 +51,7 @@ func up() *cobra.Command {
 				return err
 			}
 
-			var containers []types.Container
+			pod.Status = &types.Status{}
 
 			go func() {
 				defer handleCrash(stop)
@@ -65,8 +63,7 @@ func up() *cobra.Command {
 
 					log.Printf("%s[2J", escape)
 					log.Printf("%s[H", escape)
-					for _, c := range containers {
-						state := states[c.Name]
+					for _, state := range pod.GetContainerStatuses() {
 						r := "▓"
 						if v, ok := map[types.Phase]string{
 							types.LivePhase:    color.BlueString("▓"),
@@ -75,7 +72,7 @@ func up() *cobra.Command {
 						}[state.Phase]; ok {
 							r = v
 						}
-						line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, c.Name, state.Phase, state.Log.String())
+						line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, state.Name, state.Phase, state.Log.String())
 						if len(line) > width && width > 0 {
 							line = line[0 : width-1]
 						}
@@ -89,21 +86,25 @@ func up() *cobra.Command {
 
 			terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
 
-			for _, containers = range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
+			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 				wg := &sync.WaitGroup{}
 
-				states = map[string]*types.State{}
-
-				for _, c := range containers {
-					if _, ok := states[c.Name]; ok {
-						return fmt.Errorf("duplicate name %s", c.Name)
+				if pod.Status.InitContainerStatuses == nil {
+					for _, c := range containers {
+						pod.Status.InitContainerStatuses = append(pod.Status.InitContainerStatuses, &types.ContainerStatus{Name: c.Name})
 					}
-					states[c.Name] = &types.State{}
+				} else {
+					for _, c := range containers {
+						pod.Status.ContainerStatuses = append(pod.Status.ContainerStatuses, &types.ContainerStatus{Name: c.Name})
+					}
 				}
 
 				for _, c := range containers {
+
 					name := c.Name
-					state := states[c.Name]
+					state := pod.GetContainerStatuses().Get(c.Name)
+
+					state.Phase = types.DeadPhase
 
 					if slices.Contains(exclude, name) {
 						state.Phase = types.ExcludedPhase
@@ -123,8 +124,8 @@ func up() *cobra.Command {
 							return err
 						}
 					}
-					stdout := io.MultiWriter(logFile, states[c.Name].Stdout())
-					stderr := io.MultiWriter(logFile, states[c.Name].Stderr())
+					stdout := io.MultiWriter(logFile, state.Stdout())
+					stderr := io.MultiWriter(logFile, state.Stderr())
 					var pd proc.Proc
 					if c.Image == "" {
 						pd = &proc.HostProc{Container: c}
@@ -137,9 +138,9 @@ func up() *cobra.Command {
 						return err
 					}
 
+					wg.Add(1)
 					go func() {
 						defer handleCrash(stop)
-						wg.Add(1)
 						defer wg.Done()
 						for {
 							select {
@@ -167,7 +168,6 @@ func up() *cobra.Command {
 								} else {
 									return
 								}
-								time.Sleep(3 * time.Second)
 							}
 						}
 					}()
@@ -212,7 +212,6 @@ func up() *cobra.Command {
 						}
 						go probeLoop(ctx, stop, *probe, readyFunc)
 					}
-					time.Sleep(time.Second)
 				}
 
 				wg.Wait()
