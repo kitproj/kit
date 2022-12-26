@@ -53,7 +53,8 @@ func up() *cobra.Command {
 				return err
 			}
 
-			var names []string
+			var containers []types.Container
+
 			go func() {
 				defer handleCrash(stop)
 				for {
@@ -64,8 +65,8 @@ func up() *cobra.Command {
 
 					log.Printf("%s[2J", escape)
 					log.Printf("%s[H", escape)
-					for _, name := range names {
-						state := states[name]
+					for _, c := range containers {
+						state := states[c.Name]
 						r := "▓"
 						if v, ok := map[types.Phase]string{
 							types.LivePhase:    color.BlueString("▓"),
@@ -74,7 +75,7 @@ func up() *cobra.Command {
 						}[state.Phase]; ok {
 							r = v
 						}
-						line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, name, state.Phase, state.Log.String())
+						line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, c.Name, state.Phase, state.Log.String())
 						if len(line) > width && width > 0 {
 							line = line[0 : width-1]
 						}
@@ -88,18 +89,16 @@ func up() *cobra.Command {
 
 			terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
 
-			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
+			for _, containers = range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 				wg := &sync.WaitGroup{}
 
 				states = map[string]*types.State{}
-				names = nil
 
 				for _, c := range containers {
 					if _, ok := states[c.Name]; ok {
 						return fmt.Errorf("duplicate name %s", c.Name)
 					}
 					states[c.Name] = &types.State{}
-					names = append(names, c.Name)
 				}
 
 				for _, c := range containers {
