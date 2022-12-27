@@ -3,22 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"sync"
-	"syscall"
-	"time"
-
 	"github.com/alexec/kit/internal/proc"
 	"github.com/alexec/kit/internal/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	"io"
 	"k8s.io/utils/strings/slices"
+	"log"
+	"os"
+	"os/signal"
+	"path/filepath"
 	"sigs.k8s.io/yaml"
+	"sync"
+	"syscall"
+	"time"
 )
 
 func up() *cobra.Command {
@@ -34,21 +33,7 @@ func up() *cobra.Command {
 
 			_ = os.Mkdir("logs", 0777)
 
-			in, err := os.ReadFile(kitFile)
-			if err != nil {
-				return err
-			}
 			pod := &types.Kit{}
-			if err = yaml.UnmarshalStrict(in, pod); err != nil {
-				return err
-			}
-			data, err := yaml.Marshal(pod)
-			if err != nil {
-				return err
-			}
-			if err = os.WriteFile(kitFile, data, 0o0644); err != nil {
-				return err
-			}
 
 			pod.Status = &types.Status{}
 
@@ -80,6 +65,21 @@ func up() *cobra.Command {
 					time.Sleep(time.Second / 2)
 				}
 			}()
+
+			in, err := os.ReadFile(kitFile)
+			if err != nil {
+				return err
+			}
+			if err = yaml.UnmarshalStrict(in, pod); err != nil {
+				return err
+			}
+			data, err := yaml.Marshal(pod)
+			if err != nil {
+				return err
+			}
+			if err = os.WriteFile(kitFile, data, 0o0644); err != nil {
+				return err
+			}
 
 			terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
 
