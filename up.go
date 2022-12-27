@@ -39,17 +39,14 @@ func up() *cobra.Command {
 				return err
 			}
 			pod := &types.Kit{}
-			err = yaml.UnmarshalStrict(in, pod)
-			if err != nil {
+			if err = yaml.UnmarshalStrict(in, pod); err != nil {
 				return err
 			}
-
 			data, err := yaml.Marshal(pod)
 			if err != nil {
 				return err
 			}
-			err = os.WriteFile(kitFile, data, 0o0644)
-			if err != nil {
+			if err = os.WriteFile(kitFile, data, 0o0644); err != nil {
 				return err
 			}
 
@@ -120,9 +117,7 @@ func up() *cobra.Command {
 
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
-						if err != nil {
-							return err
-						}
+						return err
 					}
 					stdout := io.MultiWriter(logFile, state.Stdout())
 					stderr := io.MultiWriter(logFile, state.Stderr())
@@ -133,8 +128,7 @@ func up() *cobra.Command {
 						pd = &proc.ContainerProc{Container: c}
 					}
 
-					err = pd.Init(ctx)
-					if err != nil {
+					if err = pd.Init(ctx); err != nil {
 						return err
 					}
 
@@ -174,8 +168,8 @@ func up() *cobra.Command {
 
 					go func() {
 						<-ctx.Done()
-						err := pd.Stop(context.Background(), terminationGracePeriod)
-						if err != nil {
+
+						if err := pd.Stop(context.Background(), terminationGracePeriod); err != nil {
 							state.Phase = types.ErrorPhase
 							state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
