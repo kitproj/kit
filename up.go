@@ -3,27 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/alexec/kit/internal/proc"
 	"github.com/alexec/kit/internal/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
-	"io"
-	"k8s.io/utils/strings/slices"
-	"log"
-	"os"
-	"os/signal"
-	"path/filepath"
 	"sigs.k8s.io/yaml"
-	"sync"
-	"syscall"
-	"time"
 )
 
 func up() *cobra.Command {
-	var include []string
-	var exclude []string
-
 	cmd := &cobra.Command{
 		Use: "up",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -34,8 +31,7 @@ func up() *cobra.Command {
 			_ = os.Mkdir("logs", 0777)
 
 			pod := &types.Kit{}
-
-			pod.Status = &types.Status{}
+			status := types.Status{}
 
 			go func() {
 				defer handleCrash(stop)
@@ -47,7 +43,11 @@ func up() *cobra.Command {
 
 					log.Printf("%s[2J", escape)
 					log.Printf("%s[H", escape)
-					for _, state := range pod.GetContainerStatuses() {
+					for _, c := range append(pod.Spec.InitContainers, pod.Spec.Containers...) {
+						state, ok := status[c.Name]
+						if !ok {
+							continue
+						}
 						r := "▓"
 						if v, ok := map[types.Phase]string{
 							types.LivePhase:    color.BlueString("▓"),
@@ -84,30 +84,16 @@ func up() *cobra.Command {
 			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 				wg := &sync.WaitGroup{}
 
-				if pod.Status.InitContainerStatuses == nil {
-					for _, c := range containers {
-						pod.Status.InitContainerStatuses = append(pod.Status.InitContainerStatuses, &types.ContainerStatus{Name: c.Name})
-					}
-				} else {
-					for _, c := range containers {
-						pod.Status.ContainerStatuses = append(pod.Status.ContainerStatuses, &types.ContainerStatus{Name: c.Name})
-					}
+				status = types.Status{}
+
+				for _, c := range containers {
+					status[c.Name] = &types.ContainerStatus{Name: c.Name}
 				}
 
 				for _, c := range containers {
 
 					name := c.Name
-					state := pod.GetContainerStatuses().Get(c.Name)
-
-					if slices.Contains(exclude, name) {
-						state.Phase = types.ExcludedPhase
-						continue
-					}
-
-					if include != nil && !slices.Contains(include, name) {
-						state.Phase = types.ExcludedPhase
-						continue
-					}
+					state := status[name]
 
 					state.Phase = types.CreatingPhase
 
@@ -209,8 +195,6 @@ func up() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringArrayVarP(&exclude, "exclude", "e", nil, "exclude")
-	cmd.Flags().StringArrayVarP(&include, "include", "i", nil, "include")
 	return cmd
 }
 func handleCrash(stop func()) {

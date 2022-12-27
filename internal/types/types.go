@@ -76,32 +76,6 @@ type Kit struct {
 	ApiVersion string    `json:"apiVersion,omitempty"`
 	Kind       string    `json:"kind,omitempty"`
 	Metadata   *Metadata `json:"metadata,omitempty"`
-	Status     *Status   `json:"status,omitempty"`
-}
-
-func (k Kit) GetContainers() []Container {
-	if len(k.Status.ContainerStatuses) > 0 {
-		return k.Spec.Containers
-	}
-	return k.Spec.InitContainers
-}
-
-type ContainerStatuses []*ContainerStatus
-
-func (s ContainerStatuses) Get(name string) *ContainerStatus {
-	for _, status := range s {
-		if status.Name == name {
-			return status
-		}
-	}
-	panic(name)
-}
-
-func (k Kit) GetContainerStatuses() ContainerStatuses {
-	if len(k.Status.ContainerStatuses) > 0 {
-		return k.Status.ContainerStatuses
-	}
-	return k.Status.InitContainerStatuses
 }
 
 type LogEntry struct {
@@ -124,7 +98,6 @@ type Phase string
 
 const (
 	CreatingPhase Phase = "creating"
-	ExcludedPhase Phase = "excluded"
 	BuildingPhase Phase = "building"
 	RunningPhase  Phase = "running"
 	LivePhase     Phase = "live"
@@ -210,7 +183,4 @@ func (s Spec) GetTerminationGracePeriod() time.Duration {
 	return 30 * time.Second
 }
 
-type Status struct {
-	InitContainerStatuses []*ContainerStatus `json:"initContainerStatuses,omitempty"`
-	ContainerStatuses     []*ContainerStatus `json:"containerStatuses,omitempty"`
-}
+type Status map[string]*ContainerStatus

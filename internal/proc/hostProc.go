@@ -26,7 +26,7 @@ func (h *HostProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
 }
 
 func (h *HostProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
-	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
+	cmd := exec.CommandContext(ctx, h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdout
