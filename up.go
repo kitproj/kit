@@ -81,8 +81,6 @@ func up() *cobra.Command {
 				return err
 			}
 
-			terminationGracePeriod := pod.Spec.GetTerminationGracePeriod()
-
 			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 				wg := &sync.WaitGroup{}
 
@@ -100,8 +98,6 @@ func up() *cobra.Command {
 
 					name := c.Name
 					state := pod.GetContainerStatuses().Get(c.Name)
-
-					state.Phase = types.DeadPhase
 
 					if slices.Contains(exclude, name) {
 						state.Phase = types.ExcludedPhase
@@ -143,7 +139,7 @@ func up() *cobra.Command {
 							default:
 								err := func() error {
 									defer func() { state.Phase = types.ExitedPhase }()
-									if err := pd.Stop(ctx, terminationGracePeriod); err != nil {
+									if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
 										return fmt.Errorf("failed to stop: %v", err)
 									}
 									state.Phase = types.BuildingPhase
@@ -169,7 +165,7 @@ func up() *cobra.Command {
 					go func() {
 						<-ctx.Done()
 
-						if err := pd.Stop(context.Background(), terminationGracePeriod); err != nil {
+						if err := pd.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
 							state.Phase = types.ErrorPhase
 							state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
@@ -186,7 +182,7 @@ func up() *cobra.Command {
 								state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 							}
 							if !live {
-								if err := pd.Stop(ctx, terminationGracePeriod); err != nil {
+								if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
 									state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
 								}
 							}

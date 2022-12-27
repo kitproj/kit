@@ -44,3 +44,4 @@ spec:
     - sleep
     - "1"
     name: init
+status: {}
