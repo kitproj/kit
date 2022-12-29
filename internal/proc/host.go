@@ -14,9 +14,8 @@ import (
 )
 
 type host struct {
+	types.Spec
 	types.Container
-	grace   time.Duration
-	process *os.Process
 }
 
 func (h *host) Init(ctx context.Context) error {
@@ -44,9 +43,8 @@ func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 		go func() {
 			<-ctx.Done()
-			h.stop()
+			h.stop(cmd.Process.Pid)
 		}()
-		h.process = cmd.Process
 		return cmd.Wait()
 	}
 	return nil
@@ -70,28 +68,24 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
-	h.process = cmd.Process
 	go func() {
 		<-ctx.Done()
-		h.stop()
+		h.stop(cmd.Process.Pid)
 	}()
 	return cmd.Wait()
 }
 
-func (h *host) stop() error {
-	if h.process != nil {
-		pgid, _ := syscall.Getpgid(h.process.Pid)
-		if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
-			return nil
-		}
-		time.Sleep(h.grace)
-		if err := syscall.Kill(-pgid, syscall.SIGKILL); err == nil || isNotPermitted(err) {
-			return nil
-		} else {
-			return err
-		}
+func (h *host) stop(pid int) error {
+	pgid, _ := syscall.Getpgid(pid)
+	if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
+		return nil
 	}
-	return nil
+	time.Sleep(h.Spec.GetTerminationGracePeriod())
+	if err := syscall.Kill(-pgid, syscall.SIGKILL); err == nil || isNotPermitted(err) {
+		return nil
+	} else {
+		return err
+	}
 }
 
 func isNotPermitted(err error) bool {

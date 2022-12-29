@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -28,8 +29,8 @@ func up() *cobra.Command {
 		Use: "up",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
-			defer stop()
+			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+			defer stopEverything()
 
 			_ = os.Mkdir("logs", 0777)
 
@@ -40,7 +41,7 @@ func up() *cobra.Command {
 			init := true
 
 			go func() {
-				defer handleCrash(stop)
+				defer handleCrash(stopEverything)
 				for {
 					width, _, _ := terminal.GetSize(0)
 					if width == 0 {
@@ -128,7 +129,7 @@ func up() *cobra.Command {
 					}
 					stdout := io.MultiWriter(logFile, logEntry.Stdout())
 					stderr := io.MultiWriter(logFile, logEntry.Stderr())
-					prc := proc.New(c)
+					prc := proc.New(c, pod.Spec)
 
 					processes[name] = prc
 
@@ -136,11 +137,11 @@ func up() *cobra.Command {
 						return err
 					}
 
-					ctx, stop := context.WithCancel(ctx)
+					processCtx, stopProcess := context.WithCancel(ctx)
 
 					wg.Add(1)
-					go func() {
-						defer handleCrash(stop)
+					go func(name, image string) {
+						defer handleCrash(stopEverything)
 						defer wg.Done()
 						for {
 							select {
@@ -148,31 +149,52 @@ func up() *cobra.Command {
 								return
 							default:
 								err := func() error {
-									state.State = corev1.ContainerState{
-										Waiting: &corev1.ContainerStateWaiting{Reason: "stopping"},
-									}
+									runCtx, stopRun := context.WithCancel(processCtx)
+									defer stopRun()
 									state.State = corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{Reason: "building"},
 									}
-									if err := prc.Build(ctx, stdout, stderr); err != nil {
+									if err := prc.Build(runCtx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to build: %v", err)
 									}
 									state.State = corev1.ContainerState{
 										Running: &corev1.ContainerStateRunning{},
 									}
-									if err := prc.Run(ctx, stdout, stderr); err != nil {
+									logEntry.Msg = ""
+									go func() {
+										defer handleCrash(stopEverything)
+										var last time.Time
+										for {
+											select {
+											case <-runCtx.Done():
+												return
+											default:
+												stat, err := os.Stat(image)
+												if err != nil {
+													return
+												}
+												if !last.IsZero() && stat.ModTime().After(last) {
+													stopRun()
+												}
+												last = stat.ModTime()
+												time.Sleep(time.Second)
+											}
+										}
+									}()
+									if err := prc.Run(runCtx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to run: %v", err)
 									}
 									return nil
 								}()
 								if err != nil {
-									if err == context.Canceled {
+									if errors.Is(err, context.Canceled) {
 										return
 									}
 									state.State = corev1.ContainerState{
 										Terminated: &corev1.ContainerStateTerminated{Reason: "error"},
 									}
-									logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
+									logEntry.Level = "error"
+									logEntry.Msg = err.Error()
 								} else {
 									state.State = corev1.ContainerState{
 										Terminated: &corev1.ContainerStateTerminated{Reason: "exited"},
@@ -183,29 +205,32 @@ func up() *cobra.Command {
 								}
 							}
 						}
-					}()
+					}(c.Name, c.Image)
 
 					go func() {
+						defer handleCrash(stopEverything)
 						<-ctx.Done()
-						stop()
+						stopProcess()
 					}()
 
 					if probe := c.LivenessProbe; probe != nil {
-						liveFunc := func(live bool, err error) {
+						liveFunc := func(name string, live bool, err error) {
 							if !live {
-								stop()
+								stopProcess()
 							}
 						}
-						go probeLoop(ctx, stop, *probe, liveFunc)
+						go probeLoop(ctx, stopEverything, c.Name, *probe, liveFunc)
 					}
 					if probe := c.ReadinessProbe; probe != nil {
-						readyFunc := func(ready bool, err error) {
+						readyFunc := func(name string, ready bool, err error) {
 							state.Ready = ready
 							if err != nil {
-								logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
+								logEntry.Level = "error"
+								logEntry.Msg = err.Error()
+
 							}
 						}
-						go probeLoop(ctx, stop, *probe, readyFunc)
+						go probeLoop(ctx, stopEverything, c.Name, *probe, readyFunc)
 					}
 				}
 
@@ -218,6 +243,7 @@ func up() *cobra.Command {
 	}
 	return cmd
 }
+
 func handleCrash(stop func()) {
 	if r := recover(); r != nil {
 		log.Println(r)

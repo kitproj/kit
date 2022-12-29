@@ -16,10 +16,10 @@ type Interface interface {
 	Run(ctx context.Context, stdout, stderr io.Writer) error
 }
 
-func New(c types.Container) Interface {
+func New(c types.Container, spec types.Spec) Interface {
 	if _, ok := imageIsHostfile(c.Image); c.Image == "" || ok {
-		return &host{Container: c}
+		return &host{Container: c, Spec: spec}
 	} else {
-		return &container{Container: c}
+		return &container{Container: c, Spec: spec}
 	}
 }
