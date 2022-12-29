@@ -13,7 +13,7 @@ import (
 	"github.com/alexec/kit/internal/types"
 
 	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
@@ -22,14 +22,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type ContainerProc struct {
+type container struct {
 	types.Spec
 	types.Container
 	cli *client.Client
 	TTY bool
 }
 
-func (h *ContainerProc) Init(ctx context.Context) error {
+func (h *container) Init(ctx context.Context) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (h *ContainerProc) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	cli := h.cli
 	dockerfile := filepath.Join(h.Image, "Dockerfile")
 	if _, err := os.Stat(dockerfile); err == nil {
@@ -70,7 +70,7 @@ func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) err
 	return nil
 }
 
-func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	portSet, portBindings, err := h.createPorts()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 	if err != nil {
 		return err
 	}
-	created, err := h.cli.ContainerCreate(ctx, &container.Config{
+	created, err := h.cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     h.Name,
 		ExposedPorts: portSet,
 		Tty:          h.TTY,
@@ -90,7 +90,7 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 		// TODO support entrypoint
 		Entrypoint: h.Command,
 		Labels:     map[string]string{"name": h.Name},
-	}, &container.HostConfig{
+	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,
 		Binds:        binds,
 	}, &network.NetworkingConfig{}, &v1.Platform{}, h.Name)
@@ -122,7 +122,7 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 	return nil
 }
 
-func (h *ContainerProc) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, error) {
+func (h *container) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, error) {
 	portSet := nat.PortSet{}
 	portBindings := map[nat.Port][]nat.PortBinding{}
 	for _, p := range h.Ports {
@@ -139,7 +139,7 @@ func (h *ContainerProc) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBindi
 	return portSet, portBindings, nil
 }
 
-func (h *ContainerProc) createEnviron() []string {
+func (h *container) createEnviron() []string {
 	var environ []string
 	for _, env := range h.Env {
 		environ = append(environ, fmt.Sprintf("%s=%s", env.Name, env.Value))
@@ -147,7 +147,7 @@ func (h *ContainerProc) createEnviron() []string {
 	return environ
 }
 
-func (h *ContainerProc) createBinds() ([]string, error) {
+func (h *container) createBinds() ([]string, error) {
 	var binds []string
 	for _, mount := range h.VolumeMounts {
 		for _, volume := range h.Spec.Volumes {
@@ -163,7 +163,7 @@ func (h *ContainerProc) createBinds() ([]string, error) {
 	return binds, nil
 }
 
-func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {
+func (h *container) Stop(ctx context.Context, grace time.Duration) error {
 	list, err := h.cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
 	if err != nil {
 		return err
@@ -179,4 +179,4 @@ func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {
 	return nil
 }
 
-var _ Proc = &ContainerProc{}
+var _ Proc = &container{}

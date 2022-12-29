@@ -134,12 +134,7 @@ func up() *cobra.Command {
 					}
 					stdout := io.MultiWriter(logFile, logEntry.Stdout())
 					stderr := io.MultiWriter(logFile, logEntry.Stderr())
-					var pd proc.Proc
-					if c.Image == "" {
-						pd = &proc.HostProc{Container: c}
-					} else {
-						pd = &proc.ContainerProc{Container: c}
-					}
+					pd := proc.New(c)
 
 					if err = pd.Init(ctx); err != nil {
 						return err

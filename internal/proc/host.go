@@ -12,20 +12,20 @@ import (
 	"github.com/alexec/kit/internal/types"
 )
 
-type HostProc struct {
+type host struct {
 	types.Container
 	process *os.Process
 }
 
-func (h *HostProc) Init(ctx context.Context) error {
+func (h *host) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *HostProc) Build(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	return nil
 }
 
-func (h *HostProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
+func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd := exec.CommandContext(ctx, h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
@@ -45,7 +45,7 @@ func (h *HostProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return cmd.Wait()
 }
 
-func (h *HostProc) Stop(ctx context.Context, grace time.Duration) error {
+func (h *host) Stop(ctx context.Context, grace time.Duration) error {
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
 		if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
@@ -65,4 +65,4 @@ func isNotPermitted(err error) bool {
 	return err != nil && err.Error() == "operation not permitted"
 }
 
-var _ Proc = &HostProc{}
+var _ Proc = &host{}
