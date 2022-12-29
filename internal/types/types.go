@@ -42,14 +42,14 @@ type Container struct {
 	Ports           []ContainerPort `json:"ports,omitempty"`
 }
 
-type WriteFunc func(p []byte) (n int, err error)
+type writeFunc func(p []byte) (n int, err error)
 
-func (w WriteFunc) Write(p []byte) (n int, err error) {
+func (w writeFunc) Write(p []byte) (n int, err error) {
 	return w(p)
 }
 
 func (s *LogEntry) Stdout() io.Writer {
-	return WriteFunc(func(p []byte) (n int, err error) {
+	return writeFunc(func(p []byte) (n int, err error) {
 		*s = LogEntry{"info", last(p)}
 		return len(p), nil
 	})
@@ -61,7 +61,7 @@ func last(p []byte) string {
 }
 
 func (s *LogEntry) Stderr() io.Writer {
-	return WriteFunc(func(p []byte) (n int, err error) {
+	return writeFunc(func(p []byte) (n int, err error) {
 		*s = LogEntry{"error", last(p)}
 		return len(p), nil
 	})
