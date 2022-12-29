@@ -138,6 +138,11 @@ spec:
 You can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
 running and you must manually clean up.
 
+## Killing One Process
+
+* To kill a host process: `kill $(lsof -ti:$host_port)`
+* To kill a container process: `docker restart $name`.
+
 ## References
 
 - [Containers from scratch](https://medium.com/@ssttehrani/containers-from-scratch-with-golang-5276576f9909)
