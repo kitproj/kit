@@ -57,27 +57,23 @@ func up() *cobra.Command {
 						if state == nil {
 							continue
 						}
-						r := "▓"
-						reason := ""
+						icon, reason := "▓", "unknown"
 						if state.State.Waiting != nil {
 							reason = state.State.Waiting.Reason
 						} else if state.State.Running != nil {
 							if state.Ready {
-								r = color.GreenString("▓")
-								reason = "ready"
+								icon, reason = color.GreenString("▓"), "ready"
 							} else {
-								r = color.BlueString("▓")
-								reason = "running"
+								icon, reason = color.BlueString("▓"), "running"
+
 							}
 						} else if state.State.Terminated != nil {
-							reason = state.State.Terminated.Reason
+							icon, reason = "▓", state.State.Terminated.Reason
 							if reason == "error" {
-								r = color.RedString("▓")
+								icon = color.RedString("▓")
 							}
-						} else {
-							reason = "unknown"
 						}
-						line := fmt.Sprintf("%s %-10s [%-7s]  %s", r, state.Name, reason, logEntries[c.Name].String())
+						line := fmt.Sprintf("%s %-10s [%-7s]  %s", icon, state.Name, reason, logEntries[c.Name].String())
 						if len(line) > width && width > 0 {
 							line = line[0 : width-1]
 						}
@@ -134,9 +130,9 @@ func up() *cobra.Command {
 					}
 					stdout := io.MultiWriter(logFile, logEntry.Stdout())
 					stderr := io.MultiWriter(logFile, logEntry.Stderr())
-					pd := proc.New(c)
+					prc := proc.New(c)
 
-					if err = pd.Init(ctx); err != nil {
+					if err = prc.Init(ctx); err != nil {
 						return err
 					}
 
@@ -153,19 +149,19 @@ func up() *cobra.Command {
 									state.State = corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{Reason: "stopping"},
 									}
-									if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
+									if err := prc.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
 										return fmt.Errorf("failed to stop: %v", err)
 									}
 									state.State = corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{Reason: "building"},
 									}
-									if err := pd.Build(ctx, stdout, stderr); err != nil {
+									if err := prc.Build(ctx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to build: %v", err)
 									}
 									state.State = corev1.ContainerState{
 										Running: &corev1.ContainerStateRunning{},
 									}
-									if err := pd.Run(ctx, stdout, stderr); err != nil {
+									if err := prc.Run(ctx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to run: %v", err)
 									}
 									return nil
@@ -189,7 +185,7 @@ func up() *cobra.Command {
 
 					go func() {
 						<-ctx.Done()
-						if err := pd.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
+						if err := prc.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
 							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
 					}()
@@ -197,7 +193,7 @@ func up() *cobra.Command {
 					if probe := c.LivenessProbe; probe != nil {
 						liveFunc := func(live bool, err error) {
 							if !live {
-								if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
+								if err := prc.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
 									logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
 								}
 							}
