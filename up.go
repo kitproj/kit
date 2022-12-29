@@ -13,13 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/alexec/kit/internal/proc"
 	"github.com/alexec/kit/internal/types"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	corev1 "k8s.io/api/core/v1"
+	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
 
@@ -74,10 +74,7 @@ func up() *cobra.Command {
 							}
 						}
 						line := fmt.Sprintf("%s %-10s [%-7s]  %s", icon, state.Name, reason, logEntries[c.Name].String())
-						if len(line) > width && width > 0 {
-							line = line[0 : width-1]
-						}
-						log.Println(line)
+						log.Println(k8sstrings.ShortenString(line, width))
 					}
 					time.Sleep(time.Second / 2)
 				}
@@ -136,10 +133,16 @@ func up() *cobra.Command {
 						return err
 					}
 
+					stop := func() {
+						if err := prc.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
+							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
+						}
+					}
 					wg.Add(1)
 					go func() {
 						defer handleCrash(stop)
 						defer wg.Done()
+						defer stop() // why stop twice? because host process don't always stop when cancelled
 						for {
 							select {
 							case <-ctx.Done():
@@ -166,7 +169,10 @@ func up() *cobra.Command {
 									}
 									return nil
 								}()
-								if err != nil && err != context.Canceled {
+								if err != nil {
+									if err == context.Canceled {
+										return
+									}
 									state.State = corev1.ContainerState{
 										Terminated: &corev1.ContainerStateTerminated{Reason: "error"},
 									}
@@ -185,9 +191,7 @@ func up() *cobra.Command {
 
 					go func() {
 						<-ctx.Done()
-						if err := prc.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
-							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
-						}
+						stop()
 					}()
 
 					if probe := c.LivenessProbe; probe != nil {

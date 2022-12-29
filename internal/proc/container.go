@@ -169,8 +169,8 @@ func (h *container) Stop(ctx context.Context, grace time.Duration) error {
 	}
 	for _, existing := range list {
 		if existing.Labels["name"] == h.Name {
-			err = h.cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true})
-			if err != nil {
+			_ = h.cli.ContainerStop(ctx, existing.ID, &grace)
+			if err := h.cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
 				return err
 			}
 		}
