@@ -26,7 +26,6 @@ type container struct {
 	types.Spec
 	types.Container
 	cli *client.Client
-	TTY bool
 }
 
 func (h *container) Init(ctx context.Context) error {

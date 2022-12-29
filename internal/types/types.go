@@ -39,6 +39,7 @@ type Container struct {
 	Env             []EnvVar        `json:"env,omitempty"`
 	Ports           []ContainerPort `json:"ports,omitempty"`
 	VolumeMounts    []VolumeMount   `json:"volumeMounts,omitempty"`
+	TTY             bool            `json:"tty,omitempty"`
 }
 
 type Pod struct {
