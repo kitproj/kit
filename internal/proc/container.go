@@ -68,8 +68,6 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 }
 
 func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 	if err := h.remove(ctx); err != nil {
 		return err
 	}

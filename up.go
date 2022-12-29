@@ -75,7 +75,7 @@ func up() *cobra.Command {
 								icon = color.RedString("▓")
 							}
 						}
-						line := fmt.Sprintf("%s %-10s [%-7s]  %s", icon, state.Name, reason, logEntries[c.Name].String())
+						line := fmt.Sprintf("%s %-10s [%-7s]  %s", icon, k8sstrings.ShortenString(state.Name, 10), reason, logEntries[c.Name].String())
 						log.Println(k8sstrings.ShortenString(line, width))
 					}
 					time.Sleep(time.Second / 2)
@@ -140,7 +140,7 @@ func up() *cobra.Command {
 					processCtx, stopProcess := context.WithCancel(ctx)
 
 					wg.Add(1)
-					go func(name, image string) {
+					go func(name, image string, livenessProbe, readinessProbe *types.Probe) {
 						defer handleCrash(stopEverything)
 						defer wg.Done()
 						for {
@@ -181,6 +181,31 @@ func up() *cobra.Command {
 											}
 										}
 									}()
+									if probe := livenessProbe; probe != nil {
+										liveFunc := func(name string, live bool, err error) {
+											if !live {
+												stopRun()
+											}
+										}
+										go probeLoop(runCtx, stopEverything, name, *probe, liveFunc)
+									}
+									if probe := readinessProbe; probe != nil {
+										readyFunc := func(name string, ready bool, err error) {
+											state.Ready = ready
+											if err != nil {
+												logEntry.Level = "error"
+												logEntry.Msg = err.Error()
+
+											}
+										}
+										go probeLoop(ctx, stopEverything, name, *probe, readyFunc)
+									}
+
+									go func() {
+										defer handleCrash(stopEverything)
+										<-ctx.Done()
+										stopProcess()
+									}()
 									if err := prc.Run(runCtx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to run: %v", err)
 									}
@@ -205,33 +230,9 @@ func up() *cobra.Command {
 								}
 							}
 						}
-					}(c.Name, c.Image)
+					}(c.Name, c.Image, c.LivenessProbe.DeepCopy(), c.ReadinessProbe)
 
-					go func() {
-						defer handleCrash(stopEverything)
-						<-ctx.Done()
-						stopProcess()
-					}()
-
-					if probe := c.LivenessProbe; probe != nil {
-						liveFunc := func(name string, live bool, err error) {
-							if !live {
-								stopProcess()
-							}
-						}
-						go probeLoop(ctx, stopEverything, c.Name, *probe, liveFunc)
-					}
-					if probe := c.ReadinessProbe; probe != nil {
-						readyFunc := func(name string, ready bool, err error) {
-							state.Ready = ready
-							if err != nil {
-								logEntry.Level = "error"
-								logEntry.Msg = err.Error()
-
-							}
-						}
-						go probeLoop(ctx, stopEverything, c.Name, *probe, readyFunc)
-					}
+					time.Sleep(time.Second / 4)
 				}
 
 				wg.Wait()

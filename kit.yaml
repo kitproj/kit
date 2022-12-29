@@ -41,6 +41,13 @@ spec:
     volumeMounts:
     - mountPath: /work
       name: work
+  - command:
+    - sh
+    - -c
+    - |
+      set -eux
+      sleep 10
+    name: kef
   initContainers:
   - command:
     - sleep

@@ -2,18 +2,20 @@
 
 This is a tool to enable local development of containerized applications.
 
-It allows you to specify a set of process that run in **containers** or on the **host**. The process are run concurrently and their status is **muxed into a single terminal** window (so you're not overwhelmed by output). It **probe** your processes to see if they've gone wrong, automatically restarting them. When you're done, **ctrl+c** to and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
+It allows you to specify a set of process that run in **containers** or on the **host**. The process are run
+concurrently and their status is **muxed into a single terminal** window (so you're not overwhelmed by output). It *
+*probes** your processes to see if they've gone wrong, automatically restarting them. When your source code changes,
+container and host process **auto-rebuild** and restart. When you're done, **ctrl+c** to
+and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
 
 It's arguably the mutant offspring of other tools:
 
-| tool                | container processes | host processes | ctrl+c to stop | terminal mux | log capture | probes |
-|---------------------|---------------------|----------------|----------------|--------------|-------------|--------|
-| `kit`               | ✔                   | ✔              | ✔              | ✔            | ✔           | ✔      |
-| `docker compose up` | ✔                   | ✖              | ✖?             | ✔            | ✔           | ✖      |
-| `podman play kube`  | ✔                   | ✖              | ✖              | ✖            | ✔           | ✔?     |
-| `foreman run`       | ✖                   | ✔              | ✔              | ✔            | ✖           | ✖      |
-
-Volumes are not yet supported.
+| tool                | container processes | host processes | auto re-build | ctrl+c to stop | terminal mux | log capture | probes |
+|---------------------|---------------------|----------------|---------------|----------------|--------------|-------------|--------|
+| `kit`               | ✔                   | ✔              | ✔             | ✔              | ✔            | ✔           | ✔      |
+| `docker compose up` | ✔                   | ✖              | ✖             | ✖?             | ✔            | ✔           | ✖      |
+| `podman play kube`  | ✔                   | ✖              | ✖             | ✖              | ✖            | ✔           | ✔?     |
+| `foreman run`       | ✖                   | ✔              | ✖             | ✔              | ✔            | ✖           | ✖      |
 
 Tilt, Skaffold, and Garden are in the same problem space.
 
@@ -74,7 +76,7 @@ If `image` field is omitted, the value of `command` is used to start the process
       command: [ go, run, ./demo/foo ]
 ```
 
-If `image` is path to a directory containing a `Hostfile`. That file is run run on the host as the build step; 
+If `image` is path to a directory containing a `Hostfile`. That file is run run on the host as the build step;
 
 ```bash
 #!/bin/sh
@@ -89,6 +91,29 @@ go build .
     - name: bar
       image: demo/bar
       command: [ ./demo/bar/bar ]
+```
+
+### Auto Rebuild and Restart
+
+If anything in the build directory changes, then the process auto-rebuilds and restarts.
+
+It's often not convenient to keep your source code in the same directory as the build, but you could use a "toucher" to
+touch the build directory whenever the source changes:
+
+```yaml
+  - command:
+    - bash
+    - -c
+    - |
+      set -eux
+
+      while true; do
+        if [[ src/main -nt src/test/app ]]; then
+          touch src/test/app
+        fi
+        sleep 2
+      done
+    name: toucher
 ```
 
 ### Init Containers
