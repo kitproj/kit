@@ -15,6 +15,7 @@ import (
 
 type host struct {
 	types.Container
+	grace   time.Duration
 	process *os.Process
 }
 
@@ -23,6 +24,8 @@ func (h *host) Init(ctx context.Context) error {
 }
 
 func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	if f, ok := imageIsHostfile(h.Image); ok {
 		cmd := exec.CommandContext(ctx, f)
 		cmd.Dir = h.WorkingDir
@@ -39,6 +42,10 @@ func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 		if err := cmd.Start(); err != nil {
 			return err
 		}
+		go func() {
+			<-ctx.Done()
+			h.stop()
+		}()
 		h.process = cmd.Process
 		return cmd.Wait()
 	}
@@ -46,6 +53,8 @@ func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	cmd := exec.CommandContext(ctx, h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
@@ -62,16 +71,20 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return err
 	}
 	h.process = cmd.Process
+	go func() {
+		<-ctx.Done()
+		h.stop()
+	}()
 	return cmd.Wait()
 }
 
-func (h *host) Stop(ctx context.Context, grace time.Duration) error {
+func (h *host) stop() error {
 	if h.process != nil {
 		pgid, _ := syscall.Getpgid(h.process.Pid)
 		if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
 			return nil
 		}
-		time.Sleep(grace)
+		time.Sleep(h.grace)
 		if err := syscall.Kill(-pgid, syscall.SIGKILL); err == nil || isNotPermitted(err) {
 			return nil
 		} else {

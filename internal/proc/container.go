@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
 
@@ -38,7 +37,6 @@ func (h *container) Init(ctx context.Context) error {
 }
 
 func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
-	cli := h.cli
 	dockerfile := filepath.Join(h.Image, "Dockerfile")
 	if _, err := os.Stat(dockerfile); err == nil {
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
@@ -46,7 +44,7 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 			return err
 		}
 		defer r.Close()
-		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Image}})
+		resp, err := h.cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Image}})
 		if err != nil {
 			return err
 		}
@@ -55,7 +53,7 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 			return err
 		}
 	} else if h.ImagePullPolicy != string(corev1.PullNever) {
-		r, err := cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
+		r, err := h.cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return err
 		}
@@ -70,6 +68,11 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 }
 
 func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	if err := h.remove(ctx); err != nil {
+		return err
+	}
 	portSet, portBindings, err := h.createPorts()
 	if err != nil {
 		return err
@@ -99,6 +102,10 @@ func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err = h.cli.ContainerStart(ctx, created.ID, dockertypes.ContainerStartOptions{}); err != nil {
 		return err
 	}
+	go func() {
+		<-ctx.Done()
+		h.remove(context.Background())
+	}()
 	logs, err := h.cli.ContainerLogs(ctx, h.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -162,11 +169,12 @@ func (h *container) createBinds() ([]string, error) {
 	return binds, nil
 }
 
-func (h *container) Stop(ctx context.Context, grace time.Duration) error {
+func (h *container) remove(ctx context.Context) error {
 	list, err := h.cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
 	if err != nil {
 		return err
 	}
+	grace := h.Spec.GetTerminationGracePeriod()
 	for _, existing := range list {
 		if existing.Labels["name"] == h.Name {
 			_ = h.cli.ContainerStop(ctx, existing.ID, &grace)

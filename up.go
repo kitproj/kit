@@ -136,16 +136,12 @@ func up() *cobra.Command {
 						return err
 					}
 
-					stop := func() {
-						if err := prc.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
-							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
-						}
-					}
+					ctx, stop := context.WithCancel(ctx)
+
 					wg.Add(1)
 					go func() {
 						defer handleCrash(stop)
 						defer wg.Done()
-						defer stop() // why stop twice? because host process don't always stop when cancelled
 						for {
 							select {
 							case <-ctx.Done():
@@ -154,9 +150,6 @@ func up() *cobra.Command {
 								err := func() error {
 									state.State = corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{Reason: "stopping"},
-									}
-									if err := prc.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
-										return fmt.Errorf("failed to stop: %v", err)
 									}
 									state.State = corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{Reason: "building"},
@@ -200,9 +193,7 @@ func up() *cobra.Command {
 					if probe := c.LivenessProbe; probe != nil {
 						liveFunc := func(live bool, err error) {
 							if !live {
-								if err := prc.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
-									logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
-								}
+								stop()
 							}
 						}
 						go probeLoop(ctx, stop, *probe, liveFunc)
