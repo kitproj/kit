@@ -31,7 +31,7 @@ spec:
     readinessProbe:
       httpGet:
         port: 7070
-  - image: ./demo/qux
+  - image: demo/qux
     name: qux
     ports:
     - containerPort: 80
@@ -39,8 +39,15 @@ spec:
     readinessProbe:
       httpGet:
         port: 6060
+    volumeMounts:
+    - mountPath: /work
+      name: work
   initContainers:
   - command:
     - sleep
     - "1"
     name: init
+  volumes:
+  - hostPath:
+      path: .
+    name: work

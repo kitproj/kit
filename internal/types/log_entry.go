@@ -1,9 +1,10 @@
 package types
 
 import (
-	"github.com/fatih/color"
 	"io"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 type LogEntry struct {

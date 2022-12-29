@@ -16,7 +16,7 @@ func lint() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pod := &types.Kit{}
+			pod := &types.Pod{}
 			err = yaml.UnmarshalStrict(in, pod)
 			if err != nil {
 				return err

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/docker/docker/pkg/stdcopy"
+
 	"github.com/alexec/kit/internal/types"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -21,10 +23,10 @@ import (
 )
 
 type ContainerProc struct {
+	types.Spec
 	types.Container
-	cli   *client.Client
-	image string
-	TTY   bool
+	cli *client.Client
+	TTY bool
 }
 
 func (h *ContainerProc) Init(ctx context.Context) error {
@@ -45,79 +47,60 @@ func (h *ContainerProc) Build(ctx context.Context, stdout, stderr io.Writer) err
 			return err
 		}
 		defer r.Close()
-		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Name}})
+		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Image}})
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
-		_, err = io.Copy(stdout, resp.Body)
-		if err != nil {
+		if _, err = io.Copy(stdout, resp.Body); err != nil {
 			return err
 		}
-		h.image = h.Name
 	} else if h.ImagePullPolicy != string(corev1.PullNever) {
 		r, err := cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return err
 		}
-		_, err = io.Copy(stdout, r)
-		if err != nil {
+		if _, err = io.Copy(stdout, r); err != nil {
 			return err
 		}
-		err = r.Close()
-		if err != nil {
+		if err = r.Close(); err != nil {
 			return err
 		}
-		h.image = h.Image
 	}
 	return nil
 }
 
 func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error {
-
-	portSet := nat.PortSet{}
-	portBindings := map[nat.Port][]nat.PortBinding{}
-	for _, p := range h.Ports {
-		port, err := nat.NewPort("tcp", fmt.Sprint(p.ContainerPort))
-		if err != nil {
-			return err
-		}
-		portSet[port] = struct{}{}
-		hostPort := p.GetHostPort()
-		portBindings[port] = []nat.PortBinding{{
-			HostPort: fmt.Sprint(hostPort),
-		}}
+	portSet, portBindings, err := h.createPorts()
+	if err != nil {
+		return err
 	}
-
-	var environ []string
-	for _, env := range h.Env {
-		environ = append(environ, fmt.Sprintf("%s=%s", env.Name, env.Value))
+	binds, err := h.createBinds()
+	if err != nil {
+		return err
 	}
-	cli := h.cli
-	created, err := cli.ContainerCreate(ctx, &container.Config{
-		Hostname: h.Name,
-		Env:      environ,
-		// TODO support entrypoint
-		Entrypoint:   h.Command,
-		Cmd:          h.Args,
-		Image:        h.image,
-		WorkingDir:   h.WorkingDir,
-		Tty:          h.TTY,
+	created, err := h.cli.ContainerCreate(ctx, &container.Config{
+		Hostname:     h.Name,
 		ExposedPorts: portSet,
-		Labels:       map[string]string{"name": h.Name},
+		Tty:          h.TTY,
+		Env:          h.createEnviron(),
+		Cmd:          h.Args,
+		Image:        h.Image,
+		WorkingDir:   h.WorkingDir,
+		// TODO support entrypoint
+		Entrypoint: h.Command,
+		Labels:     map[string]string{"name": h.Name},
 	}, &container.HostConfig{
 		PortBindings: portBindings,
+		Binds:        binds,
 	}, &network.NetworkingConfig{}, &v1.Platform{}, h.Name)
 	if err != nil {
 		return err
 	}
-
-	err = cli.ContainerStart(ctx, created.ID, dockertypes.ContainerStartOptions{})
-	if err != nil {
+	if err = h.cli.ContainerStart(ctx, created.ID, dockertypes.ContainerStartOptions{}); err != nil {
 		return err
 	}
-
-	logs, err := cli.ContainerLogs(ctx, h.Name, dockertypes.ContainerLogsOptions{
+	logs, err := h.cli.ContainerLogs(ctx, h.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -126,11 +109,10 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 		return err
 	}
 	defer logs.Close()
-	_, err = io.Copy(stdout, logs)
-	if err != nil {
+	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
 		return err
 	}
-	inspect, err := cli.ContainerInspect(ctx, created.ID)
+	inspect, err := h.cli.ContainerInspect(ctx, created.ID)
 	if err != nil {
 		return err
 	}
@@ -140,15 +122,55 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 	return nil
 }
 
+func (h *ContainerProc) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, error) {
+	portSet := nat.PortSet{}
+	portBindings := map[nat.Port][]nat.PortBinding{}
+	for _, p := range h.Ports {
+		port, err := nat.NewPort("tcp", fmt.Sprint(p.ContainerPort))
+		if err != nil {
+			return nil, nil, err
+		}
+		portSet[port] = struct{}{}
+		hostPort := p.GetHostPort()
+		portBindings[port] = []nat.PortBinding{{
+			HostPort: fmt.Sprint(hostPort),
+		}}
+	}
+	return portSet, portBindings, nil
+}
+
+func (h *ContainerProc) createEnviron() []string {
+	var environ []string
+	for _, env := range h.Env {
+		environ = append(environ, fmt.Sprintf("%s=%s", env.Name, env.Value))
+	}
+	return environ
+}
+
+func (h *ContainerProc) createBinds() ([]string, error) {
+	var binds []string
+	for _, mount := range h.VolumeMounts {
+		for _, volume := range h.Spec.Volumes {
+			if volume.Name == mount.Name {
+				abs, err := filepath.Abs(volume.HostPath.Path)
+				if err != nil {
+					return nil, err
+				}
+				binds = append(binds, fmt.Sprintf("%s:%s", abs, mount.MountPath))
+			}
+		}
+	}
+	return binds, nil
+}
+
 func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {
-	cli := h.cli
-	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+	list, err := h.cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
 	if err != nil {
 		return err
 	}
 	for _, existing := range list {
 		if existing.Labels["name"] == h.Name {
-			err = cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true})
+			err = h.cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true})
 			if err != nil {
 				return err
 			}

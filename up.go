@@ -33,7 +33,7 @@ func up() *cobra.Command {
 
 			_ = os.Mkdir("logs", 0777)
 
-			pod := &types.Kit{}
+			pod := &types.Pod{}
 			status := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
 			init := true

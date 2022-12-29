@@ -38,20 +38,16 @@ type Container struct {
 	WorkingDir      string          `json:"workingDir,omitempty"`
 	Env             []EnvVar        `json:"env,omitempty"`
 	Ports           []ContainerPort `json:"ports,omitempty"`
+	VolumeMounts    []VolumeMount   `json:"volumeMounts,omitempty"`
 }
 
-type writeFunc func(p []byte) (n int, err error)
-
-func (w writeFunc) Write(p []byte) (n int, err error) {
-	return w(p)
-}
-
-type Kit struct {
+type Pod struct {
 	Spec       Spec      `json:"spec"`
 	ApiVersion string    `json:"apiVersion,omitempty"`
 	Kind       string    `json:"kind,omitempty"`
 	Metadata   *Metadata `json:"metadata,omitempty"`
 }
+
 type Metadata struct {
 	Name string `json:"name"`
 }
@@ -118,10 +114,25 @@ func (a HTTPGetAction) GetPort() int32 {
 	return a.Port.IntVal
 }
 
+type VolumeMount struct {
+	Name      string `json:"name"`
+	MountPath string `json:"mountPath"`
+}
+
+type HostPath struct {
+	Path string `json:"path"`
+}
+
+type Volume struct {
+	Name     string   `json:"name"`
+	HostPath HostPath `json:"hostPath"`
+}
+
 type Spec struct {
 	TerminationGracePeriodSeconds *int32      `json:"terminationGracePeriodSeconds,omitempty"`
 	InitContainers                []Container `json:"initContainers,omitempty"`
 	Containers                    []Container `json:"containers,omitempty"`
+	Volumes                       []Volume    `json:"volumes,omitempty"`
 }
 
 func (s Spec) GetTerminationGracePeriod() time.Duration {
