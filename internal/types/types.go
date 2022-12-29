@@ -87,8 +87,29 @@ func (p Probe) GetSuccessThreshold() int {
 	return int(p.SuccessThreshold)
 }
 
+func (p *Probe) DeepCopy() *Probe {
+	if p == nil {
+		return nil
+	}
+	return &Probe{
+		InitialDelaySeconds: p.InitialDelaySeconds,
+		PeriodSeconds:       p.PeriodSeconds,
+		TCPSocket:           p.TCPSocket.DeepCopy(),
+		HTTPGet:             p.HTTPGet.DeepCopy(),
+		SuccessThreshold:    p.SuccessThreshold,
+		FailureThreshold:    p.FailureThreshold,
+	}
+}
+
 type TCPSocketAction struct {
 	Port intstr.IntOrString `json:"port"`
+}
+
+func (a *TCPSocketAction) DeepCopy() *TCPSocketAction {
+	if a == nil {
+		return nil
+	}
+	return &TCPSocketAction{Port: a.Port}
 }
 
 type HTTPGetAction struct {
@@ -113,6 +134,18 @@ func (a HTTPGetAction) GetPort() int32 {
 		return 80
 	}
 	return a.Port.IntVal
+}
+
+func (a *HTTPGetAction) DeepCopy() *HTTPGetAction {
+	if a == nil {
+		return nil
+	}
+	return &HTTPGetAction{
+		Scheme: a.Scheme,
+		Port:   a.Port,
+		Path:   a.Path,
+	}
+
 }
 
 type VolumeMount struct {

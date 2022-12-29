@@ -26,8 +26,17 @@ func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	if f, ok := imageIsHostfile(h.Image); ok {
+
+		_, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex on %s to unblock...", h.Image)))
+		if err != nil {
+			return err
+		}
+		mutex := KeyLock(h.Image)
+		mutex.Lock()
+		defer mutex.Unlock()
+
 		cmd := exec.CommandContext(ctx, f)
-		cmd.Dir = h.WorkingDir
+		cmd.Dir = h.Image
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
@@ -97,7 +106,7 @@ var _ Interface = &host{}
 const hostfile = "Hostfile"
 
 func imageIsHostfile(image string) (string, bool) {
-	f := filepath.Join(image, hostfile)
+	f, _ := filepath.Abs(filepath.Join(image, hostfile))
 	_, err := os.Stat(f)
 	return f, err == nil
 }
