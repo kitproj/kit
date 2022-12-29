@@ -178,4 +178,4 @@ func (h *container) Stop(ctx context.Context, grace time.Duration) error {
 	return nil
 }
 
-var _ Proc = &container{}
+var _ Interface = &container{}

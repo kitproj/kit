@@ -1,0 +1,7 @@
+#!/bin/sh
+# Hostfile
+set -eux
+
+sleep 1
+
+go build .

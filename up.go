@@ -36,6 +36,7 @@ func up() *cobra.Command {
 			pod := &types.Pod{}
 			status := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
+			processes := make(map[string]proc.Interface)
 			init := true
 
 			go func() {
@@ -128,6 +129,8 @@ func up() *cobra.Command {
 					stdout := io.MultiWriter(logFile, logEntry.Stdout())
 					stderr := io.MultiWriter(logFile, logEntry.Stderr())
 					prc := proc.New(c)
+
+					processes[name] = prc
 
 					if err = prc.Init(ctx); err != nil {
 						return err

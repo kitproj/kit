@@ -13,12 +13,11 @@ spec:
         port: 8080
     name: foo
   - command:
-    - go
-    - run
-    - ./demo/bar
+    - ./demo/bar/bar
     env:
     - name: PORT
       value: "9090"
+    image: demo/bar
     name: bar
     readinessProbe:
       httpGet:

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -22,6 +23,25 @@ func (h *host) Init(ctx context.Context) error {
 }
 
 func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
+	if f, ok := imageIsHostfile(h.Image); ok {
+		cmd := exec.CommandContext(ctx, f)
+		cmd.Dir = h.WorkingDir
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+		cmd.Env = os.Environ()
+		for _, env := range h.Env {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
+		}
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		h.process = cmd.Process
+		return cmd.Wait()
+	}
 	return nil
 }
 
@@ -65,4 +85,12 @@ func isNotPermitted(err error) bool {
 	return err != nil && err.Error() == "operation not permitted"
 }
 
-var _ Proc = &host{}
+var _ Interface = &host{}
+
+const hostfile = "Hostfile"
+
+func imageIsHostfile(image string) (string, bool) {
+	f := filepath.Join(image, hostfile)
+	_, err := os.Stat(f)
+	return f, err == nil
+}
