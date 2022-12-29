@@ -8,9 +8,12 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/alexec/kit/internal/proc"
 	"github.com/alexec/kit/internal/types"
@@ -31,7 +34,9 @@ func up() *cobra.Command {
 			_ = os.Mkdir("logs", 0777)
 
 			pod := &types.Kit{}
-			status := types.Status{}
+			status := &types.Status{}
+			logEntries := make(map[string]*types.LogEntry)
+			init := true
 
 			go func() {
 				defer handleCrash(stop)
@@ -43,20 +48,36 @@ func up() *cobra.Command {
 
 					log.Printf("%s[2J", escape)
 					log.Printf("%s[H", escape)
-					for _, c := range append(pod.Spec.InitContainers, pod.Spec.Containers...) {
-						state, ok := status[c.Name]
-						if !ok {
+					containers := pod.Spec.Containers
+					if init {
+						containers = pod.Spec.InitContainers
+					}
+					for _, c := range containers {
+						state := status.GetContainerStatus(c.Name)
+						if state == nil {
 							continue
 						}
 						r := "▓"
-						if v, ok := map[types.Phase]string{
-							types.LivePhase:    color.BlueString("▓"),
-							types.ReadyPhase:   color.GreenString("▓"),
-							types.UnreadyPhase: color.YellowString("▓"),
-						}[state.Phase]; ok {
-							r = v
+						reason := ""
+						if state.State.Waiting != nil {
+							reason = state.State.Waiting.Reason
+						} else if state.State.Running != nil {
+							if state.Ready {
+								r = color.GreenString("▓")
+								reason = "ready"
+							} else {
+								r = color.BlueString("▓")
+								reason = "running"
+							}
+						} else if state.State.Terminated != nil {
+							reason = state.State.Terminated.Reason
+							if reason == "error" {
+								r = color.RedString("▓")
+							}
+						} else {
+							reason = "unknown"
 						}
-						line := fmt.Sprintf("%s %-10s [%-8s]  %s", r, state.Name, state.Phase, state.Log.String())
+						line := fmt.Sprintf("%s %-10s [%-7s]  %s", r, state.Name, reason, logEntries[c.Name].String())
 						if len(line) > width && width > 0 {
 							line = line[0 : width-1]
 						}
@@ -84,25 +105,35 @@ func up() *cobra.Command {
 			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
 				wg := &sync.WaitGroup{}
 
-				status = types.Status{}
-
-				for _, c := range containers {
-					status[c.Name] = &types.ContainerStatus{Name: c.Name}
+				if init {
+					for _, c := range pod.Spec.InitContainers {
+						logEntries[c.Name] = &types.LogEntry{}
+						status.InitContainerStatuses = append(status.InitContainerStatuses, corev1.ContainerStatus{
+							Name: c.Name,
+						})
+					}
+				} else {
+					for _, c := range pod.Spec.Containers {
+						logEntries[c.Name] = &types.LogEntry{}
+						status.ContainerStatuses = append(status.ContainerStatuses, corev1.ContainerStatus{
+							Name: c.Name,
+						})
+					}
 				}
 
 				for _, c := range containers {
 
 					name := c.Name
-					state := status[name]
+					state := status.GetContainerStatus(name)
 
-					state.Phase = types.CreatingPhase
+					logEntry := logEntries[name]
 
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
 						return err
 					}
-					stdout := io.MultiWriter(logFile, state.Stdout())
-					stderr := io.MultiWriter(logFile, state.Stderr())
+					stdout := io.MultiWriter(logFile, logEntry.Stdout())
+					stderr := io.MultiWriter(logFile, logEntry.Stderr())
 					var pd proc.Proc
 					if c.Image == "" {
 						pd = &proc.HostProc{Container: c}
@@ -124,25 +155,38 @@ func up() *cobra.Command {
 								return
 							default:
 								err := func() error {
-									defer func() { state.Phase = types.ExitedPhase }()
+									state.State = corev1.ContainerState{
+										Waiting: &corev1.ContainerStateWaiting{Reason: "stopping"},
+									}
 									if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
 										return fmt.Errorf("failed to stop: %v", err)
 									}
-									state.Phase = types.BuildingPhase
+									state.State = corev1.ContainerState{
+										Waiting: &corev1.ContainerStateWaiting{Reason: "building"},
+									}
 									if err := pd.Build(ctx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to build: %v", err)
 									}
-									state.Phase = types.RunningPhase
+									state.State = corev1.ContainerState{
+										Running: &corev1.ContainerStateRunning{},
+									}
 									if err := pd.Run(ctx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to run: %v", err)
 									}
 									return nil
 								}()
 								if err != nil && err != context.Canceled {
-									state.Phase = types.ErrorPhase
-									state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
+									state.State = corev1.ContainerState{
+										Terminated: &corev1.ContainerStateTerminated{Reason: "error"},
+									}
+									logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
 								} else {
-									return
+									state.State = corev1.ContainerState{
+										Terminated: &corev1.ContainerStateTerminated{Reason: "exited"},
+									}
+									if init {
+										return
+									}
 								}
 							}
 						}
@@ -150,26 +194,19 @@ func up() *cobra.Command {
 
 					go func() {
 						<-ctx.Done()
-
 						if err := pd.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
-							state.Phase = types.ErrorPhase
-							state.Log = types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
+							state.State = corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{Reason: "signal"},
+							}
+							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
 					}()
 
 					if probe := c.LivenessProbe; probe != nil {
 						liveFunc := func(live bool, err error) {
-							if live {
-								state.Phase = types.LivePhase
-							} else {
-								state.Phase = types.DeadPhase
-							}
-							if err != nil {
-								state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
-							}
 							if !live {
 								if err := pd.Stop(ctx, pod.Spec.GetTerminationGracePeriod()); err != nil {
-									state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
+									logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
 								}
 							}
 						}
@@ -177,13 +214,9 @@ func up() *cobra.Command {
 					}
 					if probe := c.ReadinessProbe; probe != nil {
 						readyFunc := func(ready bool, err error) {
-							if ready {
-								state.Phase = types.ReadyPhase
-							} else {
-								state.Phase = types.UnreadyPhase
-							}
+							state.Ready = ready
 							if err != nil {
-								state.Log = types.LogEntry{Level: "error", Msg: err.Error()}
+								logEntry = &types.LogEntry{Level: "error", Msg: err.Error()}
 							}
 						}
 						go probeLoop(ctx, stop, *probe, readyFunc)
@@ -191,6 +224,8 @@ func up() *cobra.Command {
 				}
 
 				wg.Wait()
+
+				init = false
 			}
 			return nil
 		},
@@ -200,6 +235,7 @@ func up() *cobra.Command {
 func handleCrash(stop func()) {
 	if r := recover(); r != nil {
 		log.Println(r)
+		debug.PrintStack()
 		stop()
 	}
 }

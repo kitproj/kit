@@ -127,7 +127,17 @@ func (h *ContainerProc) Run(ctx context.Context, stdout, stderr io.Writer) error
 	}
 	defer logs.Close()
 	_, err = io.Copy(stdout, logs)
-	return err
+	if err != nil {
+		return err
+	}
+	inspect, err := cli.ContainerInspect(ctx, created.ID)
+	if err != nil {
+		return err
+	}
+	if inspect.State.ExitCode > 0 {
+		return fmt.Errorf("exit code %d", inspect.State.ExitCode)
+	}
+	return nil
 }
 
 func (h *ContainerProc) Stop(ctx context.Context, grace time.Duration) error {

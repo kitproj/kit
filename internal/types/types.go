@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/fatih/color"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -40,21 +42,15 @@ type Container struct {
 	Ports           []ContainerPort `json:"ports,omitempty"`
 }
 
-type ContainerStatus struct {
-	Name  string   `json:"name,omitempty"`
-	Phase Phase    `json:"phase,omitempty"`
-	Log   LogEntry `json:"log"`
-}
-
 type WriteFunc func(p []byte) (n int, err error)
 
 func (w WriteFunc) Write(p []byte) (n int, err error) {
 	return w(p)
 }
 
-func (s *ContainerStatus) Stdout() io.Writer {
+func (s *LogEntry) Stdout() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.Log = LogEntry{"info", last(p)}
+		*s = LogEntry{"info", last(p)}
 		return len(p), nil
 	})
 }
@@ -64,9 +60,9 @@ func last(p []byte) string {
 	return parts[len(parts)-1]
 }
 
-func (s *ContainerStatus) Stderr() io.Writer {
+func (s *LogEntry) Stderr() io.Writer {
 	return WriteFunc(func(p []byte) (n int, err error) {
-		s.Log = LogEntry{"error", last(p)}
+		*s = LogEntry{"error", last(p)}
 		return len(p), nil
 	})
 }
@@ -93,20 +89,6 @@ func (e LogEntry) String() string {
 type Metadata struct {
 	Name string `json:"name"`
 }
-
-type Phase string
-
-const (
-	CreatingPhase Phase = "creating"
-	BuildingPhase Phase = "building"
-	RunningPhase  Phase = "running"
-	LivePhase     Phase = "live"
-	DeadPhase     Phase = "dead"
-	ReadyPhase    Phase = "ready"
-	UnreadyPhase  Phase = "unready"
-	ExitedPhase   Phase = "exited"
-	ErrorPhase    Phase = "error"
-)
 
 type Probe struct {
 	InitialDelaySeconds int32            `json:"initialDelaySeconds,omitempty"`
@@ -183,4 +165,18 @@ func (s Spec) GetTerminationGracePeriod() time.Duration {
 	return 30 * time.Second
 }
 
-type Status map[string]*ContainerStatus
+type Status corev1.PodStatus
+
+func (s *Status) GetContainerStatus(name string) *corev1.ContainerStatus {
+	for i, x := range s.InitContainerStatuses {
+		if x.Name == name {
+			return &s.InitContainerStatuses[i]
+		}
+	}
+	for i, x := range s.ContainerStatuses {
+		if x.Name == name {
+			return &s.ContainerStatuses[i]
+		}
+	}
+	return nil
+}
