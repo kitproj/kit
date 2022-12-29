@@ -195,9 +195,6 @@ func up() *cobra.Command {
 					go func() {
 						<-ctx.Done()
 						if err := pd.Stop(context.Background(), pod.Spec.GetTerminationGracePeriod()); err != nil {
-							state.State = corev1.ContainerState{
-								Terminated: &corev1.ContainerStateTerminated{Reason: "signal"},
-							}
 							logEntry = &types.LogEntry{Level: "error", Msg: fmt.Sprintf("failed to stop: %v", err)}
 						}
 					}()
