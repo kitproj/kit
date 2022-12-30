@@ -9,8 +9,9 @@ import (
 )
 
 func lint() *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "lint",
+	return &cobra.Command{
+		Use:   "lint",
+		Short: "Lint file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			in, err := os.ReadFile(kitFile)
 			if err != nil {
@@ -31,8 +32,6 @@ func lint() *cobra.Command {
 				return err
 			}
 			return nil
-
 		},
 	}
-	return cmd
 }
