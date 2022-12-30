@@ -25,8 +25,9 @@ import (
 )
 
 func up() *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "up",
+	return &cobra.Command{
+		Use:   "up",
+		Short: "Start-up processes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
@@ -242,7 +243,6 @@ func up() *cobra.Command {
 			return nil
 		},
 	}
-	return cmd
 }
 
 func handleCrash(stop func()) {

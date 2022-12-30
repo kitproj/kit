@@ -18,8 +18,9 @@ const kitFile = "kit.yaml"
 
 func main() {
 	cmd := &cobra.Command{Use: "kit"}
-	cmd.AddCommand(up())
 	cmd.AddCommand(lint())
+	cmd.AddCommand(up())
+	cmd.AddCommand(version())
 
 	err := cmd.Execute()
 	if err != nil {
