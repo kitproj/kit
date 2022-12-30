@@ -36,12 +36,7 @@ kit up
 
 You'll see something like this:
 
-```
-▓ foo        [dead    ]  2022/12/21 17:48:19 listening on 8080
-▓ bar        [unready ]  2022/12/21 17:48:20 port=9090
-▓ baz        [excluded]  
-▓ qux        [running ]  y[Thu Dec 22 01:48:21.957864 2022] [core:notice] [pid 1:tid 281
-```
+![screenshot](screenshot.png)
 
 Logs are stored in `./logs`.
 
