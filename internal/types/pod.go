@@ -27,6 +27,39 @@ func (p ContainerPort) GetHostPort() int {
 	return p.HostPort
 }
 
+type EnvVars []EnvVar
+
+func (v EnvVars) Environ() []string {
+	var environ []string
+	for _, env := range v {
+		environ = append(environ, fmt.Sprintf("%s=%s", env.Name, env.Value))
+	}
+	return environ
+}
+
+type Build struct {
+	Command    []string `json:"command,omitempty"`
+	Args       []string `json:"args,omitempty"`
+	WorkingDir string   `json:"workingDir,omitempty"`
+	Env        EnvVars  `json:"env,omitempty"`
+	Watch      []string `json:"watch,omitempty"`
+	Mutex      string   `json:"mutex,omitempty"`
+}
+
+func (b *Build) DeepCopy() *Build {
+	if b == nil {
+		return nil
+	}
+	return &Build{
+		Command:    b.Command,
+		Args:       b.Args,
+		WorkingDir: b.WorkingDir,
+		Env:        b.Env,
+		Watch:      b.Watch,
+		Mutex:      b.Mutex,
+	}
+}
+
 type Container struct {
 	Name            string          `json:"name"`
 	Image           string          `json:"image,omitempty"`
@@ -36,10 +69,11 @@ type Container struct {
 	Command         []string        `json:"command,omitempty"`
 	Args            []string        `json:"args,omitempty"`
 	WorkingDir      string          `json:"workingDir,omitempty"`
-	Env             []EnvVar        `json:"env,omitempty"`
+	Env             EnvVars         `json:"env,omitempty"`
 	Ports           []ContainerPort `json:"ports,omitempty"`
 	VolumeMounts    []VolumeMount   `json:"volumeMounts,omitempty"`
 	TTY             bool            `json:"tty,omitempty"`
+	Build           *Build          `json:"build,omitempty"`
 }
 
 type Pod struct {

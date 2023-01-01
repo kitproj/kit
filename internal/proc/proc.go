@@ -17,7 +17,7 @@ type Interface interface {
 }
 
 func New(c types.Container, spec types.Spec) Interface {
-	if _, ok := imageIsHostfile(c.Image); c.Image == "" || ok {
+	if c.Image == "" {
 		return &host{Container: c, Spec: spec}
 	} else {
 		return &container{Container: c, Spec: spec}
