@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Kitful local dev."
   homepage "https://github.com/alexec/kit"
-  version "0.0.13"
+  version "0.0.14"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.13/kit_0.0.13_Darwin_x86_64.tar.gz"
-      sha256 "8c79568122096615eb59612e61d9fa92830a62594f0d0cc34a2cce7de933db99"
+      url "https://github.com/alexec/kit/releases/download/v0.0.14/kit_0.0.14_Darwin_x86_64.tar.gz"
+      sha256 "720779ed44e5ccfe9ed7b2c296b24e59a45bc301cfa89540b4432ca7a46ad8d3"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/alexec/kit/releases/download/v0.0.13/kit_0.0.13_Darwin_arm64.tar.gz"
-      sha256 "b8402e5efaac3c813cf3c7749c8243942354b422d39a8605454e5d624d4111a7"
+      url "https://github.com/alexec/kit/releases/download/v0.0.14/kit_0.0.14_Darwin_arm64.tar.gz"
+      sha256 "add72fd493ab981836f600763ddd8950ea6922e97403c5b1ab71b30784da4ed8"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/alexec/kit/releases/download/v0.0.13/kit_0.0.13_Linux_arm64.tar.gz"
-      sha256 "6767e8912c40bcda82e3efdc33dc589c33461725db0412b23873aa7a817595d6"
+      url "https://github.com/alexec/kit/releases/download/v0.0.14/kit_0.0.14_Linux_arm64.tar.gz"
+      sha256 "bfd5418f2d6b102047ea0e1562cf61fceaf1e90eec66085b2f1efb934c85fadb"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.13/kit_0.0.13_Linux_x86_64.tar.gz"
-      sha256 "06abdc128077b99554cb4b0332e6c1aaa322baae70ea4bdf85700b630f0d4217"
+      url "https://github.com/alexec/kit/releases/download/v0.0.14/kit_0.0.14_Linux_x86_64.tar.gz"
+      sha256 "f90122657d97ef38ee91819fdc66e8cfb55a9e8ad0ab8be1e33b40cbed2c6ebf"
 
       def install
         bin.install "kit"
