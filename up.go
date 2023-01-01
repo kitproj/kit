@@ -141,7 +141,7 @@ func up() *cobra.Command {
 					processCtx, stopProcess := context.WithCancel(ctx)
 
 					wg.Add(1)
-					go func(name, image string, livenessProbe, readinessProbe *types.Probe) {
+					go func(name, image string, livenessProbe, readinessProbe *types.Probe, build *types.Build) {
 						defer handleCrash(stopEverything)
 						defer wg.Done()
 						for {
@@ -164,20 +164,25 @@ func up() *cobra.Command {
 									logEntry.Msg = ""
 									go func() {
 										defer handleCrash(stopEverything)
-										var last time.Time
+										last := time.Now()
 										for {
 											select {
 											case <-runCtx.Done():
 												return
 											default:
-												stat, err := os.Stat(image)
-												if err != nil {
-													return
+												next := time.Now()
+												if build != nil {
+													for _, file := range build.Watch {
+														stat, err := os.Stat(file)
+														if err != nil {
+															return
+														}
+														if stat.ModTime().After(last) {
+															stopRun()
+														}
+													}
 												}
-												if !last.IsZero() && stat.ModTime().After(last) {
-													stopRun()
-												}
-												last = stat.ModTime()
+												last = next
 												time.Sleep(time.Second)
 											}
 										}
@@ -229,9 +234,10 @@ func up() *cobra.Command {
 										return
 									}
 								}
+								time.Sleep(2 * time.Second)
 							}
 						}
-					}(c.Name, c.Image, c.LivenessProbe.DeepCopy(), c.ReadinessProbe)
+					}(c.Name, c.Image, c.LivenessProbe.DeepCopy(), c.ReadinessProbe.DeepCopy(), c.Build.DeepCopy())
 
 					time.Sleep(time.Second / 4)
 				}

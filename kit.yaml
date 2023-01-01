@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: kit/v1
 kind: Pod
 metadata:
   name: kit
@@ -12,12 +12,19 @@ spec:
       tcpSocket:
         port: 8080
     name: foo
-  - command:
+  - build:
+      command:
+      - go
+      - build
+      - .
+      watch:
+      - demo/bar
+      workingDir: demo/bar
+    command:
     - ./demo/bar/bar
     env:
     - name: PORT
       value: "9090"
-    image: demo/bar
     name: bar
     readinessProbe:
       httpGet:

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -25,28 +24,25 @@ func (h *host) Init(ctx context.Context) error {
 func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	if f, ok := imageIsHostfile(h.Image); ok {
+	build := h.Container.Build
+	if build != nil {
 
-		_, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex on %s to unblock...", h.Image)))
-		if err != nil {
+		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", build.Mutex))); err != nil {
 			return err
 		}
-		mutex := KeyLock(h.Image)
+		mutex := KeyLock(build.Mutex)
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		cmd := exec.CommandContext(ctx, f)
-		cmd.Dir = h.Image
+		cmd := exec.CommandContext(ctx, build.Command[0], append(build.Command[1:], build.Args...)...)
+		cmd.Dir = build.WorkingDir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = stdout
 		cmd.Stderr = stderr
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid: true,
 		}
-		cmd.Env = os.Environ()
-		for _, env := range h.Env {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
-		}
+		cmd.Env = append(os.Environ(), build.Env.Environ()...)
 		if err := cmd.Start(); err != nil {
 			return err
 		}
@@ -70,10 +66,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Env = os.Environ()
-	for _, env := range h.Env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
-	}
+	cmd.Env = append(os.Environ(), h.Env.Environ()...)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -102,11 +95,3 @@ func isNotPermitted(err error) bool {
 }
 
 var _ Interface = &host{}
-
-const hostfile = "Hostfile"
-
-func imageIsHostfile(image string) (string, bool) {
-	f, _ := filepath.Abs(filepath.Join(image, hostfile))
-	_, err := os.Stat(f)
-	return f, err == nil
-}

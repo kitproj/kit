@@ -37,6 +37,15 @@ func (h *container) Init(ctx context.Context) error {
 }
 
 func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
+	build := h.Container.Build
+	if build != nil {
+		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", build.Mutex))); err != nil {
+			return err
+		}
+		mutex := KeyLock(build.Mutex)
+		mutex.Lock()
+		defer mutex.Unlock()
+	}
 	dockerfile := filepath.Join(h.Image, "Dockerfile")
 	if _, err := os.Stat(dockerfile); err == nil {
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
@@ -83,7 +92,7 @@ func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Hostname:     h.Name,
 		ExposedPorts: portSet,
 		Tty:          h.TTY,
-		Env:          h.createEnviron(),
+		Env:          h.Env.Environ(),
 		Cmd:          h.Args,
 		Image:        h.Image,
 		WorkingDir:   h.WorkingDir,
@@ -141,14 +150,6 @@ func (h *container) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, 
 		}}
 	}
 	return portSet, portBindings, nil
-}
-
-func (h *container) createEnviron() []string {
-	var environ []string
-	for _, env := range h.Env {
-		environ = append(environ, fmt.Sprintf("%s=%s", env.Name, env.Value))
-	}
-	return environ
 }
 
 func (h *container) createBinds() ([]string, error) {
