@@ -8,7 +8,7 @@ concurrently and their status is **muxed into a single terminal** window (so you
 container and host process **auto-rebuild** and restart. When you're done, **ctrl+c** to
 and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
 
-You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that support containers.
+You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that supports containers.
 
 | tool                | container processes | host processes | auto re-build | ctrl+c to stop | terminal mux | log capture | probes |
 |---------------------|---------------------|----------------|---------------|----------------|--------------|-------------|--------|
@@ -28,7 +28,7 @@ brew install kit
 
 ## Usage
 
-Describe you application in a [`kit.yaml`](kit.yaml) file using Kubernetes pod syntax, then start:
+Describe you application in a [`kit.yaml`](kit.yaml) file, then start:
 
 ```bash
 kit up
@@ -55,7 +55,7 @@ If it is a path to a directory containing `Dockerfile`, that file is built, and 
       image: httpd
     # path image? build and run in Docker
     - name: qux
-      image: ./demo/qux
+      image: demo/qux
 ```
 
 Any container with the same name as the container name in the YAML is stopped and re-created whenever the process
