@@ -8,7 +8,7 @@ concurrently and their status is **muxed into a single terminal** window (so you
 container and host process **auto-rebuild** and restart. When you're done, **ctrl+c** to
 and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
 
-It's arguably the mutant offspring of other tools:
+You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that support containers.
 
 | tool                | container processes | host processes | auto re-build | ctrl+c to stop | terminal mux | log capture | probes |
 |---------------------|---------------------|----------------|---------------|----------------|--------------|-------------|--------|
