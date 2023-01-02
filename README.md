@@ -71,23 +71,6 @@ If `image` field is omitted, the value of `command` is used to start the process
       command: [ go, run, ./demo/foo ]
 ```
 
-If `image` is path to a directory containing a `Hostfile`. That file is run run on the host as the build step;
-
-```bash
-#!/bin/sh
-# Hostfile
-set -eux
-
-go build .
-```
-
-```yaml
-    # Hostfile? this is a host process with a build stage
-    - name: bar
-      image: demo/bar
-      command: [ ./demo/bar/bar ]
-```
-
 ### Auto Rebuild and Restart
 
 You can specify a set of files to watch for changes that result in a re-build:
