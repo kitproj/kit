@@ -1,6 +1,6 @@
 set -eux
+go generate .
 go vet .
 goimports -w .
 git diff --exit-code
-go generate .
 go install .
