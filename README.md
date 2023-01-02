@@ -47,7 +47,7 @@ The `image` field can be either:
 1. An conventional image tag. E.g. `ubunutu`.
 2. A path to a a directory containing contain a `Dockerfile`, e.g. `.foo`.
 
-If it is a path to a directory containing `Dockerfile`, that file is built, and tagged with the container name.
+If it is a path to a directory containing `Dockerfile`, that file is built, and tagged.
 
 ```yaml
     # conventional image? run in Docker
@@ -90,26 +90,26 @@ go build .
 
 ### Auto Rebuild and Restart
 
-If anything in the build directory changes, then the process auto-rebuilds and restarts.
-
-It's often not convenient to keep your source code in the same directory as the build, but you could use a "toucher" to
-touch the build directory whenever the source changes:
+You can specify a set of files to watch for changes that result in a re-build:
 
 ```yaml
-  - command:
-    - bash
-    - -c
-    - |
-      set -eux
+  - build:
+      watch:
+        - demo/bar
+    name: bar
+```        
 
-      while true; do
-        if [[ src/main -nt src/test/app ]]; then
-          touch src/test/app
-        fi
-        sleep 2
-      done
-    name: toucher
-```
+For host processes, you must specify the build command too:
+
+```yaml
+  - build:
+      command:
+        - go
+        - build
+        - .
+      workingDir: demo/bar
+    name: bar
+```        
 
 ### Init Containers
 
