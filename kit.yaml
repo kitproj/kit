@@ -12,6 +12,8 @@ spec:
       tcpSocket:
         port: 8080
     name: foo
+    ports:
+    - hostPort: 8080
   - build:
       command:
       - go
@@ -26,6 +28,8 @@ spec:
     - name: PORT
       value: "9090"
     name: bar
+    ports:
+    - hostPort: 9090
     readinessProbe:
       httpGet:
         port: 9090

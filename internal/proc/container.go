@@ -18,7 +18,6 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type container struct {
@@ -66,7 +65,7 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 		if _, err = io.Copy(stdout, resp.Body); err != nil {
 			return err
 		}
-	} else if h.ImagePullPolicy != string(corev1.PullNever) {
+	} else if h.ImagePullPolicy != "PullNever" {
 		r, err := h.cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return err
