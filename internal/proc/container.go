@@ -37,14 +37,19 @@ func (h *container) Init(ctx context.Context) error {
 }
 
 func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
-	build := h.Container.Build
-	if build != nil {
-		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", build.Mutex))); err != nil {
-			return err
+
+	if build := h.Container.Build; build != nil {
+		if build.HasMutex() {
+			if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", build.Mutex))); err != nil {
+				return err
+			}
+			mutex := KeyLock(build.Mutex)
+			mutex.Lock()
+			defer mutex.Unlock()
+			if _, err := stdout.Write([]byte(fmt.Sprintf("locked mutex %q\n", build.Mutex))); err != nil {
+				return err
+			}
 		}
-		mutex := KeyLock(build.Mutex)
-		mutex.Lock()
-		defer mutex.Unlock()
 	}
 	dockerfile := filepath.Join(h.Image, "Dockerfile")
 	if _, err := os.Stat(dockerfile); err == nil {

@@ -13,7 +13,9 @@ func lint() *cobra.Command {
 		Use:   "lint",
 		Short: "Lint file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			in, err := os.ReadFile(kitFile)
+			configFile := defaultConfigFile
+
+			in, err := os.ReadFile(configFile)
 			if err != nil {
 				return err
 			}
@@ -27,7 +29,7 @@ func lint() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = os.WriteFile(kitFile, data, 0o0644)
+			err = os.WriteFile(configFile, data, 0o0644)
 			if err != nil {
 				return err
 			}

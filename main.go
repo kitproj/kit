@@ -14,7 +14,7 @@ func init() {
 
 const escape = "\x1b"
 
-const kitFile = "kit.yaml"
+const defaultConfigFile = "kit.yaml"
 
 func main() {
 	cmd := &cobra.Command{Use: "kit"}

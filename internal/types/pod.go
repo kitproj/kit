@@ -60,6 +60,10 @@ func (b *Build) DeepCopy() *Build {
 	}
 }
 
+func (b *Build) HasMutex() bool {
+	return b != nil && b.Mutex != ""
+}
+
 type Container struct {
 	Name            string          `json:"name"`
 	Image           string          `json:"image,omitempty"`

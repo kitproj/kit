@@ -26,9 +26,10 @@ import (
 
 func up() *cobra.Command {
 	return &cobra.Command{
-		Use:   "up",
+		Use:   "up [config_file]",
 		Short: "Start-up processes",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			configFile := defaultConfigFile
 
 			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 			defer stopEverything()
@@ -42,6 +43,7 @@ func up() *cobra.Command {
 			init := true
 
 			go func() {
+				defer handleCrash(stopEverything)
 				defer handleCrash(stopEverything)
 				for {
 					width, _, _ := terminal.GetSize(0)
@@ -83,7 +85,7 @@ func up() *cobra.Command {
 				}
 			}()
 
-			in, err := os.ReadFile(kitFile)
+			in, err := os.ReadFile(configFile)
 			if err != nil {
 				return err
 			}
@@ -94,7 +96,7 @@ func up() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err = os.WriteFile(kitFile, data, 0o0644); err != nil {
+			if err = os.WriteFile(configFile, data, 0o0644); err != nil {
 				return err
 			}
 
