@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -16,11 +14,11 @@ type EnvVar struct {
 }
 
 type ContainerPort struct {
-	ContainerPort int `json:"containerPort,omitempty"`
-	HostPort      int `json:"hostPort"`
+	ContainerPort uint16 `json:"containerPort,omitempty"`
+	HostPort      uint16 `json:"hostPort"`
 }
 
-func (p ContainerPort) GetHostPort() int {
+func (p ContainerPort) GetHostPort() uint16 {
 	if p.HostPort == 0 {
 		return p.ContainerPort
 	}
@@ -78,6 +76,14 @@ type Container struct {
 	VolumeMounts    []VolumeMount   `json:"volumeMounts,omitempty"`
 	TTY             bool            `json:"tty,omitempty"`
 	Build           *Build          `json:"build,omitempty"`
+}
+
+func (c Container) GetHostPorts() []uint16 {
+	var ports []uint16
+	for _, p := range c.Ports {
+		ports = append(ports, p.GetHostPort())
+	}
+	return ports
 }
 
 type Pod struct {
@@ -214,9 +220,35 @@ func (s Spec) GetTerminationGracePeriod() time.Duration {
 	return 30 * time.Second
 }
 
-type Status corev1.PodStatus
+type Status struct {
+	InitContainerStatuses []ContainerStatus
+	ContainerStatuses     []ContainerStatus
+}
 
-func (s *Status) GetContainerStatus(name string) *corev1.ContainerStatus {
+type ContainerStateWaiting struct {
+	Reason string
+}
+
+type ContainerStateRunning struct {
+}
+
+type ContainerStateTerminated struct {
+	Reason string
+}
+
+type ContainerState struct {
+	Waiting    *ContainerStateWaiting
+	Running    *ContainerStateRunning
+	Terminated *ContainerStateTerminated
+}
+
+type ContainerStatus struct {
+	Name  string
+	Ready bool
+	State ContainerState
+}
+
+func (s *Status) GetContainerStatus(name string) *ContainerStatus {
 	for i, x := range s.InitContainerStatuses {
 		if x.Name == name {
 			return &s.InitContainerStatuses[i]

@@ -19,7 +19,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
-	corev1 "k8s.io/api/core/v1"
 	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
@@ -78,7 +77,8 @@ func up() *cobra.Command {
 								icon = color.RedString("▓")
 							}
 						}
-						line := fmt.Sprintf("%s %-10s [%-7s]  %s", icon, k8sstrings.ShortenString(state.Name, 10), reason, logEntries[c.Name].String())
+
+						line := fmt.Sprintf("%s %-10s [%-8s] %v %s", icon, k8sstrings.ShortenString(state.Name, 10), reason, c.GetHostPorts(), logEntries[c.Name].String())
 						log.Println(k8sstrings.ShortenString(line, width))
 					}
 					time.Sleep(time.Second / 2)
@@ -106,14 +106,14 @@ func up() *cobra.Command {
 				if init {
 					for _, c := range pod.Spec.InitContainers {
 						logEntries[c.Name] = &types.LogEntry{}
-						status.InitContainerStatuses = append(status.InitContainerStatuses, corev1.ContainerStatus{
+						status.InitContainerStatuses = append(status.InitContainerStatuses, types.ContainerStatus{
 							Name: c.Name,
 						})
 					}
 				} else {
 					for _, c := range pod.Spec.Containers {
 						logEntries[c.Name] = &types.LogEntry{}
-						status.ContainerStatuses = append(status.ContainerStatuses, corev1.ContainerStatus{
+						status.ContainerStatuses = append(status.ContainerStatuses, types.ContainerStatus{
 							Name: c.Name,
 						})
 					}
@@ -154,14 +154,14 @@ func up() *cobra.Command {
 								err := func() error {
 									runCtx, stopRun := context.WithCancel(processCtx)
 									defer stopRun()
-									state.State = corev1.ContainerState{
-										Waiting: &corev1.ContainerStateWaiting{Reason: "building"},
+									state.State = types.ContainerState{
+										Waiting: &types.ContainerStateWaiting{Reason: "building"},
 									}
 									if err := prc.Build(runCtx, stdout, stderr); err != nil {
 										return fmt.Errorf("failed to build: %v", err)
 									}
-									state.State = corev1.ContainerState{
-										Running: &corev1.ContainerStateRunning{},
+									state.State = types.ContainerState{
+										Running: &types.ContainerStateRunning{},
 									}
 									logEntry.Msg = ""
 									go func() {
@@ -223,14 +223,14 @@ func up() *cobra.Command {
 									if errors.Is(err, context.Canceled) {
 										return
 									}
-									state.State = corev1.ContainerState{
-										Terminated: &corev1.ContainerStateTerminated{Reason: "error"},
+									state.State = types.ContainerState{
+										Terminated: &types.ContainerStateTerminated{Reason: "error"},
 									}
 									logEntry.Level = "error"
 									logEntry.Msg = err.Error()
 								} else {
-									state.State = corev1.ContainerState{
-										Terminated: &corev1.ContainerStateTerminated{Reason: "exited"},
+									state.State = types.ContainerState{
+										Terminated: &types.ContainerStateTerminated{Reason: "exited"},
 									}
 									if init {
 										return
