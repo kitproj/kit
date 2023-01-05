@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"os"
-
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -17,11 +15,7 @@ const escape = "\x1b"
 const defaultConfigFile = "kit.yaml"
 
 func main() {
-	cmd := &cobra.Command{Use: "kit"}
-	cmd.AddCommand(initCmd())
-	cmd.AddCommand(lintCmd())
-	cmd.AddCommand(upCmd())
-	cmd.AddCommand(versionCmd())
+	cmd := upCmd()
 
 	err := cmd.Execute()
 	if err != nil {
