@@ -79,7 +79,7 @@ func upCmd() *cobra.Command {
 						}
 
 						line := fmt.Sprintf("%s %-10s [%-8s] %v %s", icon, k8sstrings.ShortenString(state.Name, 10), reason, c.GetHostPorts(), logEntries[c.Name].String())
-						log.Println(k8sstrings.ShortenString(line, width))
+						log.Println(k8sstrings.ShortenString(line, width), color.Reset)
 					}
 					time.Sleep(time.Second / 2)
 				}
