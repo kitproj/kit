@@ -57,7 +57,7 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 			return err
 		}
 		defer r.Close()
-		resp, err := h.cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Image}})
+		resp, err := h.cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{h.Name}})
 		if err != nil {
 			return err
 		}
@@ -92,13 +92,17 @@ func (h *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	image := h.Image
+	if _, err := os.Stat(filepath.Join(h.Image, "Dockerfile")); err == nil {
+		image = h.Name
+	}
 	created, err := h.cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     h.Name,
 		ExposedPorts: portSet,
 		Tty:          h.TTY,
 		Env:          h.Env.Environ(),
 		Cmd:          h.Args,
-		Image:        h.Image,
+		Image:        image,
 		WorkingDir:   h.WorkingDir,
 		// TODO support entrypoint
 		Entrypoint: h.Command,
