@@ -65,7 +65,7 @@ func (h *container) Build(ctx context.Context, stdout, stderr io.Writer) error {
 		if _, err = io.Copy(stdout, resp.Body); err != nil {
 			return err
 		}
-	} else if h.ImagePullPolicy != "PullNever" {
+	} else if h.ImagePullPolicy != "Never" {
 		r, err := h.cli.ImagePull(ctx, h.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return err

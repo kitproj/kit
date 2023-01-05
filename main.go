@@ -18,9 +18,10 @@ const defaultConfigFile = "kit.yaml"
 
 func main() {
 	cmd := &cobra.Command{Use: "kit"}
-	cmd.AddCommand(lint())
-	cmd.AddCommand(up())
-	cmd.AddCommand(version())
+	cmd.AddCommand(initCmd())
+	cmd.AddCommand(lintCmd())
+	cmd.AddCommand(upCmd())
+	cmd.AddCommand(versionCmd())
 
 	err := cmd.Execute()
 	if err != nil {

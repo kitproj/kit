@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func up() *cobra.Command {
+func upCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "up [config_file]",
 		Short: "Start-up processes",

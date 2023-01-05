@@ -87,14 +87,15 @@ func (c Container) GetHostPorts() []uint16 {
 }
 
 type Pod struct {
-	Spec       Spec      `json:"spec"`
-	ApiVersion string    `json:"apiVersion,omitempty"`
-	Kind       string    `json:"kind,omitempty"`
-	Metadata   *Metadata `json:"metadata,omitempty"`
+	Spec       Spec     `json:"spec"`
+	ApiVersion string   `json:"apiVersion,omitempty"`
+	Kind       string   `json:"kind,omitempty"`
+	Metadata   Metadata `json:"metadata"`
 }
 
 type Metadata struct {
-	Name string `json:"name"`
+	Name        string            `json:"name"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type Probe struct {
@@ -170,14 +171,18 @@ func (a HTTPGetAction) GetProto() string {
 }
 
 func (a HTTPGetAction) GetURL() string {
-	return fmt.Sprintf("%s://localhost:%v%s", a.GetProto(), a.GetPort(), a.Path)
+	return fmt.Sprintf("%s://localhost:%s%s", a.GetProto(), a.GetPort(), a.Path)
 }
 
-func (a HTTPGetAction) GetPort() int32 {
+func (a HTTPGetAction) GetPort() string {
 	if a.Port == nil {
-		return 80
+		if a.GetProto() == "http" {
+			return "80"
+		} else {
+			return "443"
+		}
 	}
-	return a.Port.IntVal
+	return a.Port.String()
 }
 
 func (a *HTTPGetAction) DeepCopy() *HTTPGetAction {
