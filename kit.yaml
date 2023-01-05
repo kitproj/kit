@@ -1,6 +1,8 @@
 apiVersion: kit/v1
 kind: Pod
 metadata:
+  annotations:
+    help: https://github.com/alexec/kit
   name: kit
 spec:
   containers:
@@ -14,6 +16,9 @@ spec:
     name: foo
     ports:
     - hostPort: 8080
+    readinessProbe:
+      tcpSocket:
+        port: 8080
   - build:
       command:
       - go
@@ -41,29 +46,16 @@ spec:
     readinessProbe:
       httpGet:
         port: 7070
-  - image: demo/qux
-    name: qux
-    ports:
-    - containerPort: 80
-      hostPort: 6060
-    readinessProbe:
-      httpGet:
-        port: 6060
+  initContainers:
+  - command:
+    - ls
+    - /work
+    image: ubuntu
+    name: init
     volumeMounts:
     - mountPath: /work
       name: work
-  - command:
-    - sh
-    - -c
-    - |
-      set -eux
-      sleep 10
-    name: kef
-  initContainers:
-  - command:
-    - sleep
-    - "1"
-    name: init
+  terminationGracePeriodSeconds: 3
   volumes:
   - hostPath:
       path: .

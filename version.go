@@ -11,7 +11,7 @@ import (
 //go:embed tag
 var tag string
 
-func version() *cobra.Command {
+func versionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version",

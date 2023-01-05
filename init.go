@@ -1,29 +1,32 @@
 package main
 
 import (
+	_ "embed"
 	"os"
+	"path/filepath"
 
 	"github.com/alexec/kit/internal/types"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )
 
-func lintCmd() *cobra.Command {
+//go:embed kit.yaml
+var kitYaml string
+
+func initCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "lint",
-		Short: "Lint file",
+		Use:  "init",
+		Long: "Initialize config file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile
-
-			in, err := os.ReadFile(configFile)
-			if err != nil {
-				return err
-			}
 			pod := &types.Pod{}
-			err = yaml.UnmarshalStrict(in, pod)
+			err := yaml.Unmarshal([]byte(kitYaml), pod)
 			if err != nil {
 				return err
 			}
+
+			wd, _ := os.Getwd()
+			pod.Metadata.Name = filepath.Base(wd)
 
 			data, err := yaml.Marshal(pod)
 			if err != nil {
