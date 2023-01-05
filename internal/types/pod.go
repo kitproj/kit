@@ -192,6 +192,21 @@ type TaskState struct {
 	Terminated *TaskStateTerminated
 }
 
+func (s TaskStatus) GetReason() string {
+	if s.State.Waiting != nil {
+		return s.State.Waiting.Reason
+	} else if s.State.Running != nil {
+		if s.Ready {
+			return "ready"
+		} else {
+			return "running"
+		}
+	} else if s.State.Terminated != nil {
+		return s.State.Terminated.Reason
+	}
+	return "unknown"
+}
+
 type TaskStatus struct {
 	Name  string
 	Ready bool

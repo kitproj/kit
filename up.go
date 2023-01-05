@@ -42,36 +42,28 @@ func upCmd() *cobra.Command {
 
 			go func() {
 				defer handleCrash(stopEverything)
-				defer handleCrash(stopEverything)
 				for {
 					width, _, _ := terminal.GetSize(0)
 					if width == 0 {
 						width = 80
 					}
-					log.Printf("%s[2J", escape)   // erase screen
-					log.Printf("%s[0;0H", escape) // position home
+					log.Printf("%s[2J", escape)   // clear screen
+					log.Printf("%s[0;0H", escape) // move to 0,0
 					for _, t := range pod.Spec.Tasks {
 						state := status.GetContainerStatus(t.Name)
 						if state == nil {
 							continue
 						}
-						icon, reason := "▓", "unknown"
-						if state.State.Waiting != nil {
-							reason = state.State.Waiting.Reason
-						} else if state.State.Running != nil {
-							if state.Ready {
-								icon, reason = color.GreenString("▓"), "ready"
-							} else {
-								icon, reason = color.BlueString("▓"), "running"
-
-							}
-						} else if state.State.Terminated != nil {
-							icon, reason = "▓", state.State.Terminated.Reason
-							if reason == "error" {
-								icon = color.RedString("▓")
-							}
+						reason := state.GetReason()
+						icon := "▓"
+						switch reason {
+						case "running":
+							icon = color.BlueString("▓")
+						case "ready":
+							icon = color.GreenString("▓")
+						case "error":
+							icon = color.RedString("▓")
 						}
-
 						prefix := fmt.Sprintf("%s %-10s %-8s %v", icon, k8sstrings.ShortenString(state.Name, 10), reason, color.HiBlackString(fmt.Sprint(t.GetHostPorts())))
 						entry := logEntries[t.Name]
 						msg := k8sstrings.ShortenString(entry.Msg, width-len(prefix)-1)
