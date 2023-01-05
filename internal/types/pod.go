@@ -57,6 +57,7 @@ type Task struct {
 	TTY             bool          `json:"tty,omitempty"`
 	Watch           []string      `json:"watch,omitempty"`
 	Mutex           string        `json:"mutex,omitempty"`
+	Dependencies    []string      `json:"dependencies,omitempty"`
 }
 
 func (t *Task) IsBackground() bool {
@@ -158,9 +159,33 @@ type Volume struct {
 	HostPath HostPath `json:"hostPath"`
 }
 
+type Tasks []Task
+
+func (t Tasks) GetLeaves() Tasks {
+	var out Tasks
+	for _, t := range t {
+		if len(t.Dependencies) == 0 {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+func (t Tasks) GetDownstream(name string) Tasks {
+	var out Tasks
+	for _, t := range t {
+		for _, d := range t.Dependencies {
+			if d == name {
+				out = append(out, t)
+			}
+		}
+	}
+	return out
+}
+
 type PodSpec struct {
 	TerminationGracePeriodSeconds *int32   `json:"terminationGracePeriodSeconds,omitempty"`
-	Tasks                         []Task   `json:"tasks,omitempty"`
+	Tasks                         Tasks    `json:"tasks,omitempty"`
 	Volumes                       []Volume `json:"volumes,omitempty"`
 }
 
@@ -172,7 +197,7 @@ func (s PodSpec) GetTerminationGracePeriod() time.Duration {
 }
 
 type Status struct {
-	TaskStatuses []TaskStatus
+	TaskStatuses []*TaskStatus
 }
 
 type TaskStateWaiting struct {
@@ -207,6 +232,10 @@ func (s TaskStatus) GetReason() string {
 	return "unknown"
 }
 
+func (s TaskStatus) IsSuccess() bool {
+	return s.State.Terminated != nil && s.State.Terminated.Reason == "success"
+}
+
 type TaskStatus struct {
 	Name  string
 	Ready bool
@@ -216,7 +245,7 @@ type TaskStatus struct {
 func (s *Status) GetContainerStatus(name string) *TaskStatus {
 	for i, x := range s.TaskStatuses {
 		if x.Name == name {
-			return &s.TaskStatuses[i]
+			return s.TaskStatuses[i]
 		}
 	}
 	return nil

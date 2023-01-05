@@ -22,6 +22,7 @@ spec:
   - command:
     - go
     - build
+    - -v
     - .
     name: build-bar
     watch:
@@ -29,6 +30,8 @@ spec:
     workingDir: demo/bar
   - command:
     - ./demo/bar/bar
+    dependencies:
+    - build-bar
     env:
     - name: PORT
       value: "9090"
@@ -46,6 +49,7 @@ spec:
     readinessProbe:
       httpGet:
         port: 7070
+      initialDelaySeconds: 3
   - command:
     - ls
     - /work

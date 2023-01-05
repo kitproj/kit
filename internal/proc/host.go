@@ -32,7 +32,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 	}
 
-	cmd := exec.CommandContext(ctx, h.Command[0], append(h.Command[1:], h.Args...)...)
+	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdout
@@ -46,14 +46,14 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		if err := h.stop(cmd.Process.Pid); err != nil {
-			_, _ = stderr.Write([]byte(err.Error()))
+		if err := h.stop(cmd.Process.Pid, stdout); err != nil {
+			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
 	return cmd.Wait()
 }
 
-func (h *host) stop(pid int) error {
+func (h *host) stop(pid int, stdout io.Writer) error {
 	pgid, _ := syscall.Getpgid(pid)
 	if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
 		return nil
