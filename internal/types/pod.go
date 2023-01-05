@@ -173,10 +173,10 @@ func (t Tasks) GetLeaves() Tasks {
 
 func (t Tasks) GetDownstream(name string) Tasks {
 	var out Tasks
-	for _, t := range t {
-		for _, d := range t.Dependencies {
-			if d == name {
-				out = append(out, t)
+	for _, downstream := range t {
+		for _, upstream := range downstream.Dependencies {
+			if upstream == name {
+				out = append(out, downstream)
 			}
 		}
 	}

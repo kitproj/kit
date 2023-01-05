@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -38,8 +37,6 @@ func upCmd() *cobra.Command {
 			pod := &types.Pod{}
 			status := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
-			stoppers := make(map[string]func())
-			processes := make(map[string]proc.Interface)
 
 			go func() {
 				defer handleCrash(stopEverything)
@@ -48,8 +45,8 @@ func upCmd() *cobra.Command {
 					if width == 0 {
 						width = 80
 					}
-					log.Printf("%s[2J", escape)   // clear screen
-					log.Printf("%s[0;0H", escape) // move to 0,0
+					fmt.Printf("%s[2J", escape)   // clear screen
+					fmt.Printf("%s[0;0H", escape) // move to 0,0
 					for _, t := range pod.Spec.Tasks {
 						state := status.GetContainerStatus(t.Name)
 						if state == nil {
@@ -74,11 +71,9 @@ func upCmd() *cobra.Command {
 						if entry.IsError() {
 							msg = color.YellowString(msg)
 						}
-						log.Println(prefix + " " + msg)
+						fmt.Println(prefix + " " + msg)
 					}
-					log.Println()
-					log.Printf("kit %s", tag)
-					time.Sleep(time.Second / 2)
+					time.Sleep(time.Second)
 				}
 			}()
 
@@ -114,8 +109,15 @@ func upCmd() *cobra.Command {
 
 			wg := sync.WaitGroup{}
 
+			stopAndWait := make(map[string]func())
+
 			for t := range tasks {
 				name := t.Name
+
+				if f, ok := stopAndWait[name]; ok {
+					f()
+				}
+
 				logEntries[name] = &types.LogEntry{}
 				if status.GetContainerStatus(name) == nil {
 					status.TaskStatuses = append(status.TaskStatuses, &types.TaskStatus{
@@ -127,11 +129,15 @@ func upCmd() *cobra.Command {
 
 				prc := proc.New(t, pod.Spec)
 
-				processes[name] = prc
-
 				processCtx, stopProcess := context.WithCancel(ctx)
+				defer stopProcess()
 
-				stoppers[name] = stopProcess
+				pwg := &sync.WaitGroup{}
+
+				stopAndWait[name] = func() {
+					stopProcess()
+					pwg.Wait()
+				}
 
 				go func(t types.Task, stopProcess func()) {
 					defer handleCrash(stopEverything)
@@ -148,6 +154,7 @@ func upCmd() *cobra.Command {
 								}
 								if stat.ModTime().After(last) {
 									tasks <- t
+									break
 								}
 							}
 							last = time.Now()
@@ -155,10 +162,12 @@ func upCmd() *cobra.Command {
 						}
 					}
 				}(t, stopProcess)
+				wg.Add(1)
+				pwg.Add(1)
 				go func(t types.Task, status *types.TaskStatus) {
 					defer handleCrash(stopEverything)
-					wg.Add(1)
 					defer wg.Done()
+					defer pwg.Done()
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
 						panic(err)
@@ -225,10 +234,6 @@ func upCmd() *cobra.Command {
 									Terminated: &types.TaskStateTerminated{Reason: "success"},
 								}
 								for _, downstream := range pod.Spec.Tasks.GetDownstream(t.Name) {
-									if stop, ok := stoppers[downstream.Name]; ok {
-										stop()
-										delete(stoppers, downstream.Name)
-									}
 									tasks <- downstream
 								}
 								if !t.IsBackground() {
@@ -252,7 +257,7 @@ func upCmd() *cobra.Command {
 
 func handleCrash(stop func()) {
 	if r := recover(); r != nil {
-		log.Println(r)
+		fmt.Println(r)
 		debug.PrintStack()
 		stop()
 	}
