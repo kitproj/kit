@@ -2,21 +2,26 @@
 
 This is a tool to enable local development of containerized applications.
 
-It allows you to specify a set of process that run in **containers** or on the **host**. The process are run
-concurrently and their status is **muxed into a single terminal** window (so you're not overwhelmed by output). It *
-*probes** your processes to see if they've gone wrong, automatically restarting them. When your source code changes,
-container and host process **auto-rebuild** and restart. When you're done, **ctrl+c** to
-and they're all cleanly stopped. **Logs are captured** so you can look at them anytime.
+- It allows you to specify a set of **tasks** that run in **containers** or as **host processes**.
+- You can specify **liveness probes** your tasks to see if they've gone wrong, they're automatically restarting them if they go wrong.
+- You can specify **readiness probes** your tasks to see if they've ready to be used.
+- You can specify **dependencies** between tasks, so that upstream tasks are successful or ready before downstream tasks are
+  started.
+- Task run concurrently and their status is **muxed into a single terminal window** (so you're not overwhelmed by
+  output).
+- You can specify **watches on your source code changes**, tasks are automatically re-run, and your app restarts.
+- When you're done, **ctrl+c** to and they're all cleanly stopped.
+- **Logs are captured** so you can look at them anytime.
 
 You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that
 supports containers.
 
-| tool                | container processes | host processes | auto re-build | ctrl+c to stop | terminal mux | log capture | probes |
-|---------------------|---------------------|----------------|---------------|----------------|--------------|-------------|--------|
-| `kit`               | ✔                   | ✔              | ✔             | ✔              | ✔            | ✔           | ✔      |
-| `docker compose up` | ✔                   | ✖              | ✖             | ✖?             | ✔            | ✔           | ✖      |
-| `podman play kube`  | ✔                   | ✖              | ✖             | ✖              | ✖            | ✔           | ✔?     |
-| `foreman run`       | ✖                   | ✔              | ✖             | ✔              | ✔            | ✖           | ✖      |
+| tool                | container processes | host processes | auto re-run | ctrl+c to stop | terminal mux | log capture | probes |
+|---------------------|---------------------|----------------|-------------|----------------|--------------|-------------|--------|
+| `kit`               | ✔                   | ✔              | ✔           | ✔              | ✔            | ✔           | ✔      |
+| `docker compose up` | ✔                   | ✖              | ✖           | ✖?             | ✔            | ✔           | ✖      |
+| `podman play kube`  | ✔                   | ✖              | ✖           | ✖              | ✖            | ✔           | ✔?     |
+| `foreman run`       | ✖                   | ✔              | ✖           | ✔              | ✔            | ✖           | ✖      |
 
 Tilt, Skaffold, and Garden are in the same problem space.
 
@@ -29,13 +34,7 @@ brew install kit
 
 ## Usage
 
-Initialize your [`kit.yaml`](kit.yaml) file,
-
-```bash
-kit init
-```
-
-Update kit.yaml, then start:
+Create your [`kit.yaml`](kit.yaml) file, then start:
 
 ```bash
 kit up
@@ -83,28 +82,10 @@ If `image` field is omitted, the value of `command` is used to start the process
 You can specify a set of files to watch for changes that result in a re-build:
 
 ```yaml
-  - build:
-      watch:
-        - demo/bar
+  - watch:
+      - demo/bar
     name: bar
 ```        
-
-For host processes, you must specify the build command too:
-
-```yaml
-  - build:
-      command:
-        - go
-        - build
-        - .
-      workingDir: demo/bar
-    name: bar
-```        
-
-### Init Containers
-
-Init containers are started before the main containers. They are allowed to run to completion before the main containers
-are started. Useful if you want to do some set-up or build steps.
 
 ### Liveness Probe
 
@@ -126,7 +107,7 @@ running and you must manually clean up.
 ## Killing One Process
 
 * To kill a host process: `kill $(lsof -ti:$host_port)`
-* To kill a container process: `docker restart $name`.
+* To kill a container process: `docker kill $name`.
 
 ## References
 
