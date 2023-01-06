@@ -35,7 +35,7 @@ func upCmd() *cobra.Command {
 			_ = os.Mkdir("logs", 0777)
 
 			pod := &types.Pod{}
-			status := &types.Status{}
+			statuses := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
 
 			go func() {
@@ -48,7 +48,7 @@ func upCmd() *cobra.Command {
 					fmt.Printf("%s[2J", escape)   // clear screen
 					fmt.Printf("%s[0;0H", escape) // move to 0,0
 					for _, t := range pod.Spec.Tasks {
-						state := status.GetContainerStatus(t.Name)
+						state := statuses.GetStatus(t.Name)
 						if state == nil {
 							continue
 						}
@@ -111,6 +111,19 @@ func upCmd() *cobra.Command {
 
 			stopAndWait := make(map[string]func())
 
+			maybeStartDownstream := func(name string) {
+				for _, downstream := range pod.Spec.Tasks.GetDownstream(name) {
+					ok := true
+					for _, upstream := range downstream.Dependencies {
+						x := statuses.GetStatus(upstream)
+						ok = ok && (x.IsSuccess() || x.IsReady())
+					}
+					if ok {
+						tasks <- downstream
+					}
+				}
+			}
+
 			for t := range tasks {
 				name := t.Name
 
@@ -119,8 +132,8 @@ func upCmd() *cobra.Command {
 				}
 
 				logEntries[name] = &types.LogEntry{}
-				if status.GetContainerStatus(name) == nil {
-					status.TaskStatuses = append(status.TaskStatuses, &types.TaskStatus{
+				if statuses.GetStatus(name) == nil {
+					statuses.TaskStatuses = append(statuses.TaskStatuses, &types.TaskStatus{
 						Name: name,
 					})
 				}
@@ -207,9 +220,7 @@ func upCmd() *cobra.Command {
 										status.Ready = ready
 										if ready {
 											_, _ = fmt.Fprintf(stdout, "readiness ready=%v\n", status.Ready)
-											for _, downstream := range pod.Spec.Tasks.GetDownstream(t.Name) {
-												tasks <- downstream
-											}
+											maybeStartDownstream(name)
 										} else {
 											_, _ = fmt.Fprintf(stderr, "readiness ready=%v err=%v\n", ready, err)
 										}
@@ -233,9 +244,7 @@ func upCmd() *cobra.Command {
 								status.State = types.TaskState{
 									Terminated: &types.TaskStateTerminated{Reason: "success"},
 								}
-								for _, downstream := range pod.Spec.Tasks.GetDownstream(t.Name) {
-									tasks <- downstream
-								}
+								maybeStartDownstream(name)
 								if !t.IsBackground() {
 									return
 								}
@@ -243,7 +252,7 @@ func upCmd() *cobra.Command {
 							time.Sleep(2 * time.Second)
 						}
 					}
-				}(t, status.GetContainerStatus(t.Name))
+				}(t, statuses.GetStatus(t.Name))
 
 				time.Sleep(time.Second / 4)
 			}

@@ -232,8 +232,12 @@ func (s TaskStatus) GetReason() string {
 	return "unknown"
 }
 
-func (s TaskStatus) IsSuccess() bool {
-	return s.State.Terminated != nil && s.State.Terminated.Reason == "success"
+func (s *TaskStatus) IsSuccess() bool {
+	return s != nil && s.State.Terminated != nil && s.State.Terminated.Reason == "success"
+}
+
+func (s *TaskStatus) IsReady() bool {
+	return s != nil && s.Ready
 }
 
 type TaskStatus struct {
@@ -242,7 +246,7 @@ type TaskStatus struct {
 	State TaskState
 }
 
-func (s *Status) GetContainerStatus(name string) *TaskStatus {
+func (s *Status) GetStatus(name string) *TaskStatus {
 	for i, x := range s.TaskStatuses {
 		if x.Name == name {
 			return s.TaskStatuses[i]
