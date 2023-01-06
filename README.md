@@ -49,7 +49,7 @@ You'll see something like this:
 
 Logs are stored in `./logs`.
 
-### Container Process
+### Container
 
 The `image` field can be either:
 
@@ -79,6 +79,9 @@ If `image` field is omitted, the value of `command` is used to start the process
     - name: foo
       command: [ go, run, ./demo/foo ]
 ```
+### Noop
+
+If `image` field is omitted and `command` is omitted, the task does nothing, running forever.
 
 ### Auto Rebuild and Restart
 

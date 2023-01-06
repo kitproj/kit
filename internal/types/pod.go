@@ -180,6 +180,38 @@ func (t Tasks) GetDownstream(name string) Tasks {
 	return out
 }
 
+func (t Tasks) NeededFor(names []string) Tasks {
+	todo := make(chan string, len(t))
+	for _, name := range names {
+		todo <- name
+	}
+	found := map[string]bool{}
+	for name := range todo {
+		found[name] = true
+		for _, d := range t.Get(name).Dependencies {
+			todo <- d
+		}
+		if len(todo) == 0 {
+			close(todo)
+		}
+	}
+	var out Tasks
+	for name := range found {
+		out = append(out, t.Get(name))
+	}
+	return out
+}
+
+func (t Tasks) Get(name string) Task {
+	for _, task := range t {
+		if task.Name == name {
+			return task
+		}
+
+	}
+	panic(fmt.Errorf("not task named %q", name))
+}
+
 type PodSpec struct {
 	TerminationGracePeriodSeconds *int32   `json:"terminationGracePeriodSeconds,omitempty"`
 	Tasks                         Tasks    `json:"tasks,omitempty"`
@@ -230,11 +262,23 @@ func (s TaskStatus) GetReason() string {
 }
 
 func (s *TaskStatus) IsSuccess() bool {
-	return s != nil && s.State.Terminated != nil && s.State.Terminated.Reason == "success"
+	return s.IsTerminated() && s.State.Terminated.Reason == "success"
+}
+
+func (s TaskStatus) Failed() bool {
+	return s.IsTerminated() && !s.IsSuccess()
+}
+
+func (s *TaskStatus) IsTerminated() bool {
+	return s != nil && s.State.Terminated != nil
 }
 
 func (s *TaskStatus) IsReady() bool {
 	return s != nil && s.Ready
+}
+
+func (s TaskStatus) IsFulfilled() bool {
+	return s.IsSuccess() || s.IsReady()
 }
 
 type TaskStatus struct {

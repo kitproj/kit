@@ -44,8 +44,9 @@ const defaultConfigFile = "kit.yaml"
 
 func main() {
 	cmd := &cobra.Command{
-		Use:   "kit [config_file]",
-		Short: "Start-up processes",
+		Use:          "kit [config_file]",
+		Short:        "Start-up processes",
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile
 
@@ -55,9 +56,26 @@ func main() {
 			_ = os.Mkdir("logs", 0777)
 
 			pod := &types.Pod{}
+
+			in, err := os.ReadFile(configFile)
+			if err != nil {
+				return err
+			}
+			if err = yaml.UnmarshalStrict(in, pod); err != nil {
+				return err
+			}
+			data, err := yaml.Marshal(pod)
+			if err != nil {
+				return err
+			}
+			if err = os.WriteFile(configFile, data, 0o0644); err != nil {
+				return err
+			}
+
+			tasks := pod.Spec.Tasks.NeededFor(args)
+
 			statuses := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
-
 			go func() {
 				defer handleCrash(stopEverything)
 				for {
@@ -67,7 +85,7 @@ func main() {
 					}
 					fmt.Printf("%s[2J", escape)   // clear screen
 					fmt.Printf("%s[0;0H", escape) // move to 0,0
-					for _, t := range pod.Spec.Tasks {
+					for _, t := range tasks {
 						state := statuses.GetStatus(t.Name)
 						if state == nil {
 							continue
@@ -97,34 +115,19 @@ func main() {
 				}
 			}()
 
-			in, err := os.ReadFile(configFile)
-			if err != nil {
-				return err
-			}
-			if err = yaml.UnmarshalStrict(in, pod); err != nil {
-				return err
-			}
-			data, err := yaml.Marshal(pod)
-			if err != nil {
-				return err
-			}
-			if err = os.WriteFile(configFile, data, 0o0644); err != nil {
-				return err
-			}
-
-			tasks := make(chan types.Task)
+			work := make(chan types.Task)
 
 			go func() {
 				defer handleCrash(stopEverything)
-				for _, t := range pod.Spec.Tasks.GetLeaves() {
-					tasks <- t
+				for _, t := range tasks.GetLeaves() {
+					work <- t
 				}
 			}()
 
 			go func() {
 				defer handleCrash(stopEverything)
 				<-ctx.Done()
-				close(tasks)
+				close(work)
 			}()
 
 			wg := sync.WaitGroup{}
@@ -132,19 +135,32 @@ func main() {
 			stopAndWait := make(map[string]func())
 
 			maybeStartDownstream := func(name string) {
-				for _, downstream := range pod.Spec.Tasks.GetDownstream(name) {
+				for _, downstream := range tasks.GetDownstream(name) {
 					ok := true
 					for _, upstream := range downstream.Dependencies {
-						x := statuses.GetStatus(upstream)
-						ok = ok && (x.IsSuccess() || x.IsReady())
+						ok = ok && statuses.GetStatus(upstream).IsFulfilled()
 					}
 					if ok {
-						tasks <- downstream
+						work <- downstream
 					}
 				}
 			}
 
-			for t := range tasks {
+			go func() {
+				defer handleCrash(stopEverything)
+				for {
+					fulfilled := true
+					for _, task := range tasks {
+						fulfilled = fulfilled && !task.IsBackground() && statuses.GetStatus(task.Name).IsTerminated()
+					}
+					if fulfilled {
+						stopEverything()
+					}
+					time.Sleep(time.Second)
+				}
+			}()
+
+			for t := range work {
 				name := t.Name
 
 				if f, ok := stopAndWait[name]; ok {
@@ -186,7 +202,7 @@ func main() {
 									return
 								}
 								if stat.ModTime().After(last) {
-									tasks <- t
+									work <- t
 									break
 								}
 							}
@@ -279,13 +295,18 @@ func main() {
 
 			wg.Wait()
 
+			for _, task := range tasks {
+				if statuses.GetStatus(task.Name).Failed() {
+					return fmt.Errorf("%s failed", task.Name)
+				}
+			}
+
 			return nil
 		},
 	}
 
-	err := cmd.Execute()
-	if err != nil {
-		panic(err)
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
 	}
 }
 

@@ -58,6 +58,16 @@ spec:
     volumeMounts:
     - mountPath: /work
       name: work
+  - command:
+    - sh
+    - -c
+    - exit 1
+    name: error
+  - dependencies:
+    - foo
+    - bar
+    - baz
+    name: up
   terminationGracePeriodSeconds: 3
   volumes:
   - hostPath:
