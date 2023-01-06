@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -22,6 +23,10 @@ import (
 	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
+
+//go:generate sh -c "git describe --tags > tag"
+//go:embed tag
+var tag string
 
 func init() {
 	_ = os.Mkdir("logs", 0o777)
