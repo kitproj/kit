@@ -8,9 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-//go:generate go install github.com/globusdigital/deep-copy@latest
-//go:generate deep-copy --type Task --type Probe --pointer-receiver -o pod_deepcopy.go .
-
 type EnvVar struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
