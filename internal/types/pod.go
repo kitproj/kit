@@ -13,12 +13,12 @@ type EnvVar struct {
 	Value string `json:"value"`
 }
 
-type ContainerPort struct {
+type Port struct {
 	ContainerPort uint16 `json:"containerPort,omitempty"`
 	HostPort      uint16 `json:"hostPort"`
 }
 
-func (p ContainerPort) GetHostPort() uint16 {
+func (p Port) GetHostPort() uint16 {
 	if p.HostPort == 0 {
 		return p.ContainerPort
 	}
@@ -35,67 +35,45 @@ func (v EnvVars) Environ() []string {
 	return environ
 }
 
-type Build struct {
-	Command    []string `json:"command,omitempty"`
-	Args       []string `json:"args,omitempty"`
-	WorkingDir string   `json:"workingDir,omitempty"`
-	Env        EnvVars  `json:"env,omitempty"`
-	Watch      []string `json:"watch,omitempty"`
-	Mutex      string   `json:"mutex,omitempty"`
+func (t *Task) HasMutex() bool {
+	return t != nil && t.Mutex != ""
 }
 
-func (b *Build) DeepCopy() *Build {
-	if b == nil {
-		return nil
-	}
-	return &Build{
-		Command:    b.Command,
-		Args:       b.Args,
-		WorkingDir: b.WorkingDir,
-		Env:        b.Env,
-		Watch:      b.Watch,
-		Mutex:      b.Mutex,
-	}
+type Task struct {
+	Name            string        `json:"name"`
+	Image           string        `json:"image,omitempty"`
+	ImagePullPolicy string        `json:"imagePullPolicy,omitempty"`
+	LivenessProbe   *Probe        `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *Probe        `json:"readinessProbe,omitempty"`
+	Command         []string      `json:"command,omitempty"`
+	Args            []string      `json:"args,omitempty"`
+	WorkingDir      string        `json:"workingDir,omitempty"`
+	Env             EnvVars       `json:"env,omitempty"`
+	Ports           []Port        `json:"ports,omitempty"`
+	VolumeMounts    []VolumeMount `json:"volumeMounts,omitempty"`
+	TTY             bool          `json:"tty,omitempty"`
+	Watch           []string      `json:"watch,omitempty"`
+	Mutex           string        `json:"mutex,omitempty"`
+	Dependencies    []string      `json:"dependencies,omitempty"`
 }
 
-func (b *Build) HasMutex() bool {
-	return b != nil && b.Mutex != ""
+func (t *Task) IsBackground() bool {
+	return t.ReadinessProbe != nil && t.LivenessProbe != nil
 }
 
-type Container struct {
-	Name            string          `json:"name"`
-	Image           string          `json:"image,omitempty"`
-	ImagePullPolicy string          `json:"imagePullPolicy,omitempty"`
-	LivenessProbe   *Probe          `json:"livenessProbe,omitempty"`
-	ReadinessProbe  *Probe          `json:"readinessProbe,omitempty"`
-	Command         []string        `json:"command,omitempty"`
-	Args            []string        `json:"args,omitempty"`
-	WorkingDir      string          `json:"workingDir,omitempty"`
-	Env             EnvVars         `json:"env,omitempty"`
-	Ports           []ContainerPort `json:"ports,omitempty"`
-	VolumeMounts    []VolumeMount   `json:"volumeMounts,omitempty"`
-	TTY             bool            `json:"tty,omitempty"`
-	Build           *Build          `json:"build,omitempty"`
-}
-
-func (c Container) GetHostPorts() []uint16 {
+func (t Task) GetHostPorts() []uint16 {
 	var ports []uint16
-	for _, p := range c.Ports {
+	for _, p := range t.Ports {
 		ports = append(ports, p.GetHostPort())
 	}
 	return ports
 }
 
 type Pod struct {
-	Spec       Spec     `json:"spec"`
+	Spec       PodSpec  `json:"spec"`
 	ApiVersion string   `json:"apiVersion,omitempty"`
 	Kind       string   `json:"kind,omitempty"`
 	Metadata   Metadata `json:"metadata"`
-}
-
-type Metadata struct {
-	Name        string            `json:"name"`
-	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type Probe struct {
@@ -132,29 +110,8 @@ func (p Probe) GetSuccessThreshold() int {
 	return int(p.SuccessThreshold)
 }
 
-func (p *Probe) DeepCopy() *Probe {
-	if p == nil {
-		return nil
-	}
-	return &Probe{
-		InitialDelaySeconds: p.InitialDelaySeconds,
-		PeriodSeconds:       p.PeriodSeconds,
-		TCPSocket:           p.TCPSocket.DeepCopy(),
-		HTTPGet:             p.HTTPGet.DeepCopy(),
-		SuccessThreshold:    p.SuccessThreshold,
-		FailureThreshold:    p.FailureThreshold,
-	}
-}
-
 type TCPSocketAction struct {
 	Port intstr.IntOrString `json:"port"`
-}
-
-func (a *TCPSocketAction) DeepCopy() *TCPSocketAction {
-	if a == nil {
-		return nil
-	}
-	return &TCPSocketAction{Port: a.Port}
 }
 
 type HTTPGetAction struct {
@@ -185,18 +142,6 @@ func (a HTTPGetAction) GetPort() string {
 	return a.Port.String()
 }
 
-func (a *HTTPGetAction) DeepCopy() *HTTPGetAction {
-	if a == nil {
-		return nil
-	}
-	return &HTTPGetAction{
-		Scheme: a.Scheme,
-		Port:   a.Port,
-		Path:   a.Path,
-	}
-
-}
-
 type VolumeMount struct {
 	Name      string `json:"name"`
 	MountPath string `json:"mountPath"`
@@ -211,14 +156,37 @@ type Volume struct {
 	HostPath HostPath `json:"hostPath"`
 }
 
-type Spec struct {
-	TerminationGracePeriodSeconds *int32      `json:"terminationGracePeriodSeconds,omitempty"`
-	InitContainers                []Container `json:"initContainers,omitempty"`
-	Containers                    []Container `json:"containers,omitempty"`
-	Volumes                       []Volume    `json:"volumes,omitempty"`
+type Tasks []Task
+
+func (t Tasks) GetLeaves() Tasks {
+	var out Tasks
+	for _, t := range t {
+		if len(t.Dependencies) == 0 {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
-func (s Spec) GetTerminationGracePeriod() time.Duration {
+func (t Tasks) GetDownstream(name string) Tasks {
+	var out Tasks
+	for _, downstream := range t {
+		for _, upstream := range downstream.Dependencies {
+			if upstream == name {
+				out = append(out, downstream)
+			}
+		}
+	}
+	return out
+}
+
+type PodSpec struct {
+	TerminationGracePeriodSeconds *int32   `json:"terminationGracePeriodSeconds,omitempty"`
+	Tasks                         Tasks    `json:"tasks,omitempty"`
+	Volumes                       []Volume `json:"volumes,omitempty"`
+}
+
+func (s PodSpec) GetTerminationGracePeriod() time.Duration {
 	if s.TerminationGracePeriodSeconds != nil {
 		return time.Duration(*s.TerminationGracePeriodSeconds) * time.Second
 	}
@@ -226,42 +194,59 @@ func (s Spec) GetTerminationGracePeriod() time.Duration {
 }
 
 type Status struct {
-	InitContainerStatuses []ContainerStatus
-	ContainerStatuses     []ContainerStatus
+	TaskStatuses []*TaskStatus
 }
 
-type ContainerStateWaiting struct {
+type TaskStateWaiting struct {
 	Reason string
 }
 
-type ContainerStateRunning struct {
+type TaskStateRunning struct {
 }
 
-type ContainerStateTerminated struct {
+type TaskStateTerminated struct {
 	Reason string
 }
 
-type ContainerState struct {
-	Waiting    *ContainerStateWaiting
-	Running    *ContainerStateRunning
-	Terminated *ContainerStateTerminated
+type TaskState struct {
+	Waiting    *TaskStateWaiting
+	Running    *TaskStateRunning
+	Terminated *TaskStateTerminated
 }
 
-type ContainerStatus struct {
+func (s TaskStatus) GetReason() string {
+	if s.State.Waiting != nil {
+		return s.State.Waiting.Reason
+	} else if s.State.Running != nil {
+		if s.Ready {
+			return "ready"
+		} else {
+			return "running"
+		}
+	} else if s.State.Terminated != nil {
+		return s.State.Terminated.Reason
+	}
+	return "unknown"
+}
+
+func (s *TaskStatus) IsSuccess() bool {
+	return s != nil && s.State.Terminated != nil && s.State.Terminated.Reason == "success"
+}
+
+func (s *TaskStatus) IsReady() bool {
+	return s != nil && s.Ready
+}
+
+type TaskStatus struct {
 	Name  string
 	Ready bool
-	State ContainerState
+	State TaskState
 }
 
-func (s *Status) GetContainerStatus(name string) *ContainerStatus {
-	for i, x := range s.InitContainerStatuses {
+func (s *Status) GetStatus(name string) *TaskStatus {
+	for i, x := range s.TaskStatuses {
 		if x.Name == name {
-			return &s.InitContainerStatuses[i]
-		}
-	}
-	for i, x := range s.ContainerStatuses {
-		if x.Name == name {
-			return &s.ContainerStatuses[i]
+			return s.TaskStatuses[i]
 		}
 	}
 	return nil

@@ -3,20 +3,11 @@ package types
 import (
 	"io"
 	"strings"
-
-	"github.com/fatih/color"
 )
 
 type LogEntry struct {
 	Level string `json:"level"`
 	Msg   string `json:"msg"`
-}
-
-func (e *LogEntry) String() string {
-	if e.Level == "error" {
-		return color.YellowString(e.Msg)
-	}
-	return e.Msg
 }
 
 func (s *LogEntry) Stdout() io.Writer {
@@ -36,4 +27,8 @@ func (s *LogEntry) Stderr() io.Writer {
 		*s = LogEntry{"error", last(p)}
 		return len(p), nil
 	})
+}
+
+func (s *LogEntry) IsError() bool {
+	return s.Level == "error"
 }

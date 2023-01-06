@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -25,7 +24,7 @@ import (
 
 func upCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "up [config_file]",
+		Use:   "kit [config_file]",
 		Short: "Start-up processes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile
@@ -36,52 +35,45 @@ func upCmd() *cobra.Command {
 			_ = os.Mkdir("logs", 0777)
 
 			pod := &types.Pod{}
-			status := &types.Status{}
+			statuses := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
-			processes := make(map[string]proc.Interface)
-			init := true
 
 			go func() {
-				defer handleCrash(stopEverything)
 				defer handleCrash(stopEverything)
 				for {
 					width, _, _ := terminal.GetSize(0)
 					if width == 0 {
 						width = 80
 					}
-
-					log.Printf("%s[2J", escape)
-					log.Printf("%s[H", escape)
-					containers := pod.Spec.Containers
-					if init {
-						containers = pod.Spec.InitContainers
-					}
-					for _, c := range containers {
-						state := status.GetContainerStatus(c.Name)
+					fmt.Printf("%s[2J", escape)   // clear screen
+					fmt.Printf("%s[0;0H", escape) // move to 0,0
+					for _, t := range pod.Spec.Tasks {
+						state := statuses.GetStatus(t.Name)
 						if state == nil {
 							continue
 						}
-						icon, reason := "▓", "unknown"
-						if state.State.Waiting != nil {
-							reason = state.State.Waiting.Reason
-						} else if state.State.Running != nil {
-							if state.Ready {
-								icon, reason = color.GreenString("▓"), "ready"
-							} else {
-								icon, reason = color.BlueString("▓"), "running"
-
-							}
-						} else if state.State.Terminated != nil {
-							icon, reason = "▓", state.State.Terminated.Reason
-							if reason == "error" {
-								icon = color.RedString("▓")
-							}
+						if state.IsSuccess() {
+							continue
 						}
-
-						line := fmt.Sprintf("%s %-10s [%-8s] %v %s", icon, k8sstrings.ShortenString(state.Name, 10), reason, c.GetHostPorts(), logEntries[c.Name].String())
-						log.Println(k8sstrings.ShortenString(line, width), color.Reset)
+						reason := state.GetReason()
+						icon := "▓"
+						switch reason {
+						case "running":
+							icon = color.BlueString("▓")
+						case "ready":
+							icon = color.GreenString("▓")
+						case "error":
+							icon = color.RedString("▓")
+						}
+						prefix := fmt.Sprintf("%s %-10s %-8s %v", icon, k8sstrings.ShortenString(state.Name, 10), reason, color.HiBlackString(fmt.Sprint(t.GetHostPorts())))
+						entry := logEntries[t.Name]
+						msg := k8sstrings.ShortenString(entry.Msg, width-len(prefix)-1)
+						if entry.IsError() {
+							msg = color.YellowString(msg)
+						}
+						fmt.Println(prefix + " " + msg)
 					}
-					time.Sleep(time.Second / 2)
+					time.Sleep(time.Second)
 				}
 			}()
 
@@ -100,154 +92,173 @@ func upCmd() *cobra.Command {
 				return err
 			}
 
-			for _, containers := range [][]types.Container{pod.Spec.InitContainers, pod.Spec.Containers} {
-				wg := &sync.WaitGroup{}
+			tasks := make(chan types.Task)
 
-				if init {
-					for _, c := range pod.Spec.InitContainers {
-						logEntries[c.Name] = &types.LogEntry{}
-						status.InitContainerStatuses = append(status.InitContainerStatuses, types.ContainerStatus{
-							Name: c.Name,
-						})
+			go func() {
+				defer handleCrash(stopEverything)
+				for _, t := range pod.Spec.Tasks.GetLeaves() {
+					tasks <- t
+				}
+			}()
+
+			go func() {
+				defer handleCrash(stopEverything)
+				<-ctx.Done()
+				close(tasks)
+			}()
+
+			wg := sync.WaitGroup{}
+
+			stopAndWait := make(map[string]func())
+
+			maybeStartDownstream := func(name string) {
+				for _, downstream := range pod.Spec.Tasks.GetDownstream(name) {
+					ok := true
+					for _, upstream := range downstream.Dependencies {
+						x := statuses.GetStatus(upstream)
+						ok = ok && (x.IsSuccess() || x.IsReady())
 					}
-				} else {
-					for _, c := range pod.Spec.Containers {
-						logEntries[c.Name] = &types.LogEntry{}
-						status.ContainerStatuses = append(status.ContainerStatuses, types.ContainerStatus{
-							Name: c.Name,
-						})
+					if ok {
+						tasks <- downstream
 					}
 				}
+			}
 
-				for _, c := range containers {
+			for t := range tasks {
+				name := t.Name
 
-					name := c.Name
-					state := status.GetContainerStatus(name)
+				if f, ok := stopAndWait[name]; ok {
+					f()
+				}
 
-					logEntry := logEntries[name]
+				logEntries[name] = &types.LogEntry{}
+				if statuses.GetStatus(name) == nil {
+					statuses.TaskStatuses = append(statuses.TaskStatuses, &types.TaskStatus{
+						Name: name,
+					})
+				}
 
+				logEntry := logEntries[name]
+
+				prc := proc.New(t, pod.Spec)
+
+				processCtx, stopProcess := context.WithCancel(ctx)
+				defer stopProcess()
+
+				pwg := &sync.WaitGroup{}
+
+				stopAndWait[name] = func() {
+					stopProcess()
+					pwg.Wait()
+				}
+
+				go func(t types.Task, stopProcess func()) {
+					defer handleCrash(stopEverything)
+					last := time.Now()
+					for {
+						select {
+						case <-processCtx.Done():
+							return
+						default:
+							for _, file := range t.Watch {
+								stat, err := os.Stat(file)
+								if err != nil {
+									return
+								}
+								if stat.ModTime().After(last) {
+									tasks <- t
+									break
+								}
+							}
+							last = time.Now()
+							time.Sleep(time.Second)
+						}
+					}
+				}(t, stopProcess)
+				wg.Add(1)
+				pwg.Add(1)
+				go func(t types.Task, status *types.TaskStatus) {
+					defer handleCrash(stopEverything)
+					defer wg.Done()
+					defer pwg.Done()
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
-						return err
+						panic(err)
 					}
+					defer logFile.Close()
 					stdout := io.MultiWriter(logFile, logEntry.Stdout())
 					stderr := io.MultiWriter(logFile, logEntry.Stderr())
-					prc := proc.New(c, pod.Spec)
-
-					processes[name] = prc
-
-					if err = prc.Init(ctx); err != nil {
-						return err
-					}
-
-					processCtx, stopProcess := context.WithCancel(ctx)
-
-					wg.Add(1)
-					go func(name, image string, livenessProbe, readinessProbe *types.Probe, build *types.Build) {
-						defer handleCrash(stopEverything)
-						defer wg.Done()
-						for {
-							select {
-							case <-ctx.Done():
-								return
-							default:
-								err := func() error {
-									runCtx, stopRun := context.WithCancel(processCtx)
-									defer stopRun()
-									state.State = types.ContainerState{
-										Waiting: &types.ContainerStateWaiting{Reason: "building"},
-									}
-									if err := prc.Build(runCtx, stdout, stderr); err != nil {
-										return fmt.Errorf("failed to build: %v", err)
-									}
-									state.State = types.ContainerState{
-										Running: &types.ContainerStateRunning{},
-									}
-									logEntry.Msg = ""
-									go func() {
-										defer handleCrash(stopEverything)
-										last := time.Now()
-										for {
-											select {
-											case <-runCtx.Done():
-												return
-											default:
-												next := time.Now()
-												if build != nil {
-													for _, file := range build.Watch {
-														stat, err := os.Stat(file)
-														if err != nil {
-															return
-														}
-														if stat.ModTime().After(last) {
-															stopRun()
-														}
-													}
-												}
-												last = next
-												time.Sleep(time.Second)
-											}
-										}
-									}()
-									if probe := livenessProbe; probe != nil {
-										liveFunc := func(name string, live bool, err error) {
-											if !live {
-												stopRun()
-											}
-										}
-										go probeLoop(runCtx, stopEverything, name, *probe, liveFunc)
-									}
-									if probe := readinessProbe; probe != nil {
-										readyFunc := func(name string, ready bool, err error) {
-											state.Ready = ready
-											if err != nil {
-												logEntry.Level = "error"
-												logEntry.Msg = err.Error()
-
-											}
-										}
-										go probeLoop(ctx, stopEverything, name, *probe, readyFunc)
-									}
-
-									go func() {
-										defer handleCrash(stopEverything)
-										<-ctx.Done()
-										stopProcess()
-									}()
-									if err := prc.Run(runCtx, stdout, stderr); err != nil {
-										return fmt.Errorf("failed to run: %v", err)
-									}
-									return nil
+					for {
+						select {
+						case <-processCtx.Done():
+							return
+						default:
+							err := func() error {
+								runCtx, stopRun := context.WithCancel(processCtx)
+								defer stopRun()
+								go func() {
+									defer handleCrash(stopEverything)
+									<-ctx.Done()
+									stopProcess()
 								}()
-								if err != nil {
-									if errors.Is(err, context.Canceled) {
-										return
-									}
-									state.State = types.ContainerState{
-										Terminated: &types.ContainerStateTerminated{Reason: "error"},
-									}
-									logEntry.Level = "error"
-									logEntry.Msg = err.Error()
-								} else {
-									state.State = types.ContainerState{
-										Terminated: &types.ContainerStateTerminated{Reason: "exited"},
-									}
-									if init {
-										return
-									}
+								status.State = types.TaskState{
+									Running: &types.TaskStateRunning{},
 								}
-								time.Sleep(2 * time.Second)
+								if probe := t.LivenessProbe; probe != nil {
+									liveFunc := func(live bool, err error) {
+										if !live {
+											_, _ = fmt.Fprintf(stderr, "liveness live=%v err=%v\n", live, err)
+											stopRun()
+										} else {
+											_, _ = fmt.Fprintf(stdout, "liveness live=%v\n", live)
+										}
+									}
+									go probeLoop(runCtx, stopEverything, *probe, liveFunc)
+								}
+								if probe := t.ReadinessProbe; probe != nil {
+									readyFunc := func(ready bool, err error) {
+										status.Ready = ready
+										if ready {
+											_, _ = fmt.Fprintf(stdout, "readiness ready=%v\n", status.Ready)
+											maybeStartDownstream(name)
+										} else {
+											_, _ = fmt.Fprintf(stderr, "readiness ready=%v err=%v\n", ready, err)
+										}
+									}
+									go probeLoop(runCtx, stopEverything, *probe, readyFunc)
+								}
+								if err := prc.Run(runCtx, stdout, stderr); err != nil {
+									return fmt.Errorf("failed to run: %w", err)
+								}
+								return nil
+							}()
+							if err != nil {
+								if errors.Is(err, context.Canceled) {
+									return
+								}
+								status.State = types.TaskState{
+									Terminated: &types.TaskStateTerminated{Reason: "error"},
+								}
+								_, _ = fmt.Fprintln(stderr, err.Error())
+							} else {
+								status.State = types.TaskState{
+									Terminated: &types.TaskStateTerminated{Reason: "success"},
+								}
+								maybeStartDownstream(name)
+								if !t.IsBackground() {
+									return
+								}
 							}
+							time.Sleep(2 * time.Second)
 						}
-					}(c.Name, c.Image, c.LivenessProbe.DeepCopy(), c.ReadinessProbe.DeepCopy(), c.Build.DeepCopy())
+					}
+				}(t, statuses.GetStatus(t.Name))
 
-					time.Sleep(time.Second / 4)
-				}
-
-				wg.Wait()
-
-				init = false
+				time.Sleep(time.Second / 4)
 			}
+
+			wg.Wait()
+
 			return nil
 		},
 	}
@@ -255,7 +266,7 @@ func upCmd() *cobra.Command {
 
 func handleCrash(stop func()) {
 	if r := recover(); r != nil {
-		log.Println(r)
+		fmt.Println(r)
 		debug.PrintStack()
 		stop()
 	}

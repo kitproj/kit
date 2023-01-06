@@ -13,54 +13,26 @@ import (
 )
 
 type host struct {
-	types.Spec
-	types.Container
-}
-
-func (h *host) Init(ctx context.Context) error {
-	return nil
-}
-
-func (h *host) Build(ctx context.Context, stdout, stderr io.Writer) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	if build := h.Container.Build; build != nil {
-		if build.HasMutex() {
-			if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", build.Mutex))); err != nil {
-				return err
-			}
-			mutex := KeyLock(build.Mutex)
-			mutex.Lock()
-			defer mutex.Unlock()
-			if _, err := stdout.Write([]byte(fmt.Sprintf("locked mutex %q\n", build.Mutex))); err != nil {
-				return err
-			}
-		}
-		cmd := exec.CommandContext(ctx, build.Command[0], append(build.Command[1:], build.Args...)...)
-		cmd.Dir = build.WorkingDir
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = stdout
-		cmd.Stderr = stderr
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid: true,
-		}
-		cmd.Env = append(os.Environ(), build.Env.Environ()...)
-		if err := cmd.Start(); err != nil {
-			return err
-		}
-		go func() {
-			<-ctx.Done()
-			h.stop(cmd.Process.Pid)
-		}()
-		return cmd.Wait()
-	}
-	return nil
+	types.PodSpec
+	types.Task
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, h.Command[0], append(h.Command[1:], h.Args...)...)
+	if h.Task.HasMutex() {
+		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", h.Mutex))); err != nil {
+			return err
+		}
+		mutex := KeyLock(h.Mutex)
+		mutex.Lock()
+		defer mutex.Unlock()
+		if _, err := stdout.Write([]byte(fmt.Sprintf("locked mutex %q\n", h.Mutex))); err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdout
@@ -74,17 +46,19 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		h.stop(cmd.Process.Pid)
+		if err := h.stop(cmd.Process.Pid, stdout); err != nil {
+			_, _ = fmt.Fprintln(stderr, err.Error())
+		}
 	}()
 	return cmd.Wait()
 }
 
-func (h *host) stop(pid int) error {
+func (h *host) stop(pid int, stdout io.Writer) error {
 	pgid, _ := syscall.Getpgid(pid)
 	if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
 		return nil
 	}
-	time.Sleep(h.Spec.GetTerminationGracePeriod())
+	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
 	if err := syscall.Kill(-pgid, syscall.SIGKILL); err == nil || isNotPermitted(err) {
 		return nil
 	} else {

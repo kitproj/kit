@@ -8,18 +8,14 @@ import (
 )
 
 type Interface interface {
-	// Init performs are one-time initialization.
-	Init(ctx context.Context) error
-	// Build does any build steps needed.
-	Build(ctx context.Context, stdout, stderr io.Writer) error
 	// Run runs the process.
 	Run(ctx context.Context, stdout, stderr io.Writer) error
 }
 
-func New(c types.Container, spec types.Spec) Interface {
-	if c.Image == "" {
-		return &host{Container: c, Spec: spec}
+func New(t types.Task, spec types.PodSpec) Interface {
+	if t.Image == "" {
+		return &host{Task: t, PodSpec: spec}
 	} else {
-		return &container{Container: c, Spec: spec}
+		return &container{Task: t, PodSpec: spec}
 	}
 }

@@ -3,13 +3,16 @@ package main
 import (
 	"log"
 	"os"
-
-	"github.com/spf13/cobra"
 )
 
 func init() {
-	log.SetFlags(0)
-	log.SetOutput(os.Stdout)
+	_ = os.Mkdir("logs", 0o777)
+	f, err := os.OpenFile("logs/kit.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	log.SetOutput(f)
+	log.Println(tag)
 }
 
 const escape = "\x1b"
@@ -17,14 +20,10 @@ const escape = "\x1b"
 const defaultConfigFile = "kit.yaml"
 
 func main() {
-	cmd := &cobra.Command{Use: "kit"}
-	cmd.AddCommand(initCmd())
-	cmd.AddCommand(lintCmd())
-	cmd.AddCommand(upCmd())
-	cmd.AddCommand(versionCmd())
+	cmd := upCmd()
 
 	err := cmd.Execute()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }

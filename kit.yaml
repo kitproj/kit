@@ -5,7 +5,7 @@ metadata:
     help: https://github.com/alexec/kit
   name: kit
 spec:
-  containers:
+  tasks:
   - command:
     - go
     - run
@@ -19,16 +19,19 @@ spec:
     readinessProbe:
       tcpSocket:
         port: 8080
-  - build:
-      command:
-      - go
-      - build
-      - .
-      watch:
-      - demo/bar
-      workingDir: demo/bar
-    command:
+  - command:
+    - go
+    - build
+    - -v
+    - .
+    name: build-bar
+    watch:
+    - demo/bar
+    workingDir: demo/bar
+  - command:
     - ./demo/bar/bar
+    dependencies:
+    - build-bar
     env:
     - name: PORT
       value: "9090"
@@ -46,7 +49,7 @@ spec:
     readinessProbe:
       httpGet:
         port: 7070
-  initContainers:
+      initialDelaySeconds: 3
   - command:
     - ls
     - /work
