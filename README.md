@@ -3,12 +3,13 @@
 This is a tool to enable local development of containerized applications.
 
 - It allows you to specify a set of **tasks** that run in **containers** or as **host processes**.
-- You can specify **liveness probes** your tasks to see if they've gone wrong, they're automatically restarting them if they go wrong.
-- You can specify **readiness probes** your tasks to see if they've ready to be used.
-- You can specify **dependencies** between tasks, so that upstream tasks are successful or ready before downstream tasks are
-  started.
-- Task run concurrently and their status is **muxed into a single terminal window** (so you're not overwhelmed by
-  output).
+- You can specify **liveness probes** for your tasks to see if they've working, they're automatically restarting them
+  when they go wrong.
+- You can specify **readiness probes** for your tasks to see if they're ready.
+- You can specify **dependencies** between tasks, so that upstream one tasks become successful or ready downstream tasks
+  are automatically started.
+- Tasks run concurrently and their status is **muxed into a single terminal window** so you're not overwhelmed by
+  pages of terminal output.
 - You can specify **watches on your source code changes**, tasks are automatically re-run, and your app restarts.
 - When you're done, **ctrl+c** to and they're all cleanly stopped.
 - **Logs are captured** so you can look at them anytime.
@@ -23,7 +24,9 @@ supports containers.
 | `podman play kube`  | ✔                   | ✖              | ✖           | ✖              | ✖            | ✔           | ✔?     |
 | `foreman run`       | ✖                   | ✔              | ✖           | ✔              | ✔            | ✖           | ✖      |
 
-Tilt, Skaffold, and Garden are in the same problem space.
+Tilt, Skaffold, and Garden are in the same problem space, but they all cross the boundary into deployment and often require Kubernetes.
+
+You could also use is a more sophisticated `make -j4`.
 
 ## Install
 
