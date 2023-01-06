@@ -40,12 +40,12 @@ func init() {
 
 const escape = "\x1b"
 
-const defaultConfigFile = "kit.yaml"
+const defaultConfigFile = "tasks.yaml"
 
 func main() {
 	cmd := &cobra.Command{
-		Use:          "kit [config_file]",
-		Short:        "Start-up processes",
+		Use:          "kit [TASK_NAME...]",
+		Short:        "Run tasks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile

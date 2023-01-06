@@ -181,6 +181,9 @@ func (t Tasks) GetDownstream(name string) Tasks {
 }
 
 func (t Tasks) NeededFor(names []string) Tasks {
+	if len(names) == 0 {
+		return nil
+	}
 	todo := make(chan string, len(t))
 	for _, name := range names {
 		todo <- name

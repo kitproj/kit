@@ -37,7 +37,7 @@ brew install kit
 
 ## Usage
 
-Create your [`kit.yaml`](kit.yaml) file, then start:
+Create your [`tasks.yaml`](tasks.yaml) file, then start:
 
 ```bash
 kit up

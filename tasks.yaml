@@ -1,5 +1,5 @@
 apiVersion: kit/v1
-kind: Pod
+kind: Tasks
 metadata:
   annotations:
     help: https://github.com/alexec/kit
