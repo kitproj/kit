@@ -76,6 +76,17 @@ func main() {
 
 			statuses := &types.Status{}
 			logEntries := make(map[string]*types.LogEntry)
+
+			for _, task := range tasks {
+				logEntries[task.Name] = &types.LogEntry{}
+				statuses.TaskStatuses = append(statuses.TaskStatuses, &types.TaskStatus{
+					Name: task.Name,
+					State: types.TaskState{
+						Waiting: &types.TaskStateWaiting{Reason: "waiting"},
+					},
+				})
+			}
+
 			go func() {
 				defer handleCrash(stopEverything)
 				for {
@@ -85,7 +96,7 @@ func main() {
 					}
 					fmt.Printf("%s[2J", escape)   // clear screen
 					fmt.Printf("%s[0;0H", escape) // move to 0,0
-					for _, t := range tasks {
+					for _, t := range pod.Spec.Tasks {
 						state := statuses.GetStatus(t.Name)
 						if state == nil {
 							continue
@@ -165,13 +176,6 @@ func main() {
 
 				if f, ok := stopAndWait[name]; ok {
 					f()
-				}
-
-				logEntries[name] = &types.LogEntry{}
-				if statuses.GetStatus(name) == nil {
-					statuses.TaskStatuses = append(statuses.TaskStatuses, &types.TaskStatus{
-						Name: name,
-					})
 				}
 
 				logEntry := logEntries[name]
@@ -263,10 +267,7 @@ func main() {
 									}
 									go probeLoop(runCtx, stopEverything, *probe, readyFunc)
 								}
-								if err := prc.Run(runCtx, stdout, stderr); err != nil {
-									return fmt.Errorf("failed to run: %w", err)
-								}
-								return nil
+								return prc.Run(runCtx, stdout, stderr)
 							}()
 							if err != nil {
 								if errors.Is(err, context.Canceled) {

@@ -15,7 +15,7 @@ type EnvVar struct {
 
 type Port struct {
 	ContainerPort uint16 `json:"containerPort,omitempty"`
-	HostPort      uint16 `json:"hostPort"`
+	HostPort      uint16 `json:"hostPort,omitempty"`
 }
 
 func (p Port) GetHostPort() uint16 {
@@ -192,7 +192,9 @@ func (t Tasks) NeededFor(names []string) Tasks {
 	for name := range todo {
 		found[name] = true
 		for _, d := range t.Get(name).Dependencies {
-			todo <- d
+			if !found[d] {
+				todo <- d
+			}
 		}
 		if len(todo) == 0 {
 			close(todo)
@@ -204,7 +206,14 @@ func (t Tasks) NeededFor(names []string) Tasks {
 	}
 	return out
 }
-
+func (t Tasks) Has(name string) bool {
+	for _, task := range t {
+		if task.Name == name {
+			return true
+		}
+	}
+	return false
+}
 func (t Tasks) Get(name string) Task {
 	for _, task := range t {
 		if task.Name == name {
@@ -268,7 +277,7 @@ func (s *TaskStatus) IsSuccess() bool {
 	return s.IsTerminated() && s.State.Terminated.Reason == "success"
 }
 
-func (s TaskStatus) Failed() bool {
+func (s *TaskStatus) Failed() bool {
 	return s.IsTerminated() && !s.IsSuccess()
 }
 
@@ -280,7 +289,7 @@ func (s *TaskStatus) IsReady() bool {
 	return s != nil && s.Ready
 }
 
-func (s TaskStatus) IsFulfilled() bool {
+func (s *TaskStatus) IsFulfilled() bool {
 	return s.IsSuccess() || s.IsReady()
 }
 
