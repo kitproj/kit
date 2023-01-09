@@ -88,8 +88,7 @@ If `image` field is omitted and `command` is omitted, the task does nothing, run
 You can specify a set of files to watch for changes that result in a re-build:
 
 ```yaml
-  - watch:
-      - demo/bar
+  - watch: demo/bar
     name: bar
 ```        
 
