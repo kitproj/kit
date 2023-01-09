@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/docker/docker/api/types/strslice"
+
 	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/alexec/kit/internal/types"
@@ -81,11 +83,11 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		ExposedPorts: portSet,
 		Tty:          c.TTY,
 		Env:          c.Env.Environ(),
-		Cmd:          c.Args,
+		Cmd:          strslice.StrSlice(c.Args),
 		Image:        image,
 		WorkingDir:   c.WorkingDir,
 		// TODO support entrypoint
-		Entrypoint: c.Command,
+		Entrypoint: strslice.StrSlice(c.Command),
 		Labels:     map[string]string{"name": c.Name},
 	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,

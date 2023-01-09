@@ -6,67 +6,35 @@ metadata:
   name: kit
 spec:
   tasks:
-  - command:
-    - go
-    - run
-    - ./demo/foo
-    livenessProbe:
-      tcpSocket:
-        port: 8080
+  - command: go run ./demo/foo
+    livenessProbe: tcp://:8080
     name: foo
-    ports:
-    - hostPort: 8080
-    readinessProbe:
-      tcpSocket:
-        port: 8080
-  - command:
-    - go
-    - build
-    - -v
-    - .
+    ports: "8080"
+    readinessProbe: tcp://:8080
+  - command: go build -v .
     name: build-bar
-    watch:
-    - demo/bar
+    watch: demo/bar
     workingDir: demo/bar
-  - command:
-    - ./demo/bar/bar
-    dependencies:
-    - build-bar
+  - command: ./demo/bar/bar
+    dependencies: build-bar
     env:
-    - name: PORT
-      value: "9090"
+    - =
     name: bar
-    ports:
-    - hostPort: 9090
-    readinessProbe:
-      httpGet:
-        port: 9090
+    ports: "9090"
+    readinessProbe: http://:9090
   - image: httpd
     name: baz
-    ports:
-    - containerPort: 80
-      hostPort: 7070
-    readinessProbe:
-      httpGet:
-        port: 7070
-      initialDelaySeconds: 3
-  - command:
-    - ls
-    - /work
+    ports: 80:80
+    readinessProbe: http://:7070?initialDelay=3s
+  - command: ls /work
     image: ubuntu
     name: init
     volumeMounts:
     - mountPath: /work
       name: work
-  - command:
-    - sh
-    - -c
-    - exit 1
+  - command: sh -c "exit 1"
     name: error
-  - dependencies:
-    - foo
-    - bar
-    - baz
+  - dependencies: foo bar baz
     name: up
   terminationGracePeriodSeconds: 3
   volumes:
