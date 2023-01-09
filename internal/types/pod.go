@@ -131,7 +131,7 @@ func (p *Port) Unstring(s string) error {
 	case 2:
 		containerPort, err := strconv.ParseUint(parts[0], 10, 16)
 		p.ContainerPort = uint16(containerPort)
-		hostPort, err := strconv.ParseUint(parts[0], 10, 16)
+		hostPort, err := strconv.ParseUint(parts[1], 10, 16)
 		p.HostPort = uint16(hostPort)
 		return err
 	default:
@@ -269,9 +269,9 @@ func (p *Probe) Unstring(s string) error {
 	}
 
 	q := u.Query()
-	successThreshold, _ := strconv.Atoi(q.Get("successThreshold"))
+	successThreshold, _ := strconv.ParseInt(q.Get("successThreshold"), 10, 32)
 	p.SuccessThreshold = int32(successThreshold)
-	failureThreshold, _ := strconv.Atoi(q.Get("failureThreshold"))
+	failureThreshold, _ := strconv.ParseInt(q.Get("failureThreshold"), 10, 32)
 	p.FailureThreshold = int32(failureThreshold)
 	period, _ := time.ParseDuration(q.Get("period"))
 	p.PeriodSeconds = int32(period.Seconds())
@@ -371,7 +371,7 @@ func (a HTTPGetAction) GetURL() string {
 }
 
 func (a HTTPGetAction) GetPort() string {
-	if a.Port == nil {
+	if a.Port != nil {
 		return a.Port.String()
 	}
 	if a.GetProto() == "https" {
