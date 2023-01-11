@@ -26,7 +26,7 @@ supports containers.
 
 Tilt, Skaffold, and Garden are in the same problem space, but they all cross the boundary into deployment and often require Kubernetes.
 
-You could also use is a more sophisticated `make -j4`.
+You could also think of it as a more sophisticated `make -j4`.
 
 ## Install
 
