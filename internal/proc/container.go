@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"k8s.io/utils/strings/slices"
+
 	"github.com/docker/docker/api/types/strslice"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -88,7 +90,6 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		WorkingDir:   c.WorkingDir,
 		// TODO support entrypoint
 		Entrypoint: strslice.StrSlice(c.Command),
-		Labels:     map[string]string{"name": c.Name},
 	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,
 		Binds:        binds,
@@ -165,7 +166,7 @@ func (c *container) remove(ctx context.Context, cli *client.Client) error {
 	}
 	grace := c.PodSpec.GetTerminationGracePeriod()
 	for _, existing := range list {
-		if existing.Labels["name"] == c.Name {
+		if slices.Contains(existing.Names, "/"+c.Name) {
 			_ = cli.ContainerStop(ctx, existing.ID, &grace)
 			if err := cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
 				return err
