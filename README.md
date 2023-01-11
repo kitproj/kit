@@ -3,10 +3,10 @@
 This is a tool to enable local development of containerized applications.
 
 - It allows you to specify a set of **tasks** that run in **containers** or as **host processes**.
-- You can specify **liveness probes** for your tasks to see if they've working, they're automatically restarting them
+- You can specify **liveness probes** for your tasks to see if they're working, automatically restarting them
   when they go wrong.
 - You can specify **readiness probes** for your tasks to see if they're ready.
-- You can specify **dependencies** between tasks, so that upstream one tasks become successful or ready downstream tasks
+- You can specify **dependencies** between tasks, when upstream tasks become successful or ready downstream tasks
   are automatically started.
 - Tasks run concurrently and their status is **muxed into a single terminal window** so you're not overwhelmed by
   pages of terminal output.
