@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -16,8 +17,10 @@ import (
 	"time"
 
 	"github.com/alexec/kit/internal/proc"
+
 	"github.com/alexec/kit/internal/types"
 	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	k8sstrings "k8s.io/utils/strings"
@@ -116,11 +119,15 @@ func main() {
 						}
 						prefix := fmt.Sprintf("%s %-10s %-8s %v", icon, k8sstrings.ShortenString(state.Name, 10), reason, color.HiBlackString(fmt.Sprint(t.GetHostPorts())))
 						entry := logEntries[t.Name]
-						msg := k8sstrings.ShortenString(entry.Msg, width-len(prefix)-1)
-						if entry.IsError() {
-							msg = color.YellowString(msg)
+						n := width - len(prefix) - 1
+						msg := ""
+						if n > 0 {
+							msg = k8sstrings.ShortenString(entry.Msg, n)
+							if entry.IsError() {
+								msg = color.YellowString(msg)
+							}
 						}
-						fmt.Println(prefix + " " + msg)
+						fmt.Println(k8sstrings.ShortenString(prefix+" "+msg, width))
 					}
 					time.Sleep(time.Second)
 				}
@@ -194,24 +201,49 @@ func main() {
 
 				go func(t types.Task, stopProcess func()) {
 					defer handleCrash(stopEverything)
-					last := time.Now()
+					watcher, err := fsnotify.NewWatcher()
+					if err != nil {
+						panic(err)
+					}
+					defer watcher.Close()
+					for _, w := range t.Watch {
+						stat, err := os.Stat(w)
+						if err != nil {
+							panic(err)
+						}
+						if err := watcher.Add(w); err != nil {
+							panic(err)
+						}
+						if stat.IsDir() {
+							if err := filepath.WalkDir(w, func(path string, d fs.DirEntry, err error) error {
+								if err != nil {
+									return err
+								}
+								if d.IsDir() {
+									log.Printf("%q watching %q\n", t.Name, path)
+									return watcher.Add(path)
+								}
+								return nil
+							}); err != nil {
+								panic(err)
+							}
+						}
+					}
+
+					timer := time.AfterFunc(100*365*24*time.Hour, func() {
+						work <- t
+					})
+					defer timer.Stop()
+
 					for {
 						select {
 						case <-processCtx.Done():
 							return
-						default:
-							for _, file := range t.Watch {
-								stat, err := os.Stat(file)
-								if err != nil {
-									return
-								}
-								if stat.ModTime().After(last) {
-									work <- t
-									break
-								}
-							}
-							last = time.Now()
-							time.Sleep(time.Second)
+						case e := <-watcher.Events:
+							log.Printf("%q changed %v\n", t.Name, e)
+							timer.Reset(time.Second)
+						case err := <-watcher.Errors:
+							panic(err)
 						}
 					}
 				}(t, stopProcess)
