@@ -181,23 +181,12 @@ func main() {
 			for t := range work {
 				name := t.Name
 
-				if f, ok := stopAndWait[name]; ok {
-					f()
-				}
-
 				logEntry := logEntries[name]
 
 				prc := proc.New(t, pod.Spec)
 
 				processCtx, stopProcess := context.WithCancel(ctx)
 				defer stopProcess()
-
-				pwg := &sync.WaitGroup{}
-
-				stopAndWait[name] = func() {
-					stopProcess()
-					pwg.Wait()
-				}
 
 				go func(t types.Task, stopProcess func()) {
 					defer handleCrash(stopEverything)
@@ -248,11 +237,21 @@ func main() {
 					}
 				}(t, stopProcess)
 				wg.Add(1)
+				pwg := &sync.WaitGroup{}
 				pwg.Add(1)
 				go func(t types.Task, status *types.TaskStatus) {
 					defer handleCrash(stopEverything)
 					defer wg.Done()
 					defer pwg.Done()
+					if f, ok := stopAndWait[name]; ok {
+						f()
+					}
+
+					stopAndWait[name] = func() {
+						stopProcess()
+						pwg.Wait()
+					}
+
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
 						panic(err)
