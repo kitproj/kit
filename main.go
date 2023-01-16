@@ -53,7 +53,7 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile
 
-			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stopEverything()
 
 			_ = os.Mkdir("logs", 0777)
@@ -150,7 +150,7 @@ func main() {
 
 			wg := sync.WaitGroup{}
 
-			stopAndWait := make(map[string]func())
+			stopAndWait := &sync.Map{}
 
 			maybeStartDownstream := func(name string) {
 				for _, downstream := range tasks.GetDownstream(name) {
@@ -243,14 +243,14 @@ func main() {
 					defer handleCrash(stopEverything)
 					defer wg.Done()
 					defer pwg.Done()
-					if f, ok := stopAndWait[name]; ok {
-						f()
+					if f, ok := stopAndWait.Load(name); ok {
+						f.(func())()
 					}
 
-					stopAndWait[name] = func() {
+					stopAndWait.Store(name, func() {
 						stopProcess()
 						pwg.Wait()
-					}
+					})
 
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
@@ -275,7 +275,7 @@ func main() {
 								status.State = types.TaskState{
 									Running: &types.TaskStateRunning{},
 								}
-								if probe := t.LivenessProbe; probe != nil {
+								if probe := t.GetLivenessProbe(); probe != nil {
 									liveFunc := func(live bool, err error) {
 										if !live {
 											_, _ = fmt.Fprintf(stderr, "liveness live=%v err=%v\n", live, err)
@@ -286,7 +286,7 @@ func main() {
 									}
 									go probeLoop(runCtx, stopEverything, *probe, liveFunc)
 								}
-								if probe := t.ReadinessProbe; probe != nil {
+								if probe := t.GetReadinessProbe(); probe != nil {
 									readyFunc := func(ready bool, err error) {
 										status.Ready = ready
 										if ready {

@@ -23,7 +23,7 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 		default:
 			var err error
 			if tcp := probe.TCPSocket; tcp != nil {
-				_, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", tcp.Port.String()))
+				_, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", tcp.Port))
 			} else if httpGet := probe.HTTPGet; httpGet != nil {
 				err = func() error {
 					resp, err := http.Get(httpGet.GetURL())

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type EnvVar struct {
@@ -67,6 +65,11 @@ func (p *Ports) UnmarshalJSON(data []byte) error {
 		for _, port := range x {
 			*p = append(*p, port)
 		}
+		return nil
+	}
+	var i int
+	if err := json.Unmarshal(data, &i); err == nil {
+		*p = append(*p, Port{ContainerPort: uint16(i)})
 		return nil
 	}
 	var x = Strings{}
@@ -200,6 +203,27 @@ func (t Task) GetHostPorts() []uint16 {
 	return ports
 }
 
+func (t *Task) GetReadinessProbe() *Probe {
+	if t.ReadinessProbe != nil {
+		return t.ReadinessProbe
+	}
+	if len(t.Ports) > 0 {
+		return &Probe{TCPSocket: &TCPSocketAction{Port: t.Ports[0].GetHostPort()}}
+	}
+	return nil
+}
+
+func (t *Task) GetLivenessProbe() *Probe {
+	if t.LivenessProbe != nil {
+		return t.LivenessProbe
+	}
+	if len(t.Ports) > 0 {
+		return &Probe{TCPSocket: &TCPSocketAction{Port: t.Ports[0].GetHostPort()}}
+	}
+	return nil
+
+}
+
 type Pod struct {
 	Spec       PodSpec  `json:"spec"`
 	ApiVersion string   `json:"apiVersion,omitempty"`
@@ -257,13 +281,13 @@ func (p *Probe) Unstring(s string) error {
 	if err != nil {
 		return err
 	}
+	port := parsePort(u.Port())
 	if u.Scheme == "tcp" {
-		p.TCPSocket = &TCPSocketAction{Port: intstr.FromString(u.Port())}
+		p.TCPSocket = &TCPSocketAction{Port: uint16(port)}
 	} else {
-		port := intstr.FromString(u.Port())
 		p.HTTPGet = &HTTPGetAction{
 			Scheme: u.Scheme,
-			Port:   &port,
+			Port:   uint16(port),
 			Path:   u.Path,
 		}
 	}
@@ -278,6 +302,11 @@ func (p *Probe) Unstring(s string) error {
 	initialDelay, _ := time.ParseDuration(q.Get("initialDelay"))
 	p.InitialDelaySeconds = int32(initialDelay.Seconds())
 	return err
+}
+
+func parsePort(s string) uint16 {
+	port, _ := strconv.ParseUint(s, 10, 16)
+	return uint16(port)
 }
 
 func (p Probe) URL() *url.URL {
@@ -330,21 +359,21 @@ func (p Probe) GetSuccessThreshold() int {
 }
 
 type TCPSocketAction struct {
-	Port intstr.IntOrString `json:"port"`
+	Port uint16 `json:"port"`
 }
 
 func (a TCPSocketAction) URL() *url.URL {
-	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf(":%s", a.Port.String())}
+	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf(":%v", a.Port)}
 }
 
 type HTTPGetAction struct {
-	Scheme string              `json:"scheme,omitempty"`
-	Port   *intstr.IntOrString `json:"port,omitempty"`
-	Path   string              `json:"path,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
+	Port   uint16 `json:"port,omitempty"`
+	Path   string `json:"path,omitempty"`
 }
 
 func (a HTTPGetAction) URL() *url.URL {
-	return &url.URL{Scheme: a.GetProto(), Host: fmt.Sprintf(":%s", a.Port), Path: a.Path}
+	return &url.URL{Scheme: a.GetProto(), Host: fmt.Sprintf(":%v", a.Port), Path: a.Path}
 }
 
 func (a *HTTPGetAction) Unstring(s string) error {
@@ -353,8 +382,8 @@ func (a *HTTPGetAction) Unstring(s string) error {
 		return err
 	}
 	a.Scheme = x.Scheme
-	port := intstr.FromString(x.Port())
-	a.Port = &port
+	port, _ := strconv.ParseUint(x.Port(), 10, 16)
+	a.Port = uint16(port)
 	a.Path = x.Path
 	return nil
 }
@@ -367,17 +396,17 @@ func (a HTTPGetAction) GetProto() string {
 }
 
 func (a HTTPGetAction) GetURL() string {
-	return fmt.Sprintf("%s://localhost:%s%s", a.GetProto(), a.GetPort(), a.Path)
+	return fmt.Sprintf("%s://localhost:%v%s", a.GetProto(), a.GetPort(), a.Path)
 }
 
-func (a HTTPGetAction) GetPort() string {
-	if a.Port != nil {
-		return a.Port.String()
+func (a HTTPGetAction) GetPort() uint16 {
+	if a.Port > 0 {
+		return a.Port
 	}
 	if a.GetProto() == "https" {
-		return "443"
+		return 443
 	}
-	return "80"
+	return 80
 }
 
 type VolumeMount struct {

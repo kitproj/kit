@@ -7,25 +7,23 @@ metadata:
 spec:
   tasks:
   - command: go run ./demo/foo
-    livenessProbe: tcp://:8080
     name: foo
     ports: "8080"
-    readinessProbe: tcp://:8080
   - command: go build -v .
     name: build-bar
-    watch: demo/bar
+    watch: demo/bar/main.go
     workingDir: demo/bar
   - command: ./demo/bar/bar
     dependencies: build-bar
     env:
-    - =
+    - PORT=9090
     name: bar
     ports: "9090"
     readinessProbe: http://:9090
   - image: httpd
     name: baz
     ports: 80:80
-    readinessProbe: http://:7070?initialDelay=3s
+    readinessProbe: http://:80?initialDelay=3s
   - command: ls /work
     image: ubuntu
     name: init
