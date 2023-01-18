@@ -150,7 +150,7 @@ func main() {
 
 			wg := sync.WaitGroup{}
 
-			stopAndWait := &sync.Map{}
+			stop := &sync.Map{}
 
 			maybeStartDownstream := func(name string) {
 				for _, downstream := range tasks.GetDownstream(name) {
@@ -239,18 +239,23 @@ func main() {
 				wg.Add(1)
 				pwg := &sync.WaitGroup{}
 				pwg.Add(1)
-				go func(t types.Task, status *types.TaskStatus) {
+				go func(t types.Task, status *types.TaskStatus, stopProcess func()) {
 					defer handleCrash(stopEverything)
 					defer wg.Done()
 					defer pwg.Done()
-					if f, ok := stopAndWait.Load(name); ok {
+
+					if f, ok := stop.Load(name); ok {
+						log.Printf("stopping old %q \n", name)
 						f.(func())()
 					}
 
-					stopAndWait.Store(name, func() {
-						stopProcess()
-						pwg.Wait()
-					})
+					stop.Store(name, stopProcess)
+
+					mutex := proc.KeyLock("/main/proc/" + name)
+					log.Printf("waiting for mutex on %q\n", name)
+					mutex.Lock()
+					log.Printf("locked mutex %q\n", name)
+					defer mutex.Unlock()
 
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
 					if err != nil {
@@ -264,6 +269,7 @@ func main() {
 						case <-processCtx.Done():
 							return
 						default:
+							log.Printf("starting %q\n", name)
 							err := func() error {
 								runCtx, stopRun := context.WithCancel(processCtx)
 								defer stopRun()
@@ -320,7 +326,7 @@ func main() {
 							time.Sleep(2 * time.Second)
 						}
 					}
-				}(t, statuses.GetStatus(t.Name))
+				}(t, statuses.GetStatus(t.Name), stopProcess)
 
 				time.Sleep(time.Second / 4)
 			}

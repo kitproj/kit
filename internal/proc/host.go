@@ -24,7 +24,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", h.Mutex))); err != nil {
 			return err
 		}
-		mutex := KeyLock(h.Mutex)
+		mutex := KeyLock("/proc/mutex/" + h.Mutex)
 		mutex.Lock()
 		defer mutex.Unlock()
 		if _, err := stdout.Write([]byte(fmt.Sprintf("locked mutex %q\n", h.Mutex))); err != nil {
