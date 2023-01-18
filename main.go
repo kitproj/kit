@@ -117,7 +117,10 @@ func main() {
 						case "error":
 							icon = color.RedString("▓")
 						}
-						prefix := fmt.Sprintf("%s %-10s %-8s %v", icon, k8sstrings.ShortenString(state.Name, 10), reason, color.HiBlackString(fmt.Sprint(t.GetHostPorts())))
+						prefix := fmt.Sprintf("%s %-10s %-8s", icon, k8sstrings.ShortenString(state.Name, 10), reason)
+						if ports := t.GetHostPorts(); len(ports) > 0 {
+							prefix = prefix + " " + color.HiBlackString(fmt.Sprint(ports))
+						}
 						entry := logEntries[t.Name]
 						n := width - len(prefix) - 1
 						msg := ""
@@ -209,7 +212,7 @@ func main() {
 									return err
 								}
 								if d.IsDir() {
-									log.Printf("%q watching %q\n", t.Name, path)
+									logEntry.Printf("%q watching %q\n", t.Name, path)
 									return watcher.Add(path)
 								}
 								return nil
@@ -229,7 +232,7 @@ func main() {
 						case <-processCtx.Done():
 							return
 						case e := <-watcher.Events:
-							log.Printf("%q changed %v\n", t.Name, e)
+							logEntry.Printf("%v changed\n", e)
 							timer.Reset(time.Second)
 						case err := <-watcher.Errors:
 							panic(err)
@@ -245,16 +248,16 @@ func main() {
 					defer pwg.Done()
 
 					if f, ok := stop.Load(name); ok {
-						log.Printf("stopping old %q \n", name)
+						logEntry.Printf("stopping process")
 						f.(func())()
 					}
 
 					stop.Store(name, stopProcess)
 
 					mutex := proc.KeyLock("/main/proc/" + name)
-					log.Printf("waiting for mutex on %q\n", name)
+					logEntry.Printf("waiting for mutex\n")
 					mutex.Lock()
-					log.Printf("locked mutex %q\n", name)
+					logEntry.Printf("locked mutex\n")
 					defer mutex.Unlock()
 
 					logFile, err := os.Create(filepath.Join("logs", name+".log"))
@@ -269,7 +272,7 @@ func main() {
 						case <-processCtx.Done():
 							return
 						default:
-							log.Printf("starting %q\n", name)
+							logEntry.Printf("starting process")
 							err := func() error {
 								runCtx, stopRun := context.WithCancel(processCtx)
 								defer stopRun()

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"io"
 	"strings"
 )
@@ -31,4 +32,8 @@ func (s *LogEntry) Stderr() io.Writer {
 
 func (s *LogEntry) IsError() bool {
 	return s.Level == "error"
+}
+
+func (s *LogEntry) Printf(format string, args ...any) {
+	_, _ = fmt.Fprintf(s.Stdout(), format, args...)
 }
