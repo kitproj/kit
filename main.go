@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -130,7 +131,7 @@ func main() {
 								msg = color.YellowString(msg)
 							}
 						}
-						fmt.Println(prefix+" "+msg, width)
+						fmt.Println(prefix + " " + msg)
 					}
 					time.Sleep(time.Second / 2)
 				}
@@ -269,59 +270,75 @@ func main() {
 						case <-processCtx.Done():
 							return
 						default:
-							logEntry.Printf("starting process")
 							err := func() error {
-								runCtx, stopRun := context.WithCancel(processCtx)
-								defer stopRun()
-								go func() {
-									defer handleCrash(stopEverything)
-									<-ctx.Done()
-									stopProcess()
-								}()
-								status.Ready = false
-								status.State = types.TaskState{
-									Running: &types.TaskStateRunning{},
-								}
-								if probe := t.GetLivenessProbe(); probe != nil {
-									liveFunc := func(live bool, err error) {
-										if !live {
-											_, _ = fmt.Fprintf(stderr, "liveness live=%v err=%v\n", live, err)
-											stopRun()
-										} else {
-											_, _ = fmt.Fprintf(stdout, "liveness live=%v\n", live)
-										}
+								for _, port := range t.GetHostPorts() {
+									if err := isPortOpen(port); err != nil {
+										return err
 									}
-									go probeLoop(runCtx, stopEverything, *probe, liveFunc)
 								}
-								if probe := t.GetReadinessProbe(); probe != nil {
-									readyFunc := func(ready bool, err error) {
-										status.Ready = ready
-										if ready {
-											_, _ = fmt.Fprintf(stdout, "readiness ready=%v\n", status.Ready)
-											maybeStartDownstream(name)
-										} else {
-											_, _ = fmt.Fprintf(stderr, "readiness ready=%v err=%v\n", ready, err)
-										}
-									}
-									go probeLoop(runCtx, stopEverything, *probe, readyFunc)
-								}
-								return prc.Run(runCtx, stdout, stderr)
+								return nil
 							}()
 							if err != nil {
-								if errors.Is(err, context.Canceled) {
-									return
-								}
 								status.State = types.TaskState{
 									Terminated: &types.TaskStateTerminated{Reason: "error"},
 								}
 								_, _ = fmt.Fprintln(stderr, err.Error())
 							} else {
-								status.State = types.TaskState{
-									Terminated: &types.TaskStateTerminated{Reason: "success"},
-								}
-								maybeStartDownstream(name)
-								if !t.IsBackground() {
-									return
+
+								logEntry.Printf("starting process")
+								err := func() error {
+									runCtx, stopRun := context.WithCancel(processCtx)
+									defer stopRun()
+									go func() {
+										defer handleCrash(stopEverything)
+										<-ctx.Done()
+										stopProcess()
+									}()
+									status.Ready = false
+									status.State = types.TaskState{
+										Running: &types.TaskStateRunning{},
+									}
+									if probe := t.GetLivenessProbe(); probe != nil {
+										liveFunc := func(live bool, err error) {
+											if !live {
+												_, _ = fmt.Fprintf(stderr, "liveness live=%v err=%v\n", live, err)
+												stopRun()
+											} else {
+												_, _ = fmt.Fprintf(stdout, "liveness live=%v\n", live)
+											}
+										}
+										go probeLoop(runCtx, stopEverything, *probe, liveFunc)
+									}
+									if probe := t.GetReadinessProbe(); probe != nil {
+										readyFunc := func(ready bool, err error) {
+											status.Ready = ready
+											if ready {
+												_, _ = fmt.Fprintf(stdout, "readiness ready=%v\n", status.Ready)
+												maybeStartDownstream(name)
+											} else {
+												_, _ = fmt.Fprintf(stderr, "readiness ready=%v err=%v\n", ready, err)
+											}
+										}
+										go probeLoop(runCtx, stopEverything, *probe, readyFunc)
+									}
+									return prc.Run(runCtx, stdout, stderr)
+								}()
+								if err != nil {
+									if errors.Is(err, context.Canceled) {
+										return
+									}
+									status.State = types.TaskState{
+										Terminated: &types.TaskStateTerminated{Reason: "error"},
+									}
+									_, _ = fmt.Fprintln(stderr, err.Error())
+								} else {
+									status.State = types.TaskState{
+										Terminated: &types.TaskStateTerminated{Reason: "success"},
+									}
+									maybeStartDownstream(name)
+									if !t.IsBackground() {
+										return
+									}
 								}
 							}
 							time.Sleep(2 * time.Second)
@@ -347,6 +364,15 @@ func main() {
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func isPortOpen(port uint16) error {
+	listen, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	if err != nil {
+		return err
+	}
+	_ = listen.Close()
+	return nil
 }
 
 func handleCrash(stop func()) {
