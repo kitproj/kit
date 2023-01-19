@@ -122,17 +122,17 @@ func main() {
 							prefix = prefix + " " + color.HiBlackString(fmt.Sprint(ports))
 						}
 						entry := logEntries[t.Name]
-						n := width - len(prefix) - 1
+						msgWidth := width - len(prefix) - 1
 						msg := ""
-						if n > 0 {
-							msg = k8sstrings.ShortenString(entry.Msg, n)
+						if msgWidth > 0 {
+							msg = k8sstrings.ShortenString(entry.Msg, msgWidth)
 							if entry.IsError() {
 								msg = color.YellowString(msg)
 							}
 						}
-						fmt.Println(k8sstrings.ShortenString(prefix+" "+msg, width))
+						fmt.Println(prefix+" "+msg, width)
 					}
-					time.Sleep(time.Second)
+					time.Sleep(time.Second / 2)
 				}
 			}()
 
@@ -240,12 +240,9 @@ func main() {
 					}
 				}(t, stopProcess)
 				wg.Add(1)
-				pwg := &sync.WaitGroup{}
-				pwg.Add(1)
 				go func(t types.Task, status *types.TaskStatus, stopProcess func()) {
 					defer handleCrash(stopEverything)
 					defer wg.Done()
-					defer pwg.Done()
 
 					if f, ok := stop.Load(name); ok {
 						logEntry.Printf("stopping process")
@@ -281,6 +278,7 @@ func main() {
 									<-ctx.Done()
 									stopProcess()
 								}()
+								status.Ready = false
 								status.State = types.TaskState{
 									Running: &types.TaskStateRunning{},
 								}
