@@ -54,12 +54,22 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 }
 
 func (h *host) stop(pid int, stdout io.Writer) error {
-	pgid, _ := syscall.Getpgid(pid)
-	if err := syscall.Kill(-pgid, syscall.SIGTERM); err == nil || isNotPermitted(err) {
+	pgid, err := syscall.Getpgid(pid)
+	if err != nil {
+		return err
+	}
+	if pgid == pid {
+		pid = -pid
+	}
+	target, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+	if err := target.Signal(syscall.SIGTERM); err == nil || isNotPermitted(err) {
 		return nil
 	}
 	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
-	if err := syscall.Kill(-pgid, syscall.SIGKILL); err == nil || isNotPermitted(err) {
+	if err := target.Signal(os.Kill); err == nil || isNotPermitted(err) {
 		return nil
 	} else {
 		return err

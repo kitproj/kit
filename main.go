@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -54,7 +53,7 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile := defaultConfigFile
 
-			ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			ctx, stopEverything := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 			defer stopEverything()
 
 			_ = os.Mkdir("logs", 0777)
@@ -91,6 +90,7 @@ func main() {
 				})
 			}
 
+			// every 1/2 second print the current status to the terminal
 			go func() {
 				defer handleCrash(stopEverything)
 				for {
@@ -168,14 +168,15 @@ func main() {
 				}
 			}
 
+			// stop everthing if all tasks are complete
 			go func() {
 				defer handleCrash(stopEverything)
 				for {
-					fulfilled := true
+					complete := true
 					for _, task := range tasks {
-						fulfilled = fulfilled && !task.IsBackground() && statuses.GetStatus(task.Name).IsTerminated()
+						complete = complete && !task.IsBackground() && statuses.GetStatus(task.Name).IsTerminated()
 					}
-					if fulfilled {
+					if complete {
 						stopEverything()
 					}
 					time.Sleep(time.Second)
@@ -192,6 +193,7 @@ func main() {
 				processCtx, stopProcess := context.WithCancel(ctx)
 				defer stopProcess()
 
+				// watch files for changes
 				go func(t types.Task, stopProcess func()) {
 					defer handleCrash(stopEverything)
 					watcher, err := fsnotify.NewWatcher()
@@ -240,6 +242,8 @@ func main() {
 						}
 					}
 				}(t, stopProcess)
+
+				// run the process
 				wg.Add(1)
 				go func(t types.Task, status *types.TaskStatus, stopProcess func()) {
 					defer handleCrash(stopEverything)
@@ -284,7 +288,6 @@ func main() {
 								}
 								_, _ = fmt.Fprintln(stderr, err.Error())
 							} else {
-
 								logEntry.Printf("starting process")
 								err := func() error {
 									runCtx, stopRun := context.WithCancel(processCtx)
@@ -364,15 +367,6 @@ func main() {
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-func isPortOpen(port uint16) error {
-	listen, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
-	if err != nil {
-		return err
-	}
-	_ = listen.Close()
-	return nil
 }
 
 func handleCrash(stop func()) {
