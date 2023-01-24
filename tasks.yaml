@@ -22,8 +22,8 @@ spec:
     readinessProbe: http://:9090
   - image: httpd
     name: baz
-    ports: 80:80
-    readinessProbe: http://:80?initialDelay=3s
+    ports: 80:8080
+    readinessProbe: http://:8080?initialDelay=3s
   - command: ls /work
     image: ubuntu
     name: init
