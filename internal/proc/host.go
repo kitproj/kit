@@ -20,17 +20,6 @@ type host struct {
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	if h.Task.HasMutex() {
-		if _, err := stdout.Write([]byte(fmt.Sprintf("waiting for mutex %q to unlock...\n", h.Mutex))); err != nil {
-			return err
-		}
-		mutex := KeyLock("/proc/mutex/" + h.Mutex)
-		mutex.Lock()
-		defer mutex.Unlock()
-		if _, err := stdout.Write([]byte(fmt.Sprintf("locked mutex %q\n", h.Mutex))); err != nil {
-			return err
-		}
-	}
 
 	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
@@ -46,38 +35,38 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		if err := h.stop(cmd.Process.Pid, stdout); err != nil {
+		if err := h.stop(cmd.Process.Pid); err != nil {
 			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
 	return cmd.Wait()
 }
 
-func (h *host) stop(pid int, stdout io.Writer) error {
+func (h *host) stop(pid int) error {
 	pgid, err := syscall.Getpgid(pid)
 	if err != nil {
-		return err
+		// already stopped
+		if err.Error() == "no such process" {
+			return nil
+		}
+		return fmt.Errorf("failed get pgid: %w", err)
 	}
 	if pgid == pid {
 		pid = -pid
 	}
 	target, err := os.FindProcess(pid)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find process: %w", err)
 	}
-	if err := target.Signal(syscall.SIGTERM); err == nil || isNotPermitted(err) {
+	if err := target.Signal(syscall.SIGTERM); err == nil {
 		return nil
 	}
 	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
-	if err := target.Signal(os.Kill); err == nil || isNotPermitted(err) {
+	if err := target.Signal(os.Kill); err == nil {
 		return nil
 	} else {
-		return err
+		return fmt.Errorf("failed to kill: %w", err)
 	}
-}
-
-func isNotPermitted(err error) bool {
-	return err != nil && err.Error() == "operation not permitted"
 }
 
 var _ Interface = &host{}

@@ -2,7 +2,9 @@
 
 This is a tool to enable local development of containerized applications.
 
-- It allows you to specify a set of **tasks** that run in **containers** or as **host processes**.
+- You to specify a set of **tasks** that run in **containers** or as **host processes**.
+- Tasks have a **mutex**, so you can prevent tasks running concurrently.
+- Task may run to **completion** (e.g. a build or tests) or run **indefinitely** (e.g. a web service or database).
 - You can specify **liveness probes** for your tasks to see if they're working, automatically restarting them
   when they go wrong.
 - You can specify **readiness probes** for your tasks to see if they're ready.
@@ -10,8 +12,8 @@ This is a tool to enable local development of containerized applications.
   are automatically started.
 - Tasks run concurrently and their status is **muxed into a single terminal window** so you're not overwhelmed by
   pages of terminal output.
-- You can specify **watches on your source code changes**, tasks are automatically re-run, and your app restarts.
-- When you're done, **ctrl+c** to and they're all cleanly stopped.
+- You can specify **watches on your source code**, when changes occur, tasks are automatically re-run.
+- When you're done, **close your terminal** or **ctrl+c** to and they're all cleanly stopped.
 - **Logs are captured** so you can look at them anytime.
 
 You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that

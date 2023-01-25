@@ -1,7 +1,8 @@
 set -eux
 go generate .
 go vet .
+go mod tidy
 goimports -w .
-go test .
+go test ./...
 git diff --exit-code
 go install .

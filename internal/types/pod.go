@@ -189,10 +189,11 @@ type Task struct {
 	Watch           Strings       `json:"watch,omitempty"`
 	Mutex           string        `json:"mutex,omitempty"`
 	Dependencies    Strings       `json:"dependencies,omitempty"`
+	RestartPolicy   string        `json:"restartPolicy,omitempty"`
 }
 
 func (t *Task) IsBackground() bool {
-	return t.ReadinessProbe != nil && t.LivenessProbe != nil
+	return t != nil && t.GetReadinessProbe() != nil && t.GetLivenessProbe() != nil
 }
 
 func (t Task) GetHostPorts() []uint16 {
@@ -204,6 +205,9 @@ func (t Task) GetHostPorts() []uint16 {
 }
 
 func (t *Task) GetReadinessProbe() *Probe {
+	if t == nil {
+		return nil
+	}
 	if t.ReadinessProbe != nil {
 		return t.ReadinessProbe
 	}
@@ -214,6 +218,9 @@ func (t *Task) GetReadinessProbe() *Probe {
 }
 
 func (t *Task) GetLivenessProbe() *Probe {
+	if t == nil {
+		return nil
+	}
 	if t.LivenessProbe != nil {
 		return t.LivenessProbe
 	}
@@ -222,6 +229,20 @@ func (t *Task) GetLivenessProbe() *Probe {
 	}
 	return nil
 
+}
+
+func (t *Task) GetRestartPolicy() string {
+	if t.RestartPolicy != "" {
+		return t.RestartPolicy
+	}
+	return "OnFailure"
+}
+
+func (t *Task) GetMutex() string {
+	if t.Mutex != "" {
+		return t.Mutex
+	}
+	return t.Name
 }
 
 type Pod struct {
@@ -283,11 +304,11 @@ func (p *Probe) Unstring(s string) error {
 	}
 	port := parsePort(u.Port())
 	if u.Scheme == "tcp" {
-		p.TCPSocket = &TCPSocketAction{Port: uint16(port)}
+		p.TCPSocket = &TCPSocketAction{Port: port}
 	} else {
 		p.HTTPGet = &HTTPGetAction{
 			Scheme: u.Scheme,
-			Port:   uint16(port),
+			Port:   port,
 			Path:   u.Path,
 		}
 	}
@@ -334,26 +355,29 @@ func (p Probe) URL() *url.URL {
 }
 
 func (p Probe) GetInitialDelay() time.Duration {
+	if p.InitialDelaySeconds == 0 {
+		return p.GetPeriod()
+	}
 	return time.Duration(p.InitialDelaySeconds) * time.Second
 }
 
 func (p Probe) GetPeriod() time.Duration {
 	if p.PeriodSeconds == 0 {
-		return 10 * time.Second
+		return 3 * time.Second
 	}
 	return time.Duration(p.PeriodSeconds) * time.Second
 }
 
 func (p Probe) GetFailureThreshold() int {
 	if p.FailureThreshold == 0 {
-		return 3
+		return 20 // 1m
 	}
 	return int(p.FailureThreshold)
 }
 
 func (p Probe) GetSuccessThreshold() int {
 	if p.SuccessThreshold == 0 {
-		return 1
+		return 1 // 3s
 	}
 	return int(p.SuccessThreshold)
 }
@@ -500,10 +524,6 @@ func (s PodSpec) GetTerminationGracePeriod() time.Duration {
 	return 30 * time.Second
 }
 
-type Status struct {
-	TaskStatuses []*TaskStatus
-}
-
 type TaskStateWaiting struct {
 	Reason string
 }
@@ -537,11 +557,11 @@ func (s TaskStatus) GetReason() string {
 }
 
 func (s *TaskStatus) IsSuccess() bool {
-	return s.IsTerminated() && s.State.Terminated.Reason == "success"
+	return s != nil && s.IsTerminated() && s.State.Terminated.Reason == "success"
 }
 
 func (s *TaskStatus) Failed() bool {
-	return s.IsTerminated() && !s.IsSuccess()
+	return s != nil && s.IsTerminated() && !s.IsSuccess()
 }
 
 func (s *TaskStatus) IsTerminated() bool {
@@ -553,20 +573,14 @@ func (s *TaskStatus) IsReady() bool {
 }
 
 func (s *TaskStatus) IsFulfilled() bool {
-	return s.IsSuccess() || s.IsReady()
+	return s != nil && s.IsSuccess() || s.IsReady()
+}
+
+func (s TaskStatus) IsWaiting() bool {
+	return s.State.Waiting != nil
 }
 
 type TaskStatus struct {
-	Name  string
 	Ready bool
 	State TaskState
-}
-
-func (s *Status) GetStatus(name string) *TaskStatus {
-	for i, x := range s.TaskStatuses {
-		if x.Name == name {
-			return s.TaskStatuses[i]
-		}
-	}
-	return nil
 }
