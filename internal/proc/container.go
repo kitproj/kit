@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/docker/docker/errdefs"
+
 	"k8s.io/utils/strings/slices"
 
 	"github.com/docker/docker/api/types/strslice"
@@ -27,6 +29,7 @@ import (
 type container struct {
 	types.PodSpec
 	types.Task
+	remove bool
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
@@ -36,12 +39,17 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	defer cli.Close()
 
-	if err := c.remove(ctx, cli); err != nil {
+	if err := c.stop(ctx, cli); err != nil {
 		return err
 	}
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
-	if _, err := os.Stat(dockerfile); err == nil {
+	id, err := c.getContainerID(ctx, cli)
+	if err != nil {
+		return err
+	} else if id != "" {
+		_, _ = fmt.Fprintf(stdout, "container alread exists, skipping build/pull")
+	} else if _, err := os.Stat(dockerfile); err == nil {
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
 			return err
@@ -49,22 +57,22 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		defer r.Close()
 		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{c.Name}})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to build image: %w", err)
 		}
 		defer resp.Body.Close()
 		if _, err = io.Copy(stdout, resp.Body); err != nil {
-			return err
+			return fmt.Errorf("failed to build image (logs): %w", err)
 		}
 	} else if c.ImagePullPolicy != "Never" {
 		r, err := cli.ImagePull(ctx, c.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to pull image: %w", err)
 		}
 		if _, err = io.Copy(stdout, r); err != nil {
-			return err
+			return fmt.Errorf("failed to pull image (logs): %w", err)
 		}
 		if err = r.Close(); err != nil {
-			return err
+			return fmt.Errorf("failed to pull image (close): %w", err)
 		}
 	}
 
@@ -80,7 +88,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
 		image = c.Name
 	}
-	created, err := cli.ContainerCreate(ctx, &dockercontainer.Config{
+	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
 		Tty:          c.TTY,
@@ -94,15 +102,19 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		PortBindings: portBindings,
 		Binds:        binds,
 	}, &network.NetworkingConfig{}, &v1.Platform{}, c.Name)
+	if ignoreConflict(err) != nil {
+		return fmt.Errorf("failed to create container: %w", err)
+	}
+	id, err = c.getContainerID(ctx, cli)
 	if err != nil {
 		return err
 	}
-	if err = cli.ContainerStart(ctx, created.ID, dockertypes.ContainerStartOptions{}); err != nil {
-		return err
+	if err = cli.ContainerStart(ctx, id, dockertypes.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("failed to start container: %w", err)
 	}
 	go func() {
 		<-ctx.Done()
-		c.remove(context.Background(), cli)
+		c.stop(context.Background(), cli)
 	}()
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
@@ -110,13 +122,13 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Follow:     true,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to log container: %w", err)
 	}
 	defer logs.Close()
 	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
 		return err
 	}
-	inspect, err := cli.ContainerInspect(ctx, created.ID)
+	inspect, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -159,21 +171,52 @@ func (c *container) createBinds() ([]string, error) {
 	return binds, nil
 }
 
-func (c *container) remove(ctx context.Context, cli *client.Client) error {
-	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+func (c *container) stop(ctx context.Context, cli *client.Client) error {
+	id, err := c.getContainerID(ctx, cli)
 	if err != nil {
 		return err
 	}
-	grace := c.PodSpec.GetTerminationGracePeriod()
-	for _, existing := range list {
-		if slices.Contains(existing.Names, "/"+c.Name) {
-			_ = cli.ContainerStop(ctx, existing.ID, &grace)
-			if err := cli.ContainerRemove(ctx, existing.ID, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
-				return err
+	if id != "" {
+		grace := c.PodSpec.GetTerminationGracePeriod()
+		if err := cli.ContainerStop(ctx, id, &grace); ignoreNotExist(err) != nil {
+			return fmt.Errorf("failed to stop container: %w", err)
+		}
+		if c.remove {
+			if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
+				return fmt.Errorf("failed to remove container: %w", err)
 			}
 		}
 	}
 	return nil
+}
+
+func (c *container) getContainerID(ctx context.Context, cli *client.Client) (string, error) {
+	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+	if err != nil {
+		return "", err
+	}
+	for _, existing := range list {
+		if slices.Contains(existing.Names, "/"+c.Name) {
+			id := existing.ID
+			return id, nil
+		}
+	}
+	return "", nil
+}
+
+func ignoreConflict(err error) error {
+	if errdefs.IsConflict(err) {
+		return nil
+	}
+	return err
+}
+
+func ignoreNotExist(err error) error {
+	if errdefs.IsNotFound(err) {
+		return nil
+	}
+	return err
+
 }
 
 var _ Interface = &container{}
