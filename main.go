@@ -290,86 +290,79 @@ func main() {
 					case <-processCtx.Done():
 						return
 					default:
+						logEntry.Printf("starting process")
 						err := func() error {
+							runCtx, stopRun := context.WithCancel(processCtx)
+							defer stopRun()
+							go func() {
+								defer handleCrash(stopEverything)
+								<-ctx.Done()
+								stopProcess()
+							}()
+							status.Ready = false
+							status.State = types.TaskState{
+								Waiting: &types.TaskStateWaiting{Reason: "port"},
+							}
 							for _, port := range t.GetHostPorts() {
 								if err := isPortOpen(port); err != nil {
 									return err
 								}
 							}
-							return nil
+							status.State = types.TaskState{
+								Running: &types.TaskStateRunning{},
+							}
+							if probe := t.GetLivenessProbe(); probe != nil {
+								liveFunc := func(live bool, err error) {
+									if !live {
+										_, _ = fmt.Fprintf(stderr, "not live: %v\n", err)
+										stopRun()
+									} else {
+										_, _ = fmt.Fprintf(stdout, "live\n")
+									}
+								}
+								go probeLoop(runCtx, stopEverything, *probe, liveFunc)
+							}
+							if probe := t.GetReadinessProbe(); probe != nil {
+								readyFunc := func(ready bool, err error) {
+									status.Ready = ready
+									if ready {
+										_, _ = fmt.Fprintf(stdout, "ready")
+										maybeStartDownstream(name)
+									} else {
+										_, _ = fmt.Fprintf(stderr, "not ready: %v\n", err)
+									}
+								}
+								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
+							}
+							return prc.Run(runCtx, stdout, stderr)
 						}()
 						if err != nil {
+							if errors.Is(err, context.Canceled) {
+								return
+							}
 							status.State = types.TaskState{
 								Terminated: &types.TaskStateTerminated{Reason: "error"},
 							}
 							_, _ = fmt.Fprintln(stderr, err.Error())
-						} else {
-							logEntry.Printf("starting process")
-							err := func() error {
-								runCtx, stopRun := context.WithCancel(processCtx)
-								defer stopRun()
-								go func() {
-									defer handleCrash(stopEverything)
-									<-ctx.Done()
-									stopProcess()
-								}()
-								status.Ready = false
-								status.State = types.TaskState{
-									Running: &types.TaskStateRunning{},
-								}
-								if probe := t.GetLivenessProbe(); probe != nil {
-									liveFunc := func(live bool, err error) {
-										if !live {
-											_, _ = fmt.Fprintf(stderr, "not live: %v\n", err)
-											stopRun()
-										} else {
-											_, _ = fmt.Fprintf(stdout, "live\n")
-										}
-									}
-									go probeLoop(runCtx, stopEverything, *probe, liveFunc)
-								}
-								if probe := t.GetReadinessProbe(); probe != nil {
-									readyFunc := func(ready bool, err error) {
-										status.Ready = ready
-										if ready {
-											_, _ = fmt.Fprintf(stdout, "ready")
-											maybeStartDownstream(name)
-										} else {
-											_, _ = fmt.Fprintf(stderr, "not ready: %v\n", err)
-										}
-									}
-									go probeLoop(runCtx, stopEverything, *probe, readyFunc)
-								}
-								return prc.Run(runCtx, stdout, stderr)
-							}()
-							if err != nil {
-								if errors.Is(err, context.Canceled) {
-									return
-								}
-								status.State = types.TaskState{
-									Terminated: &types.TaskStateTerminated{Reason: "error"},
-								}
-								_, _ = fmt.Fprintln(stderr, err.Error())
-								if t.RestartPolicy == "Never" {
-									for _, downstream := range tasks.GetDownstream(t.Name) {
-										statuses.Store(downstream.Name, &types.TaskStatus{State: types.TaskState{Terminated: &types.TaskStateTerminated{Reason: "skipped"}}})
-									}
-								}
-							} else {
-								status.State = types.TaskState{
-									Terminated: &types.TaskStateTerminated{Reason: "success"},
-								}
-								maybeStartDownstream(name)
-								if !t.IsBackground() && t.GetRestartPolicy() != "Always" {
-									return
+							if t.RestartPolicy == "Never" {
+								for _, downstream := range tasks.GetDownstream(t.Name) {
+									statuses.Store(downstream.Name, &types.TaskStatus{State: types.TaskState{Terminated: &types.TaskStateTerminated{Reason: "skipped"}}})
 								}
 							}
-							if t.GetRestartPolicy() == "Never" {
+						} else {
+							status.State = types.TaskState{
+								Terminated: &types.TaskStateTerminated{Reason: "success"},
+							}
+							maybeStartDownstream(name)
+							if !t.IsBackground() && t.GetRestartPolicy() != "Always" {
 								return
 							}
 						}
-						time.Sleep(2 * time.Second)
+						if t.GetRestartPolicy() == "Never" {
+							return
+						}
 					}
+					time.Sleep(2 * time.Second)
 				}
 			}(t, status, stopProcess)
 
