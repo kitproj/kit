@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Kitful local dev."
   homepage "https://github.com/alexec/kit"
-  version "0.0.26"
+  version "0.0.28"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.26/kit_0.0.26_Darwin_x86_64.tar.gz"
-      sha256 "9222771b98b374f4228a6f4387fd73bde308f199ad3c9b6605888acb83ab2103"
+    if Hardware::CPU.arm?
+      url "https://github.com/alexec/kit/releases/download/v0.0.28/kit_0.0.28_Darwin_arm64.tar.gz"
+      sha256 "763fb013cbb2194c500327767391f329557be5c6869680b7158e5913be7bebfd"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/alexec/kit/releases/download/v0.0.26/kit_0.0.26_Darwin_arm64.tar.gz"
-      sha256 "0f8a17620e013a0c5012ff69936f2e656a6409f0beb6d3445a27aa03bd692249"
+    if Hardware::CPU.intel?
+      url "https://github.com/alexec/kit/releases/download/v0.0.28/kit_0.0.28_Darwin_x86_64.tar.gz"
+      sha256 "90fcfa84877c3435500158e33335cc0b3825ffbb9a0e202657f68272ce0368ae"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/alexec/kit/releases/download/v0.0.26/kit_0.0.26_Linux_arm64.tar.gz"
-      sha256 "6948745c22d7508763c5db165c7d880fec742ded8e835a8605f594fce456130e"
+      url "https://github.com/alexec/kit/releases/download/v0.0.28/kit_0.0.28_Linux_arm64.tar.gz"
+      sha256 "36f60c7f165de53d2a58495c1c6d1af6dd57467b30510ed8d33f3e82e971d743"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.26/kit_0.0.26_Linux_x86_64.tar.gz"
-      sha256 "197fcac05d16adbeaa70f1649fcd59aa2855a576af410c50ff52a2e7aa3bbc0e"
+      url "https://github.com/alexec/kit/releases/download/v0.0.28/kit_0.0.28_Linux_x86_64.tar.gz"
+      sha256 "4d6427425b993a2779aeea909f5c77bf5ed0691ea77e58716b608129084ea2eb"
 
       def install
         bin.install "kit"
