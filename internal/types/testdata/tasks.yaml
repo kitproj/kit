@@ -1,0 +1,10 @@
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  annotations:
+    help: https://github.com/alexec/kit
+  name: kit
+spec:
+  tasks:
+  - name: foo
+    ports: "8080"

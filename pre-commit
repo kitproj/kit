@@ -3,6 +3,6 @@ go generate .
 go vet .
 go mod tidy
 goimports -w .
-go test ./...
+go test -cover ./...
 git diff --exit-code
 go install .

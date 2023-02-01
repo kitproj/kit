@@ -16,13 +16,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
+	"golang.org/x/crypto/ssh/terminal"
+	k8sstrings "k8s.io/utils/strings"
+
 	"github.com/alexec/kit/internal/proc"
 
 	"github.com/alexec/kit/internal/types"
-	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
-	"golang.org/x/crypto/ssh/terminal"
-	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
 
