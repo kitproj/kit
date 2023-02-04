@@ -4,10 +4,31 @@
 [![Go](https://github.com/alexec/kit/actions/workflows/go.yml/badge.svg)](https://github.com/alexec/kit/actions/workflows/go.yml)
 [![goreleaser](https://github.com/alexec/kit/actions/workflows/goreleaser.yml/badge.svg)](https://github.com/alexec/kit/actions/workflows/goreleaser.yml)
 
-This is a tool to enable local development of containerized applications.
+## Why
 
-- You to specify a set of **tasks** that run in **containers** or as **host processes**.
-- Tasks have a **mutex**, so you can prevent tasks running concurrently.
+Improve developer productivity.
+
+## Background
+
+Modern developments has moved away from monolith services to micro-services. Development may depends on other services, which maybe your own organizations services, or they could be a Open Source project (such as Kafak or Postgres) available as container images.
+
+## What
+
+Shift-lest testing from test enviroments into graph of processes that repesent the local build and run of your application. Automatically re-build and re-start the application when source code changes. Cleanly start and stop.
+
+```mermaid
+flowchart LR
+    API --> MySQL
+    Ingestor --> Kafka
+    Ingestor --> API 
+    Sender --> Kafka
+    Sender --> Bucket
+```
+
+## How
+
+- You specify a set of **tasks** that run in **containers** or as **host processes**.
+- Tasks may have a **mutex**, so you can prevent tasks running concurrently.
 - Task may run to **completion** (e.g. a build or tests) or run **indefinitely** (e.g. a web service or database).
 - You can specify **liveness probes** for your tasks to see if they're working, automatically restarting them
   when they go wrong.
@@ -87,7 +108,7 @@ If `image` field is omitted, the value of `command` is used to start the process
 ```
 ### Noop
 
-If `image` field is omitted and `command` is omitted, the task does nothing, running forever.
+If `image` field is omitted and `command` is omitted, the task does nothing. This is used if you want to start several tasks, and conventionally you'd name the task `up`.
 
 ### Auto Rebuild and Restart
 
