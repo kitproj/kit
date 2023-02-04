@@ -14,7 +14,7 @@ Modern developments has moved away from monolith services to micro-services. Dev
 
 ## What
 
-Shift-lest testing from test enviroments into graph of processes that repesent the local build and run of your application. Automatically re-build and re-start the application when source code changes. Cleanly start and stop.
+Shift-lest testing from test environments into graph of processes that represent the local build and run of your application. Automatically re-build and re-start the application when source code changes. Cleanly start and stop.
 
 ```mermaid
 flowchart LR
