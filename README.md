@@ -28,6 +28,7 @@ flowchart LR
 ## How
 
 - You specify a set of **tasks** that run in **containers** or as **host processes**.
+- Tasks are parameterizable via **environment variables**.
 - Tasks may have a **mutex**, so you can prevent tasks running concurrently.
 - Task may run to **completion** (e.g. a build or tests) or run **indefinitely** (e.g. a web service or database).
 - You can specify **liveness probes** for your tasks to see if they're working, automatically restarting them
@@ -104,11 +105,35 @@ If `image` field is omitted, the value of `command` is used to start the process
 ```yaml
     # no image? this is a host process
     - name: foo
-      command: [ go, run, ./demo/foo ]
+      command: go run ./demo/foo 
 ```
 ### Noop
 
 If `image` field is omitted and `command` is omitted, the task does nothing. This is used if you want to start several tasks, and conventionally you'd name the task `up`.
+
+```yaml
+    # no image or command? this is a noop
+    - name: foo
+```
+
+### Parameters
+
+You can specify environment variables for the task:
+
+```yaml
+    - name: foo
+      command: echo $FOO
+      env:
+        FOO: bar
+```
+
+Environment variables specified in your shell environment are automatically passed to the task.
+
+```bash
+env FOO=qux kit up
+```
+
+Would print `qux` instead of `bar`.
 
 ### Auto Rebuild and Restart
 
