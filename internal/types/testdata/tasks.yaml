@@ -8,3 +8,6 @@ spec:
   tasks:
   - name: foo
     ports: "8080"
+  - name: bar
+    command: sh -c "echo bar"
+    dependencies: baz qux

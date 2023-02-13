@@ -18,7 +18,7 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, "kit", pod.Metadata.Name)
 	assert.Equal(t, map[string]string{"help": "https://github.com/alexec/kit"}, pod.Metadata.Annotations)
 	assert.Equal(t, 30*time.Second, pod.Spec.GetTerminationGracePeriod())
-	assert.Len(t, pod.Spec.Tasks, 1)
+	assert.Len(t, pod.Spec.Tasks, 2)
 	task := pod.Spec.Tasks[0]
 	assert.Equal(t, "foo", task.GetMutex())
 	assert.Equal(t, []uint16{8080}, task.GetHostPorts())
@@ -29,4 +29,7 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, 3*time.Second, probe.GetInitialDelay())
 	assert.Equal(t, 1, probe.GetSuccessThreshold())
 	assert.Equal(t, 20, probe.GetFailureThreshold())
+	//
+	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, pod.Spec.Tasks[1].Command)
+	assert.Equal(t, Strings{"baz", "qux"}, pod.Spec.Tasks[1].Dependencies)
 }
