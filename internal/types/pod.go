@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -161,10 +162,22 @@ func (p Port) GetHostPort() uint16 {
 
 type EnvVars []EnvVar
 
+// Environ returns a list of environment variables. If an environment variable is defined in both the task and the host, the host value is used.
 func (v EnvVars) Environ() []string {
-	var environ []string
+	osEnviron := make(map[string]string)
 	for _, env := range v {
-		environ = append(environ, env.String())
+		osEnviron[env.Name] = env.Value
+	}
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		n, v := parts[0], parts[1]
+		if osEnviron[n] != "" {
+			osEnviron[n] = v
+		}
+	}
+	var environ []string
+	for k, v := range osEnviron {
+		environ = append(environ, fmt.Sprintf("%s=%s", k, v))
 	}
 	return environ
 }

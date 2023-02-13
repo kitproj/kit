@@ -33,3 +33,12 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, pod.Spec.Tasks[1].Command)
 	assert.Equal(t, Strings{"baz", "qux"}, pod.Spec.Tasks[1].Dependencies)
 }
+
+func TestEnvVars_Environ(t *testing.T) {
+	os.Setenv("a", "x")
+	env := EnvVars{
+		{Name: "a", Value: "b"},
+		{Name: "c", Value: "d"},
+	}
+	assert.Equal(t, []string{"a=x", "c=d"}, env.Environ())
+}
