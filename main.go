@@ -65,13 +65,6 @@ func main() {
 		if err = yaml.UnmarshalStrict(in, pod); err != nil {
 			return err
 		}
-		data, err := yaml.Marshal(pod)
-		if err != nil {
-			return err
-		}
-		if err = os.WriteFile(configFile, data, 0o0644); err != nil {
-			return err
-		}
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
