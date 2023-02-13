@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -20,13 +21,20 @@ func (p *Strings) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	r := csv.NewReader(bytes.NewBuffer(data))
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	r := csv.NewReader(bytes.NewBufferString(s))
 	r.Comma = ' '
 	x, err := r.Read()
+	if err != nil {
+		return fmt.Errorf("failed to read string (use double-quotes, not single-quotes): %w", err)
+	}
 	for _, s := range x {
 		*p = append(*p, s)
 	}
-	return err
+	return nil
 }
 
 func (p Strings) MarshalJSON() ([]byte, error) {
