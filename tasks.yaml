@@ -6,6 +6,9 @@ metadata:
   name: kit
 spec:
   tasks:
+  - name: awn
+    command: ./demo/awn/awn.sh
+    ports: 9000
   - command: go run ./demo/foo
     name: foo
     ports: "8080"
@@ -32,7 +35,7 @@ spec:
       name: work
   - command: exit 1
     name: error
-  - dependencies: foo bar baz
+  - dependencies: awn foo bar baz
     name: up
   terminationGracePeriodSeconds: 3
   volumes:
