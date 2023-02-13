@@ -14,7 +14,7 @@ Modern developments has moved away from monolith services to micro-services. Dev
 
 ## What
 
-Shift-lest testing from test environments into graph of processes that represent the local build and run of your application. Automatically re-build and re-start the application when source code changes. Cleanly start and stop.
+Shift-lest testing from test environments into graph of processes that represent the local build and runtime execution of your app. Automatically re-build and re-start the application when source code changes. Robustly start and stop.
 
 ```mermaid
 flowchart LR
@@ -64,7 +64,27 @@ brew install kit
 
 ## Usage
 
-Create your [`tasks.yaml`](tasks.yaml) file, then start:
+Create your [`tasks.yaml`](tasks.yaml) file, e.g.:
+
+
+```yaml
+spec:
+  tasks:
+  - command: go build -v .
+    name: build-bar
+    watch: demo/bar/main.go
+    workingDir: demo/bar
+  - command: ./demo/bar/bar
+    dependencies: build-bar
+    env:
+    - PORT=9090
+    name: bar
+    ports: "9090"
+  - dependencies: bar
+    name: up
+```
+
+Start:
 
 ```bash
 kit up
@@ -75,6 +95,8 @@ You'll see something like this:
 ![screenshot](screenshot.png)
 
 Logs are stored in `./logs`.
+
+## Reference
 
 ### Container
 
