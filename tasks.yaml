@@ -30,7 +30,7 @@ spec:
     volumeMounts:
     - mountPath: /work
       name: work
-  - command: sh -c "exit 1"
+  - command: exit 1
     name: error
   - dependencies: foo bar baz
     name: up
