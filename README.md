@@ -115,11 +115,35 @@ If `image` field is omitted, the value of `command` is used to start the process
 ```yaml
     # no image? this is a host process
     - name: foo
-      command: [ go, run, ./demo/foo ]
+      command: go run ./demo/foo 
 ```
 ### Noop
 
 If `image` field is omitted and `command` is omitted, the task does nothing. This is used if you want to start several tasks, and conventionally you'd name the task `up`.
+
+```yaml
+    # no image or command? this is a noop
+    - name: foo
+```
+
+### Parameters
+
+You can specify environment variables for the task:
+
+```yaml
+    - name: foo
+      command: echo $FOO
+      env:
+        FOO: bar
+```
+
+Environment variables specified in your shell environment are automatically passed to the task.
+
+```bash
+env FOO=qux kit up
+```
+
+Would print `qux` instead of `bar`.
 
 ### Auto Rebuild and Restart
 
