@@ -508,7 +508,7 @@ func (t Tasks) Get(name string) Task {
 		}
 
 	}
-	panic(fmt.Errorf("not task named %q", name))
+	panic(fmt.Errorf("no task named %q", name))
 }
 
 type PodSpec struct {
