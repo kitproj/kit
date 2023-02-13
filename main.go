@@ -153,19 +153,23 @@ func main() {
 		stop := &sync.Map{}
 
 		maybeStartDownstream := func(name string) {
-			for _, downstream := range tasks.GetDownstream(name) {
-				fulfilled := true
-				for _, upstream := range downstream.Dependencies {
-					v, ok := statuses.Load(upstream)
-					if ok {
-						status := v.(*types.TaskStatus)
-						fulfilled = fulfilled && status.IsFulfilled()
-					} else {
-						fulfilled = false
+			select {
+			case <-ctx.Done():
+			default:
+				for _, downstream := range tasks.GetDownstream(name) {
+					fulfilled := true
+					for _, upstream := range downstream.Dependencies {
+						v, ok := statuses.Load(upstream)
+						if ok {
+							status := v.(*types.TaskStatus)
+							fulfilled = fulfilled && status.IsFulfilled()
+						} else {
+							fulfilled = false
+						}
 					}
-				}
-				if fulfilled {
-					work <- downstream
+					if fulfilled {
+						work <- downstream
+					}
 				}
 			}
 		}
@@ -374,7 +378,7 @@ func main() {
 	}()
 
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -21,7 +22,8 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	cmd := exec.Command(h.Command[0], append(h.Command[1:], h.Args...)...)
+	path := h.Command[0]
+	cmd := exec.Command(path, append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdout
@@ -33,28 +35,28 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+	// capture pgid straight away because it's not available after the process exits,
+	// the process may exit and leave children behind.
+	pid := cmd.Process.Pid
+	pgid, err := syscall.Getpgid(pid)
+	if err != nil {
+		return fmt.Errorf("failed get pgid: %w", err)
+	}
 	go func() {
 		<-ctx.Done()
-		if err := h.stop(cmd.Process.Pid); err != nil {
+		if err := h.stop(pgid); err != nil {
 			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
-	return cmd.Wait()
+	log.Printf("%d: waiting for process %q ", pid, path)
+	err = cmd.Wait()
+	log.Printf("%d: %q exited: %v", pid, path, err)
+	return err
 }
 
 func (h *host) stop(pid int) error {
-	pgid, err := syscall.Getpgid(pid)
-	if err != nil {
-		// already stopped
-		if err.Error() == "no such process" {
-			return nil
-		}
-		return fmt.Errorf("failed get pgid: %w", err)
-	}
-	if pgid == pid {
-		pid = -pid
-	}
-	target, err := os.FindProcess(pid)
+	log.Printf("%d: terminating process", pid)
+	target, err := os.FindProcess(-pid)
 	if err != nil {
 		return fmt.Errorf("failed to find process: %w", err)
 	}
@@ -62,6 +64,7 @@ func (h *host) stop(pid int) error {
 		return nil
 	}
 	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
+	log.Printf("%d: killing process", pid)
 	if err := target.Signal(os.Kill); err == nil {
 		return nil
 	} else {
