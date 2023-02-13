@@ -20,11 +20,7 @@ func (p *Strings) UnmarshalJSON(data []byte) error {
 		}
 		return nil
 	}
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	r := csv.NewReader(bytes.NewBuffer([]byte(s)))
+	r := csv.NewReader(bytes.NewBuffer(data))
 	r.Comma = ' '
 	x, err := r.Read()
 	for _, s := range x {
