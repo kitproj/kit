@@ -6,7 +6,7 @@
 
 ## Why
 
-Improve developer productivity.
+Make the local-dev loop crazy fast.
 
 ## Background
 
