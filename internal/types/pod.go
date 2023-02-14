@@ -97,8 +97,10 @@ func (p Ports) MarshalJSON() ([]byte, error) {
 }
 
 type Port struct {
+	// The container port to expose
 	ContainerPort uint16 `json:"containerPort,omitempty"`
-	HostPort      uint16 `json:"hostPort,omitempty"`
+	// The host port to route to the container port
+	HostPort uint16 `json:"hostPort,omitempty"`
 }
 
 func (p *Port) UnmarshalJSON(data []byte) error {
@@ -187,22 +189,34 @@ func (t *Task) HasMutex() bool {
 }
 
 type Task struct {
-	Name            string        `json:"name"`
-	Image           string        `json:"image,omitempty"`
-	ImagePullPolicy string        `json:"imagePullPolicy,omitempty"`
-	LivenessProbe   *Probe        `json:"livenessProbe,omitempty"`
-	ReadinessProbe  *Probe        `json:"readinessProbe,omitempty"`
-	Command         Strings       `json:"command,omitempty"`
-	Args            Strings       `json:"args,omitempty"`
-	WorkingDir      string        `json:"workingDir,omitempty"`
-	Env             EnvVars       `json:"env,omitempty"`
-	Ports           Ports         `json:"ports,omitempty"`
-	VolumeMounts    []VolumeMount `json:"volumeMounts,omitempty"`
-	TTY             bool          `json:"tty,omitempty"`
-	Watch           Strings       `json:"watch,omitempty"`
-	Mutex           string        `json:"mutex,omitempty"`
-	Dependencies    Strings       `json:"dependencies,omitempty"`
-	RestartPolicy   string        `json:"restartPolicy,omitempty"`
+	// The name of the task, must be unique
+	Name string `json:"name"`
+	// Either the container image to run, or a directory containing a Dockerfile
+	Image string `json:"image,omitempty"`
+	// Pull policy, e.g. Always, Never, IfNotPresent
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+	// A probe to check if the task is alive, it will be restarted if not
+	LivenessProbe *Probe `json:"livenessProbe,omitempty"`
+	// A probe to check if the task is ready to serve requests
+	ReadinessProbe *Probe `json:"readinessProbe,omitempty"`
+	// The command to run in the container or on the host
+	Command Strings `json:"command,omitempty"`
+	// The arguments to pass to the command
+	Args Strings `json:"args,omitempty"`
+	// The working directory in the container or on the host
+	WorkingDir   string        `json:"workingDir,omitempty"`
+	Env          EnvVars       `json:"env,omitempty"`
+	Ports        Ports         `json:"ports,omitempty"`
+	VolumeMounts []VolumeMount `json:"volumeMounts,omitempty"`
+	TTY          bool          `json:"tty,omitempty"`
+	// A list of files to watch for changes, and restart the task if they change
+	Watch Strings `json:"watch,omitempty"`
+	// A mutex to prevent multiple tasks with the same mutex from running at the same time
+	Mutex string `json:"mutex,omitempty"`
+	// A list of tasks to run before this task
+	Dependencies Strings `json:"dependencies,omitempty"`
+	// The restart policy, e.g. Always, Never, OnFailure
+	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
 
 func (t *Task) IsBackground() bool {
@@ -259,19 +273,26 @@ func (t *Task) GetMutex() string {
 }
 
 type Pod struct {
-	Spec       PodSpec  `json:"spec"`
-	ApiVersion string   `json:"apiVersion,omitempty"`
-	Kind       string   `json:"kind,omitempty"`
-	Metadata   Metadata `json:"metadata"`
+	Spec PodSpec `json:"spec"`
+	// APIVersion must be `kit/v1`.
+	ApiVersion string `json:"apiVersion,omitempty"`
+	// Kind must be `Tasks`.
+	Kind     string   `json:"kind,omitempty"`
+	Metadata Metadata `json:"metadata"`
 }
 
+// A probe to check if the task is alive, it will be restarted if not.
 type Probe struct {
-	TCPSocket           *TCPSocketAction `json:"tcpSocket,omitempty"`
-	HTTPGet             *HTTPGetAction   `json:"httpGet,omitempty"`
-	InitialDelaySeconds int32            `json:"initialDelaySeconds,omitempty"`
-	PeriodSeconds       int32            `json:"periodSeconds,omitempty"`
-	SuccessThreshold    int32            `json:"successThreshold,omitempty"`
-	FailureThreshold    int32            `json:"failureThreshold,omitempty"`
+	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
+	HTTPGet   *HTTPGetAction   `json:"httpGet,omitempty"`
+	// Number of seconds after the process has started before the probe is initiated.
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
+	// How often (in seconds) to perform the probe.
+	PeriodSeconds int32 `json:"periodSeconds,omitempty"`
+	// Minimum consecutive successes for the probe to be considered successful after having failed.
+	SuccessThreshold int32 `json:"successThreshold,omitempty"`
+	// Minimum consecutive failures for the probe to be considered failed after having succeeded.
+	FailureThreshold int32 `json:"failureThreshold,omitempty"`
 }
 
 func (p *Probe) UnmarshalJSON(data []byte) error {
@@ -396,6 +417,7 @@ func (p Probe) GetSuccessThreshold() int {
 }
 
 type TCPSocketAction struct {
+	// Port number of the port to probe.
 	Port uint16 `json:"port"`
 }
 
@@ -404,9 +426,12 @@ func (a TCPSocketAction) URL() *url.URL {
 }
 
 type HTTPGetAction struct {
+	// Scheme to use for connecting to the host. Defaults to HTTP.
 	Scheme string `json:"scheme,omitempty"`
-	Port   uint16 `json:"port,omitempty"`
-	Path   string `json:"path,omitempty"`
+	// Number of the port
+	Port uint16 `json:"port,omitempty"`
+	// Path to access on the HTTP server.
+	Path string `json:"path,omitempty"`
 }
 
 func (a HTTPGetAction) URL() *url.URL {
@@ -446,17 +471,23 @@ func (a HTTPGetAction) GetPort() uint16 {
 	return 80
 }
 
+// VolumeMount describes a mounting of a Volume within a container.
 type VolumeMount struct {
-	Name      string `json:"name"`
+	// This must match the name of a volume.
+	Name string `json:"name"`
+	// Path within the container at which the volume should be mounted.
 	MountPath string `json:"mountPath"`
 }
 
 type HostPath struct {
+	// Path of the directory on the host.
 	Path string `json:"path"`
 }
 
 type Volume struct {
-	Name     string   `json:"name"`
+	// Volume's name.
+	Name string `json:"name"`
+	// HostPath represents a pre-existing file or directory on the host machine that is directly exposed to the container.
 	HostPath HostPath `json:"hostPath"`
 }
 
@@ -525,9 +556,12 @@ func (t Tasks) Get(name string) Task {
 }
 
 type PodSpec struct {
-	TerminationGracePeriodSeconds *int32   `json:"terminationGracePeriodSeconds,omitempty"`
-	Tasks                         Tasks    `json:"tasks,omitempty"`
-	Volumes                       []Volume `json:"volumes,omitempty"`
+	// TerminationGracePeriodSeconds is the grace period for terminating the pod.
+	TerminationGracePeriodSeconds *int32 `json:"terminationGracePeriodSeconds,omitempty"`
+	// Tasks is a list of tasks that should be run.
+	Tasks Tasks `json:"tasks,omitempty"`
+	// Volumes is a list of volumes that can be mounted by containers belonging to the pod.
+	Volumes []Volume `json:"volumes,omitempty"`
 }
 
 func (s PodSpec) GetTerminationGracePeriod() time.Duration {
