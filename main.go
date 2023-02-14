@@ -246,8 +246,11 @@ func main() {
 					case <-processCtx.Done():
 						return
 					case e := <-watcher.Events:
-						logEntry.Printf("%v changed\n", e)
-						timer.Reset(time.Second)
+						// ignore chmod events, these can be triggered by the editor, but we don't care
+						if e.Op != fsnotify.Chmod {
+							logEntry.Printf("%v changed\n", e)
+							timer.Reset(time.Second)
+						}
 					case err := <-watcher.Errors:
 						panic(err)
 					}
