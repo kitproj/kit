@@ -18,11 +18,17 @@ Shift-lest testing from test environments into graph of processes that represent
 
 ```mermaid
 flowchart LR
-    API --> MySQL
-    Ingestor --> Kafka
-    Ingestor --> API 
-    Sender --> Kafka
-    Sender --> Bucket
+    api --> build-api
+    api --> mysql
+    ingestor --> build-ingestor
+    ingestor --> kafka
+    ingestor --> api
+    sender --> build-sender
+    sender --> kafka
+    sender --> storage-bucket
+    up --> sender
+    up --> ingestor
+    up --> api
 ```
 
 ## How
