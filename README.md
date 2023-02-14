@@ -17,18 +17,20 @@ Modern developments has moved away from monolith services to micro-services. Dev
 Shift-lest testing from test environments into graph of processes that represent the local build and runtime execution of your app. Automatically re-build and re-start the application when source code changes. Robustly start and stop.
 
 ```mermaid
+---
+title: Example of an app
+---
 flowchart LR
-    api --> build-api
-    api --> mysql
-    ingestor --> build-ingestor
-    ingestor --> kafka
-    ingestor --> api
-    sender --> build-sender
-    sender --> kafka
-    sender --> storage-bucket
-    up --> sender
-    up --> ingestor
-    up --> api
+    classDef container fill:#f1d3a1,stroke-width:0
+    classDef host fill:#e6eff6,stroke-width:0
+    api(name: api\ncommand: java -jar target/api.jar\nworkingDir: ./api\nports: 8080):::host --> build-api(name: build-api\ncommand: mvn package\nworkingDir: ./api\nwatch: ./api):::host
+    api --> mysql(name: mysql\n image: mysql:latest):::container
+    processor(name: processor\ncommand: ./processor):::host --> build-processor(name: build-processor\ncommand: go build ./processor\nwatch: ./processor):::host
+    processor --> kafka(name: kafka\nimage: ./src/images/kafka):::container
+    processor --> object-storage(name: object-storage\nimage: minio:latest):::container
+    processor --> api
+    ui(name: ui\ncommand: yarn start\nworkingDir: ./ui\nports: 4000):::host --> build-ui(name: build-ui\ncommand: yarn install\nworkingDir: ./ui):::host
+    ui --> api
 ```
 
 ## How
