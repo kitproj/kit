@@ -4,5 +4,6 @@ go vet .
 go mod tidy
 goimports -w .
 go test -cover ./...
+go run ./hack
 git diff --exit-code
 go install .
