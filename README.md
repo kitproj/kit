@@ -10,7 +10,7 @@ Make the dev loop crazy fast.
 
 ## What
 
-Kit is a  software development tool designed to turbo-charge the software development process, with inspiration from several  tools, including Foreman, Docker Compose, Podman, Tilt, Skaffold, and Garden. It combines key features and capabilities of these tools, while also offering additional functionality and flexibility.
+Kit is a software development tool designed to turbo-charge the software development process, with inspiration from several  tools, including Foreman, Docker Compose, Podman, Tilt, Skaffold, and Garden. It combines key features and capabilities of these tools, while also offering additional functionality and flexibility.
 
 Key features of Kit include:
 
@@ -28,7 +28,7 @@ Kit was written with extensive help from AI.
 
 ## Install
 
-`kit` is a standalone 8Mb binary (like `jq)`. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
+Like `jq, ``kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
 
 ```bash
 brew tap alexec/kit --custom-remote https://github.com/alexec/kit
