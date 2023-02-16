@@ -65,6 +65,8 @@ You could also think of it as a more sophisticated `make -j4`.
 
 ## Install
 
+`kit` is a standalone 8Mb binary (like `jk)`. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
+
 ```bash
 brew tap alexec/kit --custom-remote https://github.com/alexec/kit
 brew install kit
