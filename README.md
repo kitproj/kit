@@ -24,6 +24,8 @@ Key features of Kit include:
 * **Terminal output**: Tasks run concurrently and their status is muxed into a single terminal window, so you're not overwhelmed by pages of terminal output.
 * **Log capture**: Logs are captured so you can look at them anytime.
 
+Kit was written with extensive help from AI.
+
 ## Install
 
 `kit` is a standalone 8Mb binary (like `jq)`. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
