@@ -12,6 +12,8 @@ Make the dev loop crazy fast.
 
 Kit is a software development tool designed to turbo-charge the software development process, with inspiration from several  tools, including Foreman, Docker Compose, Podman, Tilt, Skaffold, and Garden. It combines key features and capabilities of these tools, while also offering additional functionality and flexibility.
 
+It is designed to work seamlessly with both local-dev and cloud-dev environments, such as Codespaces and Gitpod.
+
 Key features of Kit include:
 
 * **Local testing**: Kit is designed for local testing, allowing developers to test their code on their local machines before pushing it to a test environment or production. This speeds up the testing process and helps developers catch and fix bugs more quickly.
