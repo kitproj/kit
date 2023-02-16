@@ -6,15 +6,37 @@
 
 ## Why
 
-Make the local-dev loop crazy fast.
-
-## Background
-
-Modern developments has moved away from monolith services to micro-services. Development may depends on other services, which maybe your own organizations services, or they could be a Open Source project (such as Kafak or Postgres) available as container images.
+Make the dev loop crazy fast.
 
 ## What
 
-Shift-lest testing from test environments into graph of processes that represent the local build and runtime execution of your app. Automatically re-build and re-start the application when source code changes. Robustly start and stop.
+Kit is a  software development tool designed to turbo-charge the software development process, with inspiration from several  tools, including Foreman, Docker Compose, Podman, Tilt, Skaffold, and Garden. It combines key features and capabilities of these tools, while also offering additional functionality and flexibility.
+
+Key features of Kit include:
+
+* **Local testing**: Kit is designed for local testing, allowing developers to test their code on their local machines before pushing it to a test environment or production. This speeds up the testing process and helps developers catch and fix bugs more quickly.
+* **Advanced DAG architecture**: Kit's directed acyclic graph (DAG) structure allows for optimized parallel processing, reducing the time required for testing and speeding up the development process.
+* **Probes**: You can specify liveness probes for your tasks to see if they're working, automatically restarting them when they go wrong. You can also specify readiness probes for your tasks to see if they're ready.
+* **Dependency management**: You can specify dependencies between tasks, so when upstream tasks become successful or ready, downstream tasks are automatically started.
+* **Comprehensive container management**: Kit can manage both host processes and containers, providing a comprehensive view of the entire software system and quickly identifying any issues or bugs that arise.
+* **Automatic rebuilding and restarting**: Kit can automatically rebuild and restart applications in response to changes in the source code or configuration files, allowing developers to test their code quickly and efficiently.
+* **Flexible integration and extensibility**: Kit is designed to be highly flexible and extensible, with support for a wide range of programming languages, frameworks, and tools. It can be easily integrated with existing systems and customized to meet specific needs.
+* **Terminal output**: Tasks run concurrently and their status is muxed into a single terminal window, so you're not overwhelmed by pages of terminal output.
+* **Log capture**: Logs are captured so you can look at them anytime.
+
+## Install
+
+`kit` is a standalone 8Mb binary (like `jq)`. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
+
+```bash
+brew tap alexec/kit --custom-remote https://github.com/alexec/kit
+brew install kit
+```
+
+## Usage
+
+Apps are described by a DAG, for example:
+
 
 ```mermaid
 ---
@@ -33,48 +55,7 @@ flowchart LR
     ui --> api
 ```
 
-## How
-
-- You specify a set of **tasks** that run in **containers** or as **host processes**.
-- Tasks may have a **mutex**, so you can prevent tasks running concurrently.
-- Task may run to **completion** (e.g. a build or tests) or run **indefinitely** (e.g. a web service or database).
-- You can specify **liveness probes** for your tasks to see if they're working, automatically restarting them
-  when they go wrong.
-- You can specify **readiness probes** for your tasks to see if they're ready.
-- You can specify **dependencies** between tasks, when upstream tasks become successful or ready downstream tasks
-  are automatically started.
-- Tasks run concurrently and their status is **muxed into a single terminal window** so you're not overwhelmed by
-  pages of terminal output.
-- You can specify **watches on your source code**, when changes occur, tasks are automatically re-run.
-- When you're done, **close your terminal** or **ctrl+c** to and they're all cleanly stopped.
-- **Logs are captured** so you can look at them anytime.
-
-You could think of it as `docker compose up` or `podman kube play` that supports host processes, or `foreman` that
-supports containers.
-
-| tool                | container processes | host processes | auto re-run | ctrl+c to stop | terminal mux | log capture | probes |
-|---------------------|---------------------|----------------|-------------|----------------|--------------|-------------|--------|
-| `kit`               | ✔                   | ✔              | ✔           | ✔              | ✔            | ✔           | ✔      |
-| `docker compose up` | ✔                   | ✖              | ✖           | ✖?             | ✔            | ✔           | ✖      |
-| `podman play kube`  | ✔                   | ✖              | ✖           | ✖              | ✖            | ✔           | ✔?     |
-| `foreman run`       | ✖                   | ✔              | ✖           | ✔              | ✔            | ✖           | ✖      |
-
-Tilt, Skaffold, and Garden are in the same problem space, but they all cross the boundary into deployment and often require Kubernetes.
-
-You could also think of it as a more sophisticated `make -j4`.
-
-## Install
-
-`kit` is a standalone 8Mb binary (like `jk)`. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
-
-```bash
-brew tap alexec/kit --custom-remote https://github.com/alexec/kit
-brew install kit
-```
-
-## Usage
-
-Create your [`tasks.yaml`](tasks.yaml) file, e.g.:
+Create a [`tasks.yaml`](tasks.yaml) file, e.g.:
 
 
 ```yaml
@@ -99,12 +80,6 @@ Start:
 ```bash
 kit up
 ```
-
-You'll see something like this:
-
-![screenshot](screenshot.png)
-
-Logs are stored in `./logs`.
 
 ## Reference
 
