@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Kitful local dev."
   homepage "https://github.com/alexec/kit"
-  version "0.0.40"
+  version "0.0.41"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.40/kit_0.0.40_Darwin_x86_64.tar.gz"
-      sha256 "4aa75f04e8a01296eb3fa913068e0e3e5811d3da73ba9ee90cc8e6b0badb70ec"
+      url "https://github.com/alexec/kit/releases/download/v0.0.41/kit_0.0.41_Darwin_x86_64.tar.gz"
+      sha256 "ca1379cc63690340cd1acde58bace7c783c98e101b288f369b10263bc783d224"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/alexec/kit/releases/download/v0.0.40/kit_0.0.40_Darwin_arm64.tar.gz"
-      sha256 "268d533eeae1971233db20399813e8cabf1debaf64f3783dc869d3bdd6cee3df"
+      url "https://github.com/alexec/kit/releases/download/v0.0.41/kit_0.0.41_Darwin_arm64.tar.gz"
+      sha256 "297824d1fec4520d1692d2dbc886a3f13acc876c389450e5f5b06e7a267ab1dd"
 
       def install
         bin.install "kit"
@@ -27,17 +27,17 @@ class Kit < Formula
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      url "https://github.com/alexec/kit/releases/download/v0.0.40/kit_0.0.40_Linux_x86_64.tar.gz"
-      sha256 "83ce4a508e37bb09de716ccc3b521d6f3c7fd63c04602c70cc5e8951758d11ba"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/alexec/kit/releases/download/v0.0.41/kit_0.0.41_Linux_arm64.tar.gz"
+      sha256 "2be61930057d15f2d85691ca8b09d4aec569f9946155aeb99f71dd54bb452b57"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/alexec/kit/releases/download/v0.0.40/kit_0.0.40_Linux_arm64.tar.gz"
-      sha256 "fc02c368bf31fe6b3112f443592a17876d88a1404dc802a99037a22dd132da3a"
+    if Hardware::CPU.intel?
+      url "https://github.com/alexec/kit/releases/download/v0.0.41/kit_0.0.41_Linux_x86_64.tar.gz"
+      sha256 "8f505897d887e74b4f0130a4ddd19d40f3b44a651095c1b468f00a33063dbfc7"
 
       def install
         bin.install "kit"
