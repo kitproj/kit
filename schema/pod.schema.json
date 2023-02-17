@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alexec/kit/internal/types/pod",
+  "$ref": "#/$defs/Pod",
+  "$defs": {
+    "EnvVar": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name"
+        },
+        "value": {
+          "type": "string",
+          "title": "value"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "EnvVar",
+      "description": "A environment variable."
+    },
+    "EnvVars": {
+      "items": {
+        "$ref": "#/$defs/EnvVar"
+      },
+      "type": "array",
+      "title": "EnvVars",
+      "description": "A list of environment variables."
+    },
+    "HTTPGetAction": {
+      "properties": {
+        "scheme": {
+          "type": "string",
+          "title": "scheme",
+          "description": "Scheme to use for connecting to the host. Defaults to HTTP."
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "Number of the port"
+        },
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "Path to access on the HTTP server."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "HTTPGetAction",
+      "description": "HTTPGetAction describes an action based on HTTP Get requests."
+    },
+    "HostPath": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "Path of the directory on the host."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "title": "HostPath"
+    },
+    "Metadata": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name is the name of the resource."
+        },
+        "annotations": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "annotations",
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "title": "Metadata"
+    },
+    "Pod": {
+      "properties": {
+        "spec": {
+          "$ref": "#/$defs/PodSpec",
+          "title": "spec",
+          "description": "The specification of tasks to run."
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "apiVersion",
+          "description": "APIVersion must be `kit/v1`."
+        },
+        "kind": {
+          "type": "string",
+          "title": "kind",
+          "description": "Kind must be `Tasks`."
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata",
+          "title": "metadata",
+          "description": "Metadata is the metadata for the pod."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "spec",
+        "metadata"
+      ],
+      "title": "Pod"
+    },
+    "PodSpec": {
+      "properties": {
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "title": "terminationGracePeriodSeconds",
+          "description": "TerminationGracePeriodSeconds is the grace period for terminating the pod."
+        },
+        "tasks": {
+          "$ref": "#/$defs/Tasks",
+          "title": "tasks",
+          "description": "Tasks is a list of tasks that should be run."
+        },
+        "volumes": {
+          "items": {
+            "$ref": "#/$defs/Volume"
+          },
+          "type": "array",
+          "title": "volumes",
+          "description": "Volumes is a list of volumes that can be mounted by containers belonging to the pod."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "PodSpec",
+      "description": "Task is a unit of work that should be run."
+    },
+    "Port": {
+      "properties": {
+        "containerPort": {
+          "type": "integer",
+          "title": "containerPort",
+          "description": "The container port to expose"
+        },
+        "hostPort": {
+          "type": "integer",
+          "title": "hostPort",
+          "description": "The host port to route to the container port"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "Port",
+      "description": "A port to expose."
+    },
+    "Ports": {
+      "items": {
+        "$ref": "#/$defs/Port"
+      },
+      "type": "array",
+      "title": "Ports",
+      "description": "A list of ports to expose."
+    },
+    "Probe": {
+      "properties": {
+        "tcpSocket": {
+          "$ref": "#/$defs/TCPSocketAction",
+          "title": "tcpSocket",
+          "description": "The action to perform."
+        },
+        "httpGet": {
+          "$ref": "#/$defs/HTTPGetAction",
+          "title": "httpGet",
+          "description": "The action to perform."
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "title": "initialDelaySeconds",
+          "description": "Number of seconds after the process has started before the probe is initiated."
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "title": "periodSeconds",
+          "description": "How often (in seconds) to perform the probe."
+        },
+        "successThreshold": {
+          "type": "integer",
+          "title": "successThreshold",
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed."
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "title": "failureThreshold",
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "Probe",
+      "description": "A probe to check if the task is alive, it will be restarted if not."
+    },
+    "Strings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "title": "Strings"
+    },
+    "TCPSocketAction": {
+      "properties": {
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "Port number of the port to probe."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port"
+      ],
+      "title": "TCPSocketAction",
+      "description": "TCPSocketAction describes an action based on opening a socket"
+    },
+    "Task": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "The name of the task, must be unique"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "Either the container image to run, or a directory containing a Dockerfile"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "title": "imagePullPolicy",
+          "description": "Pull policy, e.g. Always, Never, IfNotPresent"
+        },
+        "livenessProbe": {
+          "$ref": "#/$defs/Probe",
+          "title": "livenessProbe",
+          "description": "A probe to check if the task is alive, it will be restarted if not"
+        },
+        "readinessProbe": {
+          "$ref": "#/$defs/Probe",
+          "title": "readinessProbe",
+          "description": "A probe to check if the task is ready to serve requests"
+        },
+        "command": {
+          "$ref": "#/$defs/Strings",
+          "title": "command",
+          "description": "The command to run in the container or on the host"
+        },
+        "args": {
+          "$ref": "#/$defs/Strings",
+          "title": "args",
+          "description": "The arguments to pass to the command"
+        },
+        "workingDir": {
+          "type": "string",
+          "title": "workingDir",
+          "description": "The working directory in the container or on the host"
+        },
+        "env": {
+          "$ref": "#/$defs/EnvVars",
+          "title": "env"
+        },
+        "ports": {
+          "$ref": "#/$defs/Ports",
+          "title": "ports"
+        },
+        "volumeMounts": {
+          "items": {
+            "$ref": "#/$defs/VolumeMount"
+          },
+          "type": "array",
+          "title": "volumeMounts"
+        },
+        "tty": {
+          "type": "boolean",
+          "title": "tty"
+        },
+        "watch": {
+          "$ref": "#/$defs/Strings",
+          "title": "watch",
+          "description": "A list of files to watch for changes, and restart the task if they change"
+        },
+        "mutex": {
+          "type": "string",
+          "title": "mutex",
+          "description": "A mutex to prevent multiple tasks with the same mutex from running at the same time"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/Strings",
+          "title": "dependencies",
+          "description": "A list of tasks to run before this task"
+        },
+        "restartPolicy": {
+          "type": "string",
+          "title": "restartPolicy",
+          "description": "The restart policy, e.g. Always, Never, OnFailure"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "title": "Task",
+      "description": "A task is a container or a command to run."
+    },
+    "Tasks": {
+      "items": {
+        "$ref": "#/$defs/Task"
+      },
+      "type": "array",
+      "title": "Tasks"
+    },
+    "Volume": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Volume's name."
+        },
+        "hostPath": {
+          "$ref": "#/$defs/HostPath",
+          "title": "hostPath",
+          "description": "HostPath represents a pre-existing file or directory on the host machine that is directly exposed to the container."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "hostPath"
+      ],
+      "title": "Volume"
+    },
+    "VolumeMount": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "This must match the name of a volume."
+        },
+        "mountPath": {
+          "type": "string",
+          "title": "mountPath",
+          "description": "Path within the container at which the volume should be mounted."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "mountPath"
+      ],
+      "title": "VolumeMount",
+      "description": "VolumeMount describes a mounting of a Volume within a container."
+    }
+  }
+}
