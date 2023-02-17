@@ -209,11 +209,17 @@ type Task struct {
 	// The arguments to pass to the command
 	Args Strings `json:"args,omitempty"`
 	// The working directory in the container or on the host
-	WorkingDir   string        `json:"workingDir,omitempty"`
-	Env          EnvVars       `json:"env,omitempty"`
-	Ports        Ports         `json:"ports,omitempty"`
+	WorkingDir string `json:"workingDir,omitempty"`
+	// The user to run the task as.
+	User string `json:"user,omitempty"`
+	// Environment variables to set in the container or on the host
+	Env EnvVars `json:"env,omitempty"`
+	// The ports to expose
+	Ports Ports `json:"ports,omitempty"`
+	// Volumes to mount in the container
 	VolumeMounts []VolumeMount `json:"volumeMounts,omitempty"`
-	TTY          bool          `json:"tty,omitempty"`
+	// Use a pseudo-TTY
+	TTY bool `json:"tty,omitempty"`
 	// A list of files to watch for changes, and restart the task if they change
 	Watch Strings `json:"watch,omitempty"`
 	// A mutex to prevent multiple tasks with the same mutex from running at the same time
