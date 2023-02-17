@@ -1,15 +1,15 @@
-# volumeMounts Schema
+# user Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts
+https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user
 ```
 
-Volumes to mount in the container
+The user to run the task as.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## volumeMounts Type
+## user Type
 
-`object[]` ([VolumeMount](pod-defs-volumemount.md))
+`string` ([user](pod-defs-task-properties-user.md))

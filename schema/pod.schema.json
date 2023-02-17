@@ -280,24 +280,33 @@
           "title": "workingDir",
           "description": "The working directory in the container or on the host"
         },
+        "user": {
+          "type": "string",
+          "title": "user",
+          "description": "The user to run the task as."
+        },
         "env": {
           "$ref": "#/$defs/EnvVars",
-          "title": "env"
+          "title": "env",
+          "description": "Environment variables to set in the container or on the host"
         },
         "ports": {
           "$ref": "#/$defs/Ports",
-          "title": "ports"
+          "title": "ports",
+          "description": "The ports to expose"
         },
         "volumeMounts": {
           "items": {
             "$ref": "#/$defs/VolumeMount"
           },
           "type": "array",
-          "title": "volumeMounts"
+          "title": "volumeMounts",
+          "description": "Volumes to mount in the container"
         },
         "tty": {
           "type": "boolean",
-          "title": "tty"
+          "title": "tty",
+          "description": "Use a pseudo-TTY"
         },
         "watch": {
           "$ref": "#/$defs/Strings",

@@ -4,7 +4,7 @@
 https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty
 ```
 
-
+Use a pseudo-TTY
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |

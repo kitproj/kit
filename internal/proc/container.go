@@ -95,6 +95,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Env:          c.Env.Environ(),
 		Cmd:          strslice.StrSlice(c.Args),
 		Image:        image,
+		User:         c.User,
 		WorkingDir:   c.WorkingDir,
 		// TODO support entrypoint
 		Entrypoint: strslice.StrSlice(c.Command),

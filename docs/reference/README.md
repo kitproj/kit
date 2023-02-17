@@ -44,7 +44,7 @@
 
 *   [Tasks](./pod-defs-tasks.md) – `https://github.com/alexec/kit/internal/types/pod#/$defs/Tasks`
 
-*   [volumeMounts](./pod-defs-task-properties-volumemounts.md) – `https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts`
+*   [volumeMounts](./pod-defs-task-properties-volumemounts.md "Volumes to mount in the container") – `https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts`
 
 *   [volumes](./pod-defs-podspec-properties-volumes.md "Volumes is a list of volumes that can be mounted by containers belonging to the pod") – `https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes`
 

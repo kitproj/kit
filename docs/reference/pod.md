@@ -622,6 +622,7 @@ Reference this group by using
 | [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
+| [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")                       |
 | [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
 | [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
 | [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
@@ -775,6 +776,24 @@ The working directory in the container or on the host
 
 `string` ([workingDir](pod-defs-task-properties-workingdir.md))
 
+### user
+
+The user to run the task as.
+
+`user`
+
+*   is optional
+
+*   Type: `string` ([user](pod-defs-task-properties-user.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")
+
+#### user Type
+
+`string` ([user](pod-defs-task-properties-user.md))
+
 ### env
 
 A list of environment variables.
@@ -813,7 +832,7 @@ A list of ports to expose.
 
 ### volumeMounts
 
-
+Volumes to mount in the container
 
 `volumeMounts`
 
@@ -831,7 +850,7 @@ A list of ports to expose.
 
 ### tty
 
-
+Use a pseudo-TTY
 
 `tty`
 
