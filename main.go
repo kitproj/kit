@@ -145,6 +145,7 @@ func main() {
 		go func() {
 			defer handleCrash(stopEverything)
 			<-ctx.Done()
+			fmt.Println("terminating") // let the user know we're terminating
 			close(work)
 		}()
 
