@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
@@ -65,11 +66,17 @@ func (h *host) stop(pid int) error {
 	}
 	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
 	log.Printf("%d: killing process", pid)
-	if err := target.Signal(os.Kill); err == nil {
-		return nil
-	} else {
+	if err := target.Signal(os.Kill); ignoreProcessFinishedErr(err) != nil {
 		return fmt.Errorf("failed to kill: %w", err)
 	}
+	return nil
+}
+
+func ignoreProcessFinishedErr(err error) error {
+	if err != nil && !strings.Contains(err.Error(), "process already finished") {
+		return err
+	}
+	return nil
 }
 
 var _ Interface = &host{}
