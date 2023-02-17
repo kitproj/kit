@@ -17,7 +17,7 @@ func TestPod(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "kit", pod.Metadata.Name)
 	assert.Equal(t, map[string]string{"help": "https://github.com/alexec/kit"}, pod.Metadata.Annotations)
-	assert.Equal(t, 30*time.Second, pod.Spec.GetTerminationGracePeriod())
+	assert.Equal(t, 3*time.Second, pod.Spec.GetTerminationGracePeriod())
 	assert.Len(t, pod.Spec.Tasks, 2)
 	task := pod.Spec.Tasks[0]
 	assert.Equal(t, "foo", task.GetMutex())
