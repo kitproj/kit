@@ -79,6 +79,7 @@ func main() {
 				},
 			})
 		}
+		terminating := false
 		printTasks := func() {
 			width, _, _ := terminal.GetSize(0)
 			if width == 0 {
@@ -122,6 +123,9 @@ func main() {
 				}
 				fmt.Println(prefix + " " + msg)
 			}
+			if terminating {
+				fmt.Println("terminating...")
+			}
 		}
 
 		// every 1/2 second print the current status to the terminal
@@ -145,7 +149,7 @@ func main() {
 		go func() {
 			defer handleCrash(stopEverything)
 			<-ctx.Done()
-			fmt.Println("terminating") // let the user know we're terminating
+			terminating = true
 			close(work)
 		}()
 
