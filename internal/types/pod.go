@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// A environment variable.
 type EnvVar struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
@@ -55,6 +56,7 @@ func (v EnvVar) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.String())
 }
 
+// A list of ports to expose.
 type Ports []Port
 
 func (p *Ports) UnmarshalJSON(data []byte) error {
@@ -96,6 +98,7 @@ func (p Ports) MarshalJSON() ([]byte, error) {
 	return json.Marshal(x)
 }
 
+// A port to expose.
 type Port struct {
 	// The container port to expose
 	ContainerPort uint16 `json:"containerPort,omitempty"`
@@ -162,6 +165,7 @@ func (p Port) GetHostPort() uint16 {
 	return p.HostPort
 }
 
+// A list of environment variables.
 type EnvVars []EnvVar
 
 // Environ returns a list of environment variables. If an environment variable is defined in both the task and the host, the host value is used.
@@ -188,6 +192,7 @@ func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
 }
 
+// A task is a container or a command to run.
 type Task struct {
 	// The name of the task, must be unique
 	Name string `json:"name"`
@@ -273,18 +278,22 @@ func (t *Task) GetMutex() string {
 }
 
 type Pod struct {
+	// The specification of tasks to run.
 	Spec PodSpec `json:"spec"`
 	// APIVersion must be `kit/v1`.
 	ApiVersion string `json:"apiVersion,omitempty"`
 	// Kind must be `Tasks`.
-	Kind     string   `json:"kind,omitempty"`
+	Kind string `json:"kind,omitempty"`
+	// Metadata is the metadata for the pod.
 	Metadata Metadata `json:"metadata"`
 }
 
 // A probe to check if the task is alive, it will be restarted if not.
 type Probe struct {
+	// The action to perform.
 	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
-	HTTPGet   *HTTPGetAction   `json:"httpGet,omitempty"`
+	// The action to perform.
+	HTTPGet *HTTPGetAction `json:"httpGet,omitempty"`
 	// Number of seconds after the process has started before the probe is initiated.
 	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty"`
 	// How often (in seconds) to perform the probe.
@@ -416,6 +425,7 @@ func (p Probe) GetSuccessThreshold() int {
 	return int(p.SuccessThreshold)
 }
 
+// TCPSocketAction describes an action based on opening a socket
 type TCPSocketAction struct {
 	// Port number of the port to probe.
 	Port uint16 `json:"port"`
@@ -425,6 +435,7 @@ func (a TCPSocketAction) URL() *url.URL {
 	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf(":%v", a.Port)}
 }
 
+// HTTPGetAction describes an action based on HTTP Get requests.
 type HTTPGetAction struct {
 	// Scheme to use for connecting to the host. Defaults to HTTP.
 	Scheme string `json:"scheme,omitempty"`
@@ -555,6 +566,7 @@ func (t Tasks) Get(name string) Task {
 	panic(fmt.Errorf("no task named %q", name))
 }
 
+// Task is a unit of work that should be run.
 type PodSpec struct {
 	// TerminationGracePeriodSeconds is the grace period for terminating the pod.
 	TerminationGracePeriodSeconds *int32 `json:"terminationGracePeriodSeconds,omitempty"`
