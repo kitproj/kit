@@ -568,7 +568,7 @@ func (s PodSpec) GetTerminationGracePeriod() time.Duration {
 	if s.TerminationGracePeriodSeconds != nil {
 		return time.Duration(*s.TerminationGracePeriodSeconds) * time.Second
 	}
-	return 30 * time.Second
+	return 3 * time.Second
 }
 
 type TaskStateWaiting struct {
