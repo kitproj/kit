@@ -305,6 +305,9 @@ func main() {
 								<-ctx.Done()
 								stopProcess()
 							}()
+							if err := prc.Reset(runCtx); err != nil {
+								return err
+							}
 							status.Ready = false
 							status.State = types.TaskState{
 								Waiting: &types.TaskStateWaiting{Reason: "port"},
