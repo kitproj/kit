@@ -72,6 +72,10 @@ func (h *host) stop(pid int) error {
 	return nil
 }
 
+func (h *host) Reset(ctx context.Context) error {
+	return nil
+}
+
 func ignoreProcessFinishedErr(err error) error {
 	if err != nil && !strings.Contains(err.Error(), "process already finished") {
 		return err

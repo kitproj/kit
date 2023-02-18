@@ -33,15 +33,12 @@ type container struct {
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
+
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
-
-	if err := c.stop(ctx, cli); err != nil {
-		return err
-	}
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
 	id, err := c.getContainerID(ctx, cli)
@@ -115,7 +112,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		c.stop(context.Background(), cli)
+		c.Reset(context.Background())
 	}()
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
@@ -172,7 +169,12 @@ func (c *container) createBinds() ([]string, error) {
 	return binds, nil
 }
 
-func (c *container) stop(ctx context.Context, cli *client.Client) error {
+func (c *container) Reset(ctx context.Context) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
 	id, err := c.getContainerID(ctx, cli)
 	if err != nil {
 		return err
