@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"time"
@@ -23,7 +24,7 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 		default:
 			var err error
 			if tcp := probe.TCPSocket; tcp != nil {
-				_, err = net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", tcp.Port))
+				_, err = net.Dial("tcp", fmt.Sprintf("localhost:%v", tcp.Port))
 			} else if httpGet := probe.HTTPGet; httpGet != nil {
 				err = func() error {
 					resp, err := http.Get(httpGet.GetURL())
@@ -46,6 +47,8 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 				successes = 0
 				failures++
 			}
+
+			log.Printf("probe %v: err=%v sucessess=%d failures=%d successThreshold=%d failureThreshold=%d", probe, err, successes, failures, probe.GetSuccessThreshold(), probe.GetFailureThreshold())
 
 			if successes == probe.GetSuccessThreshold() {
 				callback(true, nil)
