@@ -68,6 +68,8 @@ func main() {
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
+		log.Printf("tasks: %v\n", tasks)
+
 		statuses := sync.Map{}
 		logEntries := make(map[string]*types.LogEntry)
 
@@ -161,6 +163,7 @@ func main() {
 			select {
 			case <-ctx.Done():
 			default:
+				log.Printf("starting downstream of: %v\n", name)
 				for _, downstream := range tasks.GetDownstream(name) {
 					fulfilled := true
 					for _, upstream := range downstream.Dependencies {
@@ -173,6 +176,7 @@ func main() {
 						}
 					}
 					if fulfilled {
+						log.Printf("starting: %v\n", downstream)
 						work <- downstream
 					}
 				}
@@ -296,7 +300,7 @@ func main() {
 					case <-processCtx.Done():
 						return
 					default:
-						logEntry.Printf("starting process")
+						logEntry.Printf("starting process\n")
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
@@ -313,7 +317,7 @@ func main() {
 								Waiting: &types.TaskStateWaiting{Reason: "port"},
 							}
 							for _, port := range t.GetHostPorts() {
-								if err := isPortOpen(port); err != nil {
+								if err := isPortFree(port); err != nil {
 									return err
 								}
 							}
@@ -323,10 +327,10 @@ func main() {
 							if probe := t.GetLivenessProbe(); probe != nil {
 								liveFunc := func(live bool, err error) {
 									if !live {
-										_, _ = fmt.Fprintf(stderr, "not live: %v\n", err)
+										logEntry.Printf("not live\n")
 										stopRun()
 									} else {
-										_, _ = fmt.Fprintf(stdout, "live\n")
+										logEntry.Printf("live\n")
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, liveFunc)
@@ -335,7 +339,7 @@ func main() {
 								readyFunc := func(ready bool, err error) {
 									status.Ready = ready
 									if ready {
-										_, _ = fmt.Fprintf(stdout, "ready")
+										logEntry.Printf("ready\n")
 										maybeStartDownstream(name)
 									} else {
 										_, _ = fmt.Fprintf(stderr, "not ready: %v\n", err)
@@ -343,6 +347,7 @@ func main() {
 								}
 								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
 							}
+							logEntry.Printf("running\n")
 							return prc.Run(runCtx, stdout, stderr)
 						}()
 						if err != nil {

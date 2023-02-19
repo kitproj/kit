@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -45,7 +46,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	} else if id != "" {
-		_, _ = fmt.Fprintf(stdout, "container alread exists, skipping build/pull")
+		_, _ = fmt.Fprintf(stdout, "container already exists, skipping build/pull")
 	} else if _, err := os.Stat(dockerfile); err == nil {
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
@@ -85,6 +86,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
 		image = c.Name
 	}
+	_, _ = fmt.Fprintf(stdout, "creating container")
 	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
@@ -114,6 +116,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		<-ctx.Done()
 		c.Reset(context.Background())
 	}()
+	_, _ = fmt.Fprintf(stdout, "logging container")
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -181,10 +184,12 @@ func (c *container) Reset(ctx context.Context) error {
 	}
 	if id != "" {
 		grace := c.PodSpec.GetTerminationGracePeriod()
+		log.Printf("stopping container %q\n", id)
 		if err := cli.ContainerStop(ctx, id, &grace); ignoreNotExist(err) != nil {
 			return fmt.Errorf("failed to stop container: %w", err)
 		}
 		if c.remove {
+			log.Printf("removing container %q\n", id)
 			if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
 				return fmt.Errorf("failed to remove container: %w", err)
 			}

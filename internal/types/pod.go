@@ -387,18 +387,10 @@ func (p Probe) URL() *url.URL {
 		u = p.HTTPGet.URL()
 	}
 	var x = url.Values{}
-	if p.InitialDelaySeconds > 0 {
-		x.Add("initialDelay", p.GetInitialDelay().String())
-	}
-	if p.PeriodSeconds > 0 {
-		x.Add("period", p.GetPeriod().String())
-	}
-	if p.SuccessThreshold > 0 {
-		x.Add("successThreshold", fmt.Sprint(p.SuccessThreshold))
-	}
-	if p.FailureThreshold > 0 {
-		x.Add("failureThreshold", fmt.Sprint(p.FailureThreshold))
-	}
+	x.Add("initialDelay", p.GetInitialDelay().String())
+	x.Add("period", p.GetPeriod().String())
+	x.Add("successThreshold", fmt.Sprint(p.SuccessThreshold))
+	x.Add("failureThreshold", fmt.Sprint(p.FailureThreshold))
 	u.RawQuery = x.Encode()
 	return u
 }

@@ -8,11 +8,11 @@ import (
 
 func Test_isPortOpen(t *testing.T) {
 	t.Run("RandomPort", func(t *testing.T) {
-		err := isPortOpen(0)
+		err := isPortFree(0)
 		assert.NoError(t, err)
 	})
 	t.Run("SudoPort", func(t *testing.T) {
-		err := isPortOpen(1)
+		err := isPortFree(1)
 		assert.Error(t, err)
 	})
 }

@@ -33,6 +33,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Setpgid: true,
 	}
 	cmd.Env = append(os.Environ(), h.Env.Environ()...)
+	log.Printf("starting process %q", h.Command)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -49,14 +50,14 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
-	log.Printf("%d: waiting for process %q ", pid, path)
+	log.Printf("waiting for process %d(%q)", pid, h.Command)
 	err = cmd.Wait()
-	log.Printf("%d: %q exited: %v", pid, path, err)
+	log.Printf("process %d exited : %v", pid, err)
 	return err
 }
 
 func (h *host) stop(pid int) error {
-	log.Printf("%d: terminating process", pid)
+	log.Printf("terminating process %d\n", pid)
 	target, err := os.FindProcess(-pid)
 	if err != nil {
 		return fmt.Errorf("failed to find process: %w", err)
@@ -65,7 +66,7 @@ func (h *host) stop(pid int) error {
 		return nil
 	}
 	time.Sleep(h.PodSpec.GetTerminationGracePeriod())
-	log.Printf("%d: killing process", pid)
+	log.Printf("killing process %d\n", pid)
 	if err := target.Signal(os.Kill); ignoreProcessFinishedErr(err) != nil {
 		return fmt.Errorf("failed to kill: %w", err)
 	}
