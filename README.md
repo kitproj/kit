@@ -50,6 +50,8 @@ chmod +x kit
 sudo mv kit /usr/local/bin/kit
 ```
 
+We do not support `go install`.
+
 ## Usage
 
 Apps are described by a DAG, for example:
