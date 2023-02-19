@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/fs"
@@ -46,8 +47,17 @@ const escape = "\x1b"
 const defaultConfigFile = "tasks.yaml"
 
 func main() {
-	args := os.Args[1:]
-	configFile := defaultConfigFile
+	help := false
+	configFile := ""
+	flag.BoolVar(&help, "h", false, "help")
+	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
+	flag.Parse()
+	args := flag.Args()
+
+	if help {
+		fmt.Println("Usage: kit [-f tasks.yaml] [task1 task2 ...]")
+		os.Exit(0)
+	}
 
 	err := func() error {
 
