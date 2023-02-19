@@ -1,5 +1,7 @@
 # Examples
 
+## Container
+
 The `image` field can be either:
 
 1. An conventional image tag. E.g. `ubunutu`.
@@ -72,17 +74,12 @@ If the process is not alive (i.e. "dead"), then it is killed and restarted. Just
 ## Quitting
 
 Enter Ctrl+C to send a `SIGTERM` to the process. Each sub-process is then gets sent `SIGTERM`. If they do not exit
-within 30s, then they get a `SIGKILL`. You may wish to reduce this number:
-
-```yaml
-spec:
-  terminationGracePeriodSeconds: 3
-```
+_within 3s, then they get a `SIGKILL`. 
 
 You can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
 running and you must manually clean up.
 
-## Killing One Process
+## Killing One Task
 
 * To kill a host process: `kill $(lsof -ti:$host_port)`
-* To kill a container process: `docker kill $name`.
+* To kill a container : `docker kill $name`.

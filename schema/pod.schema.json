@@ -248,7 +248,7 @@
         "image": {
           "type": "string",
           "title": "image",
-          "description": "Either the container image to run, or a directory containing a Dockerfile"
+          "description": "Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host."
         },
         "imagePullPolicy": {
           "type": "string",
@@ -258,17 +258,17 @@
         "livenessProbe": {
           "$ref": "#/$defs/Probe",
           "title": "livenessProbe",
-          "description": "A probe to check if the task is alive, it will be restarted if not"
+          "description": "A probe to check if the task is alive, it will be restarted if not. If omitted, the task is assumed to be alive."
         },
         "readinessProbe": {
           "$ref": "#/$defs/Probe",
           "title": "readinessProbe",
-          "description": "A probe to check if the task is ready to serve requests"
+          "description": "A probe to check if the task is ready to serve requests. If omitted, the task is assumed to be ready if when the first port is open."
         },
         "command": {
           "$ref": "#/$defs/Strings",
           "title": "command",
-          "description": "The command to run in the container or on the host"
+          "description": "The command to run in the container or on the host. If both the image and the command are omitted, this is a noop."
         },
         "args": {
           "$ref": "#/$defs/Strings",

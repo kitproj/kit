@@ -107,6 +107,4 @@ Logs are stored in `./logs`.
 
 What next?
 
-- [Examples](docs/examples)
-- [Reference](docs/reference)
-
+Open the [docs](docs) to see examples of how to use Kit, as well as the reference.

@@ -4,7 +4,7 @@
 https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/image
 ```
 
-Either the container image to run, or a directory containing a Dockerfile
+Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |

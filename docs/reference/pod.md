@@ -652,7 +652,7 @@ The name of the task, must be unique
 
 ### image
 
-Either the container image to run, or a directory containing a Dockerfile
+Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
 
 `image`
 
@@ -724,7 +724,7 @@ A probe to check if the task is alive, it will be restarted if not.
 
 ### command
 
-The command to run in the container or on the host
+The command to run in the container or on the host. If both the image and the command are omitted, this is a noop.
 
 `command`
 

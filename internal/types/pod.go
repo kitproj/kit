@@ -196,15 +196,15 @@ func (t *Task) HasMutex() bool {
 type Task struct {
 	// The name of the task, must be unique
 	Name string `json:"name"`
-	// Either the container image to run, or a directory containing a Dockerfile
+	// Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
 	Image string `json:"image,omitempty"`
 	// Pull policy, e.g. Always, Never, IfNotPresent
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
-	// A probe to check if the task is alive, it will be restarted if not
+	// A probe to check if the task is alive, it will be restarted if not. If omitted, the task is assumed to be alive.
 	LivenessProbe *Probe `json:"livenessProbe,omitempty"`
-	// A probe to check if the task is ready to serve requests
+	// A probe to check if the task is ready to serve requests. If omitted, the task is assumed to be ready if when the first port is open.
 	ReadinessProbe *Probe `json:"readinessProbe,omitempty"`
-	// The command to run in the container or on the host
+	// The command to run in the container or on the host. If both the image and the command are omitted, this is a noop.
 	Command Strings `json:"command,omitempty"`
 	// The arguments to pass to the command
 	Args Strings `json:"args,omitempty"`
