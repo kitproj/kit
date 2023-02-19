@@ -30,11 +30,24 @@ Kit was written with extensive help from AI.
 
 ## Install
 
-Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/alexec/kit/releases/tag). If you're on MacOS, you can use `brew`:
+Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/alexec/kit/releases/latest). 
+
+If you're on MacOS, you can use `brew`:
 
 ```bash
 brew tap alexec/kit --custom-remote https://github.com/alexec/kit
 brew install kit
+```
+
+Otherwise, you can use `curl`:
+
+```bash
+tag=$(curl -s "https://api.github.com/repos/alexec/kit/releases/latest" | jq -r '.tag_name')
+version=${tag:1}
+curl -Lo kit.tar.gz "https://github.com/alexec/kit/releases/download/${tag}/kit_${version}_$(uname -o)_$(uname -m).tar.gz"
+tar -xvf kit.tar.gz kit
+chmod +x kit
+sudo mv kit /usr/local/bin/kit
 ```
 
 ## Usage
