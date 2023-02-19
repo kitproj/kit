@@ -66,6 +66,19 @@ func main() {
 			return err
 		}
 
+		// make sure that the file is valid,
+		// this helps Copilot to auto-complete the file,
+		// no need to have any IDE plugin - welcome to the future
+		if pod.ApiVersion != "kit/v1" {
+			return errors.New("invalid apiVersion, must be 'kit/v1")
+		}
+		if pod.Kind != "Tasks" {
+			return errors.New("invalid kind, must be 'Tasks'")
+		}
+		if pod.Metadata.Name == "" {
+			return errors.New("metadata.name is required")
+		}
+
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
 		log.Printf("tasks: %v\n", tasks)
