@@ -42,7 +42,7 @@ brew install kit
 Otherwise, you can use `curl`:
 
 ```bash
-curl -q https://raw.githubusercontent.com/alexec/kit/main/install.sh | bash
+curl -q https://raw.githubusercontent.com/alexec/kit/main/install.sh | sh
 ```
 
 We do not support `go install`.
