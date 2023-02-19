@@ -2,3 +2,4 @@
 
 git tag v$(semver next patch $(git tag|sort -V|tail -n1|cut -c 2-))
 
+git push --tags
