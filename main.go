@@ -122,16 +122,17 @@ func main() {
 					continue
 				}
 				reason := state.GetReason()
-				icon := "▓"
+				const blackSquare = "■"
+				icon := blackSquare
 				switch reason {
 				case "running":
-					icon = color.BlueString("▓")
+					icon = color.BlueString(blackSquare)
 				case "ready":
-					icon = color.GreenString("▓")
+					icon = color.GreenString(blackSquare)
 				case "error":
-					icon = color.RedString("▓")
+					icon = color.RedString(blackSquare)
 				case "skipped":
-					icon = color.HiBlackString("▓")
+					icon = color.HiBlackString(blackSquare)
 				}
 				prefix := fmt.Sprintf("%s %-10s %-8s", icon, k8sstrings.ShortenString(t.Name, 10), reason)
 				if ports := t.GetHostPorts(); len(ports) > 0 {
