@@ -1,7 +1,7 @@
 # HostPath Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/hostPath
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath
 ```
 
 HostPath represents a pre-existing file or directory on the host machine that is directly exposed to the container.
@@ -16,9 +16,9 @@ HostPath represents a pre-existing file or directory on the host machine that is
 
 # hostPath Properties
 
-| Property      | Type     | Required | Nullable       | Defined by                                                                                                                                 |
-| :------------ | :------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| [path](#path) | `string` | Required | cannot be null | [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath/properties/path") |
+| Property      | Type     | Required | Nullable       | Defined by                                                                                                                                  |
+| :------------ | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| [path](#path) | `string` | Required | cannot be null | [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath/properties/path") |
 
 ## path
 
@@ -32,7 +32,7 @@ Path of the directory on the host.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath/properties/path")
+*   defined in: [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath/properties/path")
 
 ### path Type
 

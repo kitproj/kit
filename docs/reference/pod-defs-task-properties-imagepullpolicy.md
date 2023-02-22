@@ -1,7 +1,7 @@
 # imagePullPolicy Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy
 ```
 
 Pull policy, e.g. Always, Never, IfNotPresent

@@ -1,7 +1,7 @@
 # name Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/name
+https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name
 ```
 
 This must match the name of a volume.

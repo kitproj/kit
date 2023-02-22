@@ -1,7 +1,7 @@
 # periodSeconds Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds
 ```
 
 How often (in seconds) to perform the probe.

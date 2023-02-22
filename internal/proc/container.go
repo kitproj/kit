@@ -16,7 +16,7 @@ import (
 
 	"github.com/docker/docker/pkg/stdcopy"
 
-	"github.com/alexec/kit/internal/types"
+	"github.com/kitproj/kit/internal/types"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"

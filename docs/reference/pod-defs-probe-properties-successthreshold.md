@@ -1,7 +1,7 @@
 # successThreshold Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/successThreshold
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/successThreshold
 ```
 
 Minimum consecutive successes for the probe to be considered successful after having failed.

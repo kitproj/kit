@@ -1,7 +1,7 @@
 # path Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path
+https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path
 ```
 
 Path to access on the HTTP server.

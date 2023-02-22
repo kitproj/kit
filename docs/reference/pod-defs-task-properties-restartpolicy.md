@@ -1,7 +1,7 @@
 # restartPolicy Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/restartPolicy
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy
 ```
 
 The restart policy, e.g. Always, Never, OnFailure

@@ -1,7 +1,7 @@
 # Ports Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Ports
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Ports
 ```
 
 A list of ports to expose.

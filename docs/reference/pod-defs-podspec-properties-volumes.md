@@ -1,7 +1,7 @@
 # volumes Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes
+https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes
 ```
 
 Volumes is a list of volumes that can be mounted by containers belonging to the pod.

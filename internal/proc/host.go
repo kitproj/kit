@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alexec/kit/internal/types"
+	"github.com/kitproj/kit/internal/types"
 )
 
 type host struct {

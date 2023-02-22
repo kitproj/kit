@@ -1,7 +1,7 @@
 # EnvVar Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env/items
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env/items
 ```
 
 A environment variable.
@@ -16,10 +16,10 @@ A environment variable.
 
 # items Properties
 
-| Property        | Type     | Required | Nullable       | Defined by                                                                                                                               |
-| :-------------- | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
-| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                |
+| :-------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
+| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
 
 ## name
 
@@ -33,7 +33,7 @@ A environment variable.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/name")
+*   defined in: [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")
 
 ### name Type
 
@@ -51,7 +51,7 @@ A environment variable.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/value")
+*   defined in: [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value")
 
 ### value Type
 

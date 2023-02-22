@@ -2,7 +2,7 @@ apiVersion: kit/v1
 kind: Tasks
 metadata:
   annotations:
-    help: https://github.com/alexec/kit
+    help: https://github.com/kitproj/kit
   name: kit
 spec:
   tasks:

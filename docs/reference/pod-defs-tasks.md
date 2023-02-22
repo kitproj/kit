@@ -1,7 +1,7 @@
 # Tasks Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Tasks
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks
 ```
 
 

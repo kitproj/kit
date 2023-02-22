@@ -1,7 +1,7 @@
 # initialDelaySeconds Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds
 ```
 
 Number of seconds after the process has started before the probe is initiated.

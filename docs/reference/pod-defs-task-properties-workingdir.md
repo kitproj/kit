@@ -1,7 +1,7 @@
 # workingDir Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir
 ```
 
 The working directory in the container or on the host

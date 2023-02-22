@@ -1,7 +1,7 @@
 # kind Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/kind
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind
 ```
 
 Kind must be `Tasks`.

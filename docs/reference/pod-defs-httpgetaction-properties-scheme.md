@@ -1,7 +1,7 @@
 # scheme Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme
+https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme
 ```
 
 Scheme to use for connecting to the host. Defaults to HTTP.

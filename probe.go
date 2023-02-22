@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/alexec/kit/internal/types"
+	"github.com/kitproj/kit/internal/types"
 )
 
 func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, callback func(ok bool, err error)) {

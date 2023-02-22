@@ -1,7 +1,7 @@
 # apiVersion Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/apiVersion
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion
 ```
 
 APIVersion must be `kit/v1`.

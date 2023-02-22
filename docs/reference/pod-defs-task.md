@@ -1,7 +1,7 @@
 # Task Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Tasks/items
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/items
 ```
 
 A task is a container or a command to run.
@@ -16,25 +16,25 @@ A task is a container or a command to run.
 
 # items Properties
 
-| Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                               |
-| :---------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)                       | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/name")                       |
-| [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/image")                     |
-| [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
-| [livenessProbe](#livenessprobe)     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")                             |
-| [readinessProbe](#readinessprobe)   | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")                            |
-| [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
-| [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
-| [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
-| [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")                       |
-| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
-| [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
-| [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
-| [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
-| [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
-| [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
-| [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
-| [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
+| Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                |
+| :---------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)                       | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")                       |
+| [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")                     |
+| [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
+| [livenessProbe](#livenessprobe)     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")                             |
+| [readinessProbe](#readinessprobe)   | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")                            |
+| [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
+| [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
+| [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
+| [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
+| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
+| [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
+| [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
+| [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
+| [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
+| [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
+| [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
 
 ## name
 
@@ -48,7 +48,7 @@ The name of the task, must be unique
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/name")
+*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")
 
 ### name Type
 
@@ -66,7 +66,7 @@ Either the container image to run, or a directory containing a Dockerfile. If om
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-image.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/image")
+*   defined in: [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")
 
 ### image Type
 
@@ -84,7 +84,7 @@ Pull policy, e.g. Always, Never, IfNotPresent
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy")
+*   defined in: [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy")
 
 ### imagePullPolicy Type
 
@@ -102,7 +102,7 @@ A probe to check if the task is alive, it will be restarted if not.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")
+*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")
 
 ### livenessProbe Type
 
@@ -120,7 +120,7 @@ A probe to check if the task is alive, it will be restarted if not.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")
+*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")
 
 ### readinessProbe Type
 
@@ -138,7 +138,7 @@ The command to run in the container or on the host. If both the image and the co
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/command")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")
 
 ### command Type
 
@@ -156,7 +156,7 @@ The arguments to pass to the command
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/args")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")
 
 ### args Type
 
@@ -174,7 +174,7 @@ The working directory in the container or on the host
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir")
+*   defined in: [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")
 
 ### workingDir Type
 
@@ -192,7 +192,7 @@ The user to run the task as.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")
+*   defined in: [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")
 
 ### user Type
 
@@ -210,7 +210,7 @@ A list of environment variables.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env")
+*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")
 
 ### env Type
 
@@ -228,7 +228,7 @@ A list of ports to expose.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-ports.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/ports")
+*   defined in: [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")
 
 ### ports Type
 
@@ -246,7 +246,7 @@ Volumes to mount in the container
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")
+*   defined in: [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")
 
 ### volumeMounts Type
 
@@ -264,7 +264,7 @@ Use a pseudo-TTY
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty")
+*   defined in: [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")
 
 ### tty Type
 
@@ -282,7 +282,7 @@ A list of files to watch for changes, and restart the task if they change
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/watch")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")
 
 ### watch Type
 
@@ -300,7 +300,7 @@ A mutex to prevent multiple tasks with the same mutex from running at the same t
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/mutex")
+*   defined in: [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")
 
 ### mutex Type
 
@@ -318,7 +318,7 @@ A list of tasks to run before this task
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/dependencies")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")
 
 ### dependencies Type
 
@@ -336,7 +336,7 @@ The restart policy, e.g. Always, Never, OnFailure
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")
+*   defined in: [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")
 
 ### restartPolicy Type
 

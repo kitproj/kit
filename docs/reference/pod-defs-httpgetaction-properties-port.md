@@ -1,7 +1,7 @@
 # port Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port
+https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port
 ```
 
 Number of the port

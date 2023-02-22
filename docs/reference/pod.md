@@ -1,7 +1,7 @@
 # Untitled schema Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod
+https://github.com/kitproj/kit/internal/types/pod
 ```
 
 
@@ -21,13 +21,13 @@ unknown
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar"}
 ```
 
-| Property        | Type     | Required | Nullable       | Defined by                                                                                                                               |
-| :-------------- | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
-| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                |
+| :-------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
+| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
 
 ### name
 
@@ -41,7 +41,7 @@ Reference this group by using
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/name")
+*   defined in: [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")
 
 #### name Type
 
@@ -59,7 +59,7 @@ Reference this group by using
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/value")
+*   defined in: [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value")
 
 #### value Type
 
@@ -70,7 +70,7 @@ Reference this group by using
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVars"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars"}
 ```
 
 | Property | Type | Required | Nullable | Defined by |
@@ -81,14 +81,14 @@ Reference this group by using
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction"}
 ```
 
-| Property          | Type      | Required | Nullable       | Defined by                                                                                                                                               |
-| :---------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [scheme](#scheme) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-scheme.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme") |
-| [port](#port)     | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-port.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port")     |
-| [path](#path)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path")     |
+| Property          | Type      | Required | Nullable       | Defined by                                                                                                                                                |
+| :---------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scheme](#scheme) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme") |
+| [port](#port)     | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port")     |
+| [path](#path)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path")     |
 
 ### scheme
 
@@ -102,7 +102,7 @@ Scheme to use for connecting to the host. Defaults to HTTP.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-scheme.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme")
+*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/scheme")
 
 #### scheme Type
 
@@ -120,7 +120,7 @@ Number of the port
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-port.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port")
+*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/port")
 
 #### port Type
 
@@ -138,7 +138,7 @@ Path to access on the HTTP server.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path")
+*   defined in: [Untitled schema](pod-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction/properties/path")
 
 #### path Type
 
@@ -149,12 +149,12 @@ Path to access on the HTTP server.
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath"}
 ```
 
-| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                 |
-| :-------------- | :------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| [path](#path-1) | `string` | Required | cannot be null | [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath/properties/path") |
+| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                  |
+| :-------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| [path](#path-1) | `string` | Required | cannot be null | [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath/properties/path") |
 
 ### path
 
@@ -168,7 +168,7 @@ Path of the directory on the host.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath/properties/path")
+*   defined in: [Untitled schema](pod-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath/properties/path")
 
 #### path Type
 
@@ -179,13 +179,13 @@ Path of the directory on the host.
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata"}
 ```
 
-| Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                               |
-| :-------------------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-1)             | `string` | Required | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
-| [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
+| Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                                |
+| :-------------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name-1)             | `string` | Required | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
+| [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
 
 ### name
 
@@ -199,7 +199,7 @@ Name is the name of the resource.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/name")
+*   defined in: [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")
 
 #### name Type
 
@@ -217,7 +217,7 @@ Annotations is an unstructured key value map stored with a resource that may be 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/annotations")
+*   defined in: [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations")
 
 #### annotations Type
 
@@ -228,15 +228,15 @@ Annotations is an unstructured key value map stored with a resource that may be 
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Pod"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod"}
 ```
 
-| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                   |
-| :------------------------ | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
-| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
-| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
-| [metadata](#metadata)     | `object` | Required | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
+| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                    |
+| :------------------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
+| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
+| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
+| [metadata](#metadata)     | `object` | Required | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
 
 ### spec
 
@@ -250,7 +250,7 @@ Task is a unit of work that should be run.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/spec")
+*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")
 
 #### spec Type
 
@@ -268,7 +268,7 @@ APIVersion must be `kit/v1`.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
+*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
 
 #### apiVersion Type
 
@@ -286,7 +286,7 @@ Kind must be `Tasks`.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/kind")
+*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")
 
 #### kind Type
 
@@ -304,7 +304,7 @@ Metadata is the metadata for the pod.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/metadata")
+*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")
 
 #### metadata Type
 
@@ -315,14 +315,14 @@ Metadata is the metadata for the pod.
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec"}
 ```
 
-| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                 |
-| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
-| [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
-| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
+| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                  |
+| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
+| [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
+| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
 
 ### terminationGracePeriodSeconds
 
@@ -336,7 +336,7 @@ TerminationGracePeriodSeconds is the grace period for terminating the pod.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds")
+*   defined in: [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds")
 
 #### terminationGracePeriodSeconds Type
 
@@ -354,7 +354,7 @@ Tasks is a list of tasks that should be run.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")
+*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")
 
 #### tasks Type
 
@@ -372,7 +372,7 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")
+*   defined in: [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")
 
 #### volumes Type
 
@@ -383,13 +383,13 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Port"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Port"}
 ```
 
-| Property                        | Type      | Required | Nullable       | Defined by                                                                                                                                           |
-| :------------------------------ | :-------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [containerPort](#containerport) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/containerPort") |
-| [hostPort](#hostport)           | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/hostPort")           |
+| Property                        | Type      | Required | Nullable       | Defined by                                                                                                                                            |
+| :------------------------------ | :-------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [containerPort](#containerport) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/containerPort") |
+| [hostPort](#hostport)           | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/hostPort")           |
 
 ### containerPort
 
@@ -403,7 +403,7 @@ The container port to expose
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/containerPort")
+*   defined in: [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/containerPort")
 
 #### containerPort Type
 
@@ -421,7 +421,7 @@ The host port to route to the container port
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/hostPort")
+*   defined in: [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/hostPort")
 
 #### hostPort Type
 
@@ -432,7 +432,7 @@ The host port to route to the container port
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Ports"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Ports"}
 ```
 
 | Property | Type | Required | Nullable | Defined by |
@@ -443,17 +443,17 @@ Reference this group by using
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Probe"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe"}
 ```
 
-| Property                                    | Type      | Required | Nullable       | Defined by                                                                                                                                                         |
-| :------------------------------------------ | :-------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [tcpSocket](#tcpsocket)                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")                                |
-| [httpGet](#httpget)                         | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/httpGet")                                    |
-| [initialDelaySeconds](#initialdelayseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds") |
-| [periodSeconds](#periodseconds)             | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")             |
-| [successThreshold](#successthreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")       |
-| [failureThreshold](#failurethreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")       |
+| Property                                    | Type      | Required | Nullable       | Defined by                                                                                                                                                          |
+| :------------------------------------------ | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [tcpSocket](#tcpsocket)                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")                                |
+| [httpGet](#httpget)                         | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/httpGet")                                    |
+| [initialDelaySeconds](#initialdelayseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds") |
+| [periodSeconds](#periodseconds)             | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")             |
+| [successThreshold](#successthreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")       |
+| [failureThreshold](#failurethreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")       |
 
 ### tcpSocket
 
@@ -467,7 +467,7 @@ TCPSocketAction describes an action based on opening a socket
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")
+*   defined in: [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")
 
 #### tcpSocket Type
 
@@ -485,7 +485,7 @@ HTTPGetAction describes an action based on HTTP Get requests.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-httpgetaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/httpGet")
+*   defined in: [Untitled schema](pod-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/httpGet")
 
 #### httpGet Type
 
@@ -503,7 +503,7 @@ Number of seconds after the process has started before the probe is initiated.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds")
+*   defined in: [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds")
 
 #### initialDelaySeconds Type
 
@@ -521,7 +521,7 @@ How often (in seconds) to perform the probe.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")
+*   defined in: [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")
 
 #### periodSeconds Type
 
@@ -539,7 +539,7 @@ Minimum consecutive successes for the probe to be considered successful after ha
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")
+*   defined in: [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")
 
 #### successThreshold Type
 
@@ -557,7 +557,7 @@ Minimum consecutive failures for the probe to be considered failed after having 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")
+*   defined in: [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")
 
 #### failureThreshold Type
 
@@ -568,7 +568,7 @@ Minimum consecutive failures for the probe to be considered failed after having 
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Strings"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Strings"}
 ```
 
 | Property | Type | Required | Nullable | Defined by |
@@ -579,12 +579,12 @@ Reference this group by using
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/TCPSocketAction"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/TCPSocketAction"}
 ```
 
-| Property        | Type      | Required | Nullable       | Defined by                                                                                                                                               |
-| :-------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [port](#port-1) | `integer` | Required | cannot be null | [Untitled schema](pod-defs-tcpsocketaction-properties-port.md "https://github.com/alexec/kit/internal/types/pod#/$defs/TCPSocketAction/properties/port") |
+| Property        | Type      | Required | Nullable       | Defined by                                                                                                                                                |
+| :-------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [port](#port-1) | `integer` | Required | cannot be null | [Untitled schema](pod-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/TCPSocketAction/properties/port") |
 
 ### port
 
@@ -598,7 +598,7 @@ Port number of the port to probe.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tcpsocketaction-properties-port.md "https://github.com/alexec/kit/internal/types/pod#/$defs/TCPSocketAction/properties/port")
+*   defined in: [Untitled schema](pod-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/TCPSocketAction/properties/port")
 
 #### port Type
 
@@ -609,28 +609,28 @@ Port number of the port to probe.
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Task"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Task"}
 ```
 
-| Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                               |
-| :---------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-2)                     | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/name")                       |
-| [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/image")                     |
-| [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
-| [livenessProbe](#livenessprobe)     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")                             |
-| [readinessProbe](#readinessprobe)   | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")                            |
-| [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
-| [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
-| [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
-| [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")                       |
-| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
-| [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
-| [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
-| [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
-| [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
-| [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
-| [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
-| [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
+| Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                |
+| :---------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name-2)                     | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")                       |
+| [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")                     |
+| [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
+| [livenessProbe](#livenessprobe)     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")                             |
+| [readinessProbe](#readinessprobe)   | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")                            |
+| [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
+| [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
+| [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
+| [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
+| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
+| [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
+| [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
+| [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
+| [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
+| [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
+| [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
 
 ### name
 
@@ -644,7 +644,7 @@ The name of the task, must be unique
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/name")
+*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")
 
 #### name Type
 
@@ -662,7 +662,7 @@ Either the container image to run, or a directory containing a Dockerfile. If om
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-image.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/image")
+*   defined in: [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")
 
 #### image Type
 
@@ -680,7 +680,7 @@ Pull policy, e.g. Always, Never, IfNotPresent
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy")
+*   defined in: [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy")
 
 #### imagePullPolicy Type
 
@@ -698,7 +698,7 @@ A probe to check if the task is alive, it will be restarted if not.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")
+*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")
 
 #### livenessProbe Type
 
@@ -716,7 +716,7 @@ A probe to check if the task is alive, it will be restarted if not.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")
+*   defined in: [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")
 
 #### readinessProbe Type
 
@@ -734,7 +734,7 @@ The command to run in the container or on the host. If both the image and the co
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/command")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")
 
 #### command Type
 
@@ -752,7 +752,7 @@ The arguments to pass to the command
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/args")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")
 
 #### args Type
 
@@ -770,7 +770,7 @@ The working directory in the container or on the host
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/workingDir")
+*   defined in: [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")
 
 #### workingDir Type
 
@@ -788,7 +788,7 @@ The user to run the task as.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-user.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user")
+*   defined in: [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")
 
 #### user Type
 
@@ -806,7 +806,7 @@ A list of environment variables.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env")
+*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")
 
 #### env Type
 
@@ -824,7 +824,7 @@ A list of ports to expose.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-ports.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/ports")
+*   defined in: [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")
 
 #### ports Type
 
@@ -842,7 +842,7 @@ Volumes to mount in the container
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")
+*   defined in: [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")
 
 #### volumeMounts Type
 
@@ -860,7 +860,7 @@ Use a pseudo-TTY
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty")
+*   defined in: [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")
 
 #### tty Type
 
@@ -878,7 +878,7 @@ A list of files to watch for changes, and restart the task if they change
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/watch")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")
 
 #### watch Type
 
@@ -896,7 +896,7 @@ A mutex to prevent multiple tasks with the same mutex from running at the same t
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/mutex")
+*   defined in: [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")
 
 #### mutex Type
 
@@ -914,7 +914,7 @@ A list of tasks to run before this task
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/dependencies")
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")
 
 #### dependencies Type
 
@@ -932,7 +932,7 @@ The restart policy, e.g. Always, Never, OnFailure
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")
+*   defined in: [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")
 
 #### restartPolicy Type
 
@@ -943,7 +943,7 @@ The restart policy, e.g. Always, Never, OnFailure
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Tasks"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks"}
 ```
 
 | Property | Type | Required | Nullable | Defined by |
@@ -954,13 +954,13 @@ Reference this group by using
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/Volume"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume"}
 ```
 
-| Property              | Type     | Required | Nullable       | Defined by                                                                                                                             |
-| :-------------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-3)       | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/name") |
-| [hostPath](#hostpath) | `object` | Required | cannot be null | [Untitled schema](pod-defs-hostpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/hostPath")           |
+| Property              | Type     | Required | Nullable       | Defined by                                                                                                                              |
+| :-------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name-3)       | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name") |
+| [hostPath](#hostpath) | `object` | Required | cannot be null | [Untitled schema](pod-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath")           |
 
 ### name
 
@@ -974,7 +974,7 @@ Volume's name.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/name")
+*   defined in: [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name")
 
 #### name Type
 
@@ -992,7 +992,7 @@ HostPath represents a pre-existing file or directory on the host machine that is
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-hostpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/hostPath")
+*   defined in: [Untitled schema](pod-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath")
 
 #### hostPath Type
 
@@ -1003,13 +1003,13 @@ HostPath represents a pre-existing file or directory on the host machine that is
 Reference this group by using
 
 ```json
-{"$ref":"https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount"}
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount"}
 ```
 
-| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                                 |
-| :---------------------- | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-4)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
-| [mountPath](#mountpath) | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath") |
+| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                                  |
+| :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name-4)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
+| [mountPath](#mountpath) | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath") |
 
 ### name
 
@@ -1023,7 +1023,7 @@ This must match the name of a volume.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/name")
+*   defined in: [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")
 
 #### name Type
 
@@ -1041,7 +1041,7 @@ Path within the container at which the volume should be mounted.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath")
+*   defined in: [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath")
 
 #### mountPath Type
 

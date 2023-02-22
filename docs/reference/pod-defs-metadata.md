@@ -1,7 +1,7 @@
 # Metadata Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/metadata
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata
 ```
 
 Metadata is the metadata for the pod.
@@ -16,10 +16,10 @@ Metadata is the metadata for the pod.
 
 # metadata Properties
 
-| Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                               |
-| :-------------------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)               | `string` | Required | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
-| [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
+| Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                                |
+| :-------------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)               | `string` | Required | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
+| [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
 
 ## name
 
@@ -33,7 +33,7 @@ Name is the name of the resource.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/name")
+*   defined in: [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")
 
 ### name Type
 
@@ -51,7 +51,7 @@ Annotations is an unstructured key value map stored with a resource that may be 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/annotations")
+*   defined in: [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations")
 
 ### annotations Type
 

@@ -1,7 +1,7 @@
 # Untitled schema Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/annotations/patternProperties
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations/patternProperties
 ```
 
 

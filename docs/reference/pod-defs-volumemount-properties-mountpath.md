@@ -1,7 +1,7 @@
 # mountPath Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath
+https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath
 ```
 
 Path within the container at which the volume should be mounted.

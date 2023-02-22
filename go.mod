@@ -1,4 +1,4 @@
-module github.com/alexec/kit
+module github.com/kitproj/kit
 
 go 1.19
 

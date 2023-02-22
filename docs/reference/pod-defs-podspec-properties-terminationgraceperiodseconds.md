@@ -1,7 +1,7 @@
 # terminationGracePeriodSeconds Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds
+https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds
 ```
 
 TerminationGracePeriodSeconds is the grace period for terminating the pod.

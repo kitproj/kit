@@ -1,7 +1,7 @@
 # tty Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/tty
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty
 ```
 
 Use a pseudo-TTY

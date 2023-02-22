@@ -1,7 +1,7 @@
 # EnvVars Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/env
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env
 ```
 
 A list of environment variables.

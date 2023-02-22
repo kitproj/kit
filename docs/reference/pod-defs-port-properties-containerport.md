@@ -1,7 +1,7 @@
 # containerPort Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/containerPort
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/containerPort
 ```
 
 The container port to expose

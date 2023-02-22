@@ -1,7 +1,7 @@
 # path Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/HostPath/properties/path
+https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath/properties/path
 ```
 
 Path of the directory on the host.

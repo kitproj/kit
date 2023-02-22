@@ -1,8 +1,8 @@
 # Kit
 
-[![CodeQL](https://github.com/alexec/kit/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/alexec/kit/actions/workflows/codeql-analysis.yml)
-[![Go](https://github.com/alexec/kit/actions/workflows/go.yml/badge.svg)](https://github.com/alexec/kit/actions/workflows/go.yml)
-[![goreleaser](https://github.com/alexec/kit/actions/workflows/goreleaser.yml/badge.svg)](https://github.com/alexec/kit/actions/workflows/goreleaser.yml)
+[![CodeQL](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml)
+[![Go](https://github.com/kitproj/kit/actions/workflows/go.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/go.yml)
+[![goreleaser](https://github.com/kitproj/kit/actions/workflows/goreleaser.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/goreleaser.yml)
 
 ## Why
 
@@ -30,19 +30,19 @@ Kit was written with extensive help from AI.
 
 ## Install
 
-Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/alexec/kit/releases/latest). 
+Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/kitproj/kit/releases/latest). 
 
 If you're on MacOS, you can use `brew`:
 
 ```bash
-brew tap alexec/kit --custom-remote https://github.com/alexec/kit
+brew tap kitproj/kit --custom-remote https://github.com/kitproj/kit
 brew install kit
 ```
 
 Otherwise, you can use `curl`:
 
 ```bash
-curl -q https://raw.githubusercontent.com/alexec/kit/main/install.sh | sh
+curl -q https://raw.githubusercontent.com/kitproj/kit/main/install.sh | sh
 ```
 
 We do not support `go install`.

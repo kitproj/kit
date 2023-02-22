@@ -1,7 +1,7 @@
 # user Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/user
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user
 ```
 
 The user to run the task as.

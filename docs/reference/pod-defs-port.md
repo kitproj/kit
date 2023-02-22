@@ -1,7 +1,7 @@
 # Port Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Ports/items
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Ports/items
 ```
 
 A port to expose.
@@ -16,10 +16,10 @@ A port to expose.
 
 # items Properties
 
-| Property                        | Type      | Required | Nullable       | Defined by                                                                                                                                           |
-| :------------------------------ | :-------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [containerPort](#containerport) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/containerPort") |
-| [hostPort](#hostport)           | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/hostPort")           |
+| Property                        | Type      | Required | Nullable       | Defined by                                                                                                                                            |
+| :------------------------------ | :-------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [containerPort](#containerport) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/containerPort") |
+| [hostPort](#hostport)           | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/hostPort")           |
 
 ## containerPort
 
@@ -33,7 +33,7 @@ The container port to expose
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/containerPort")
+*   defined in: [Untitled schema](pod-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/containerPort")
 
 ### containerPort Type
 
@@ -51,7 +51,7 @@ The host port to route to the container port
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/hostPort")
+*   defined in: [Untitled schema](pod-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/hostPort")
 
 ### hostPort Type
 

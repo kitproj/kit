@@ -1,7 +1,7 @@
 # hostPort Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Port/properties/hostPort
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Port/properties/hostPort
 ```
 
 The host port to route to the container port

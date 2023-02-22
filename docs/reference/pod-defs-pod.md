@@ -1,7 +1,7 @@
 # Pod Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Pod
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod
 ```
 
 
@@ -16,12 +16,12 @@ https://github.com/alexec/kit/internal/types/pod#/$defs/Pod
 
 # Pod Properties
 
-| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                   |
-| :------------------------ | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
-| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
-| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
-| [metadata](#metadata)     | `object` | Required | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
+| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                    |
+| :------------------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
+| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
+| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
+| [metadata](#metadata)     | `object` | Required | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
 
 ## spec
 
@@ -35,7 +35,7 @@ Task is a unit of work that should be run.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/spec")
+*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")
 
 ### spec Type
 
@@ -53,7 +53,7 @@ APIVersion must be `kit/v1`.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
+*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
 
 ### apiVersion Type
 
@@ -71,7 +71,7 @@ Kind must be `Tasks`.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/kind")
+*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")
 
 ### kind Type
 
@@ -89,7 +89,7 @@ Metadata is the metadata for the pod.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Pod/properties/metadata")
+*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")
 
 ### metadata Type
 

@@ -1,7 +1,7 @@
 # PodSpec Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec
+https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec
 ```
 
 Task is a unit of work that should be run.
@@ -16,11 +16,11 @@ Task is a unit of work that should be run.
 
 # PodSpec Properties
 
-| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                 |
-| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
-| [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
-| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
+| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                  |
+| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
+| [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
+| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
 
 ## terminationGracePeriodSeconds
 
@@ -34,7 +34,7 @@ TerminationGracePeriodSeconds is the grace period for terminating the pod.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds")
+*   defined in: [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds")
 
 ### terminationGracePeriodSeconds Type
 
@@ -52,7 +52,7 @@ Tasks is a list of tasks that should be run.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")
+*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")
 
 ### tasks Type
 
@@ -70,7 +70,7 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/alexec/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")
+*   defined in: [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")
 
 ### volumes Type
 

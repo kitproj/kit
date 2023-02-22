@@ -1,7 +1,7 @@
 # name Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/name
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name
 ```
 
 The name of the task, must be unique

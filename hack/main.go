@@ -5,13 +5,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/alexec/kit/internal/types"
 	"github.com/invopop/jsonschema"
+	"github.com/kitproj/kit/internal/types"
 )
 
 func main() {
 	r := new(jsonschema.Reflector)
-	_ = r.AddGoComments("github.com/alexec/kit", "./")
+	_ = r.AddGoComments("github.com/kitproj/kit", "./")
 	s := r.Reflect(types.Pod{})
 	for i, definition := range s.Definitions {
 		definition.Title = i

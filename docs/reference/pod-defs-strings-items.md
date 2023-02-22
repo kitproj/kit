@@ -1,7 +1,7 @@
 # Untitled string in undefined Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Strings/items
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Strings/items
 ```
 
 

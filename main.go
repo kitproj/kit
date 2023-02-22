@@ -21,10 +21,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	k8sstrings "k8s.io/utils/strings"
 
-	"github.com/alexec/kit/internal/proc"
+	"github.com/kitproj/kit/internal/proc"
 
-	"github.com/alexec/kit/internal/types"
 	"github.com/fsnotify/fsnotify"
+	"github.com/kitproj/kit/internal/types"
 	"sigs.k8s.io/yaml"
 )
 

@@ -1,7 +1,7 @@
 # Probe Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Probe
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe
 ```
 
 A probe to check if the task is alive, it will be restarted if not.
@@ -16,14 +16,14 @@ A probe to check if the task is alive, it will be restarted if not.
 
 # Probe Properties
 
-| Property                                    | Type      | Required | Nullable       | Defined by                                                                                                                                                         |
-| :------------------------------------------ | :-------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [tcpSocket](#tcpsocket)                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")                                |
-| [httpGet](#httpget)                         | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/httpGet")                                    |
-| [initialDelaySeconds](#initialdelayseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds") |
-| [periodSeconds](#periodseconds)             | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")             |
-| [successThreshold](#successthreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")       |
-| [failureThreshold](#failurethreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")       |
+| Property                                    | Type      | Required | Nullable       | Defined by                                                                                                                                                          |
+| :------------------------------------------ | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [tcpSocket](#tcpsocket)                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")                                |
+| [httpGet](#httpget)                         | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/httpGet")                                    |
+| [initialDelaySeconds](#initialdelayseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds") |
+| [periodSeconds](#periodseconds)             | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")             |
+| [successThreshold](#successthreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")       |
+| [failureThreshold](#failurethreshold)       | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")       |
 
 ## tcpSocket
 
@@ -37,7 +37,7 @@ TCPSocketAction describes an action based on opening a socket
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")
+*   defined in: [Untitled schema](pod-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/tcpSocket")
 
 ### tcpSocket Type
 
@@ -55,7 +55,7 @@ HTTPGetAction describes an action based on HTTP Get requests.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-httpgetaction.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/httpGet")
+*   defined in: [Untitled schema](pod-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/httpGet")
 
 ### httpGet Type
 
@@ -73,7 +73,7 @@ Number of seconds after the process has started before the probe is initiated.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds")
+*   defined in: [Untitled schema](pod-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/initialDelaySeconds")
 
 ### initialDelaySeconds Type
 
@@ -91,7 +91,7 @@ How often (in seconds) to perform the probe.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")
+*   defined in: [Untitled schema](pod-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/periodSeconds")
 
 ### periodSeconds Type
 
@@ -109,7 +109,7 @@ Minimum consecutive successes for the probe to be considered successful after ha
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")
+*   defined in: [Untitled schema](pod-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/successThreshold")
 
 ### successThreshold Type
 
@@ -127,7 +127,7 @@ Minimum consecutive failures for the probe to be considered failed after having 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")
+*   defined in: [Untitled schema](pod-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/failureThreshold")
 
 ### failureThreshold Type
 

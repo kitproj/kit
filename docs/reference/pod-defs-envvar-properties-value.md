@@ -1,7 +1,7 @@
 # value Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/EnvVar/properties/value
+https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value
 ```
 
 

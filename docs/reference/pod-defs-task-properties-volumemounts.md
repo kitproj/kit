@@ -1,7 +1,7 @@
 # volumeMounts Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Task/properties/volumeMounts
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts
 ```
 
 Volumes to mount in the container

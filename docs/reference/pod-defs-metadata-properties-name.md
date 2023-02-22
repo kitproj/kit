@@ -1,7 +1,7 @@
 # name Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Metadata/properties/name
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name
 ```
 
 Name is the name of the resource.

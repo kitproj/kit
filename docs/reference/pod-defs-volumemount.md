@@ -1,7 +1,7 @@
 # VolumeMount Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount
+https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount
 ```
 
 VolumeMount describes a mounting of a Volume within a container.
@@ -16,10 +16,10 @@ VolumeMount describes a mounting of a Volume within a container.
 
 # VolumeMount Properties
 
-| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                                 |
-| :---------------------- | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)           | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
-| [mountPath](#mountpath) | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath") |
+| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                                  |
+| :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)           | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
+| [mountPath](#mountpath) | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath") |
 
 ## name
 
@@ -33,7 +33,7 @@ This must match the name of a volume.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/name")
+*   defined in: [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")
 
 ### name Type
 
@@ -51,7 +51,7 @@ Path within the container at which the volume should be mounted.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath")
+*   defined in: [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath")
 
 ### mountPath Type
 

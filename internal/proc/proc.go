@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/alexec/kit/internal/types"
+	"github.com/kitproj/kit/internal/types"
 )
 
 type Interface interface {

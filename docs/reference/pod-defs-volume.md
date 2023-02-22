@@ -1,7 +1,7 @@
 # Volume Schema
 
 ```txt
-https://github.com/alexec/kit/internal/types/pod#/$defs/Volume
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume
 ```
 
 
@@ -16,10 +16,10 @@ https://github.com/alexec/kit/internal/types/pod#/$defs/Volume
 
 # Volume Properties
 
-| Property              | Type     | Required | Nullable       | Defined by                                                                                                                             |
-| :-------------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/name") |
-| [hostPath](#hostpath) | `object` | Required | cannot be null | [Untitled schema](pod-defs-hostpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/hostPath")           |
+| Property              | Type     | Required | Nullable       | Defined by                                                                                                                              |
+| :-------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name") |
+| [hostPath](#hostpath) | `object` | Required | cannot be null | [Untitled schema](pod-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath")           |
 
 ## name
 
@@ -33,7 +33,7 @@ Volume's name.
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/name")
+*   defined in: [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name")
 
 ### name Type
 
@@ -51,7 +51,7 @@ HostPath represents a pre-existing file or directory on the host machine that is
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-hostpath.md "https://github.com/alexec/kit/internal/types/pod#/$defs/Volume/properties/hostPath")
+*   defined in: [Untitled schema](pod-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath")
 
 ### hostPath Type
 
