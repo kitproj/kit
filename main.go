@@ -32,13 +32,17 @@ import (
 //go:embed tag
 var tag string
 
+var muxOutput = os.Stdout.Fd() == 1 && os.Getenv("NO_MUX_OUTPUT") != "1"
+
 func init() {
-	_ = os.Mkdir("logs", 0o777)
-	f, err := os.OpenFile("logs/kit.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err)
+	if muxOutput {
+		_ = os.Mkdir("logs", 0o777)
+		f, err := os.Create("logs/kit.log")
+		if err != nil {
+			panic(err)
+		}
+		log.SetOutput(f)
 	}
-	log.SetOutput(f)
 	log.Println(tag)
 }
 
@@ -154,14 +158,16 @@ func main() {
 			}
 		}
 
-		// every 1/2 second print the current status to the terminal
-		go func() {
-			defer handleCrash(stopEverything)
-			for {
-				printTasks()
-				time.Sleep(time.Second / 2)
-			}
-		}()
+		if muxOutput {
+			// every 1/2 second print the current status to the terminal
+			go func() {
+				defer handleCrash(stopEverything)
+				for {
+					printTasks()
+					time.Sleep(time.Second / 2)
+				}
+			}()
+		}
 
 		work := make(chan types.Task)
 
@@ -187,7 +193,7 @@ func main() {
 			select {
 			case <-ctx.Done():
 			default:
-				log.Printf("starting downstream of: %v\n", name)
+				log.Printf("starting downstream of %v\n", name)
 				for _, downstream := range tasks.GetDownstream(name) {
 					fulfilled := true
 					for _, upstream := range downstream.Dependencies {
@@ -200,7 +206,7 @@ func main() {
 						}
 					}
 					if fulfilled {
-						log.Printf("starting: %v\n", downstream)
+						log.Printf("starting: %v\n", downstream.Name)
 						work <- downstream
 					}
 				}
@@ -312,13 +318,17 @@ func main() {
 				logEntry.Printf("locked mutex %q\n", m)
 				defer mutex.Unlock()
 
-				logFile, err := os.Create(filepath.Join("logs", name+".log"))
-				if err != nil {
-					panic(err)
+				var stdout io.Writer = os.Stdout
+				var stderr io.Writer = os.Stderr
+				if muxOutput {
+					logFile, err := os.Create(filepath.Join("logs", name+".log"))
+					if err != nil {
+						panic(err)
+					}
+					defer logFile.Close()
+					stdout = io.MultiWriter(logFile, logEntry.Stdout())
+					stderr = io.MultiWriter(logFile, logEntry.Stderr())
 				}
-				defer logFile.Close()
-				stdout := io.MultiWriter(logFile, logEntry.Stdout())
-				stderr := io.MultiWriter(logFile, logEntry.Stderr())
 				for {
 					select {
 					case <-processCtx.Done():
