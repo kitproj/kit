@@ -15,5 +15,6 @@
 # vendor/
 /kit
 /tag
+/logs
 /out/
 /kit.tag.gz

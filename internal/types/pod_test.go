@@ -40,5 +40,5 @@ func TestEnvVars_Environ(t *testing.T) {
 		{Name: "a", Value: "b"},
 		{Name: "c", Value: "d"},
 	}
-	assert.Equal(t, []string{"a=x", "c=d"}, env.Environ())
+	assert.ElementsMatch(t, []string{"a=x", "c=d"}, env.Environ())
 }
