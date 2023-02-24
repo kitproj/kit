@@ -83,3 +83,15 @@ running and you must manually clean up.
 
 * To kill a host process: `kill $(lsof -ti:$host_port)`
 * To kill a container : `docker kill $name`.
+
+## Prebuild Patterns for Cloud Development
+
+In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds" where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java service that you need to run, it might make sense to have a separate `dependency-pull` task that is run as part of the prebuild `kit dependency-pull` separate from your primary `kit up` task
+
+```yaml
+  tasks:
+    - name: dependency-pull
+      command: "mvn clean install"
+    - name: up
+      command: "mvn spring-boot:run"
+```
