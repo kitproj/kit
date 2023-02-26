@@ -2,10 +2,10 @@
 set -eux
 
 # build
+go mod tidy
 go generate .
 go vet .
-go mod tidy
-go install golang.org/x/tools/cmd/goimports@latest
+command -v goimports || go install golang.org/x/tools/cmd/goimports@latest
 goimports -w .
 go test -cover ./...
 go install .
@@ -13,6 +13,6 @@ go install .
 # docs
 rm -Rf out docs/reference
 go run ./hack
-npm install -g @adobe/jsonschema2md
+command -v jsonschema2md || npm install -g @adobe/jsonschema2md
 jsonschema2md -d schema -f yaml -o docs/reference
 git diff --exit-code

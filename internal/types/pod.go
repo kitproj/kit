@@ -224,6 +224,8 @@ type Task struct {
 	Watch Strings `json:"watch,omitempty"`
 	// A mutex to prevent multiple tasks with the same mutex from running at the same time
 	Mutex string `json:"mutex,omitempty"`
+	// A semaphore to limit the number of tasks with the same semaphore that can run at the same time
+	Semaphore string `json:"semaphore,omitempty"`
 	// A list of tasks to run before this task
 	Dependencies Strings `json:"dependencies,omitempty"`
 	// The restart policy, e.g. Always, Never, OnFailure
@@ -274,13 +276,6 @@ func (t *Task) GetRestartPolicy() string {
 		return t.RestartPolicy
 	}
 	return "OnFailure"
-}
-
-func (t *Task) GetMutex() string {
-	if t.Mutex != "" {
-		return t.Mutex
-	}
-	return t.Name
 }
 
 type Pod struct {
@@ -433,7 +428,7 @@ func (a TCPSocketAction) URL() *url.URL {
 	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf(":%v", a.Port)}
 }
 
-// HTTPGetAction describes an action based on HTTP Get requests.
+// HTTPGetAction describes an action based on HTTP Locks requests.
 type HTTPGetAction struct {
 	// Scheme to use for connecting to the host. Defaults to HTTP.
 	Scheme string `json:"scheme,omitempty"`
@@ -572,6 +567,8 @@ type PodSpec struct {
 	Tasks Tasks `json:"tasks,omitempty"`
 	// Volumes is a list of volumes that can be mounted by containers belonging to the pod.
 	Volumes []Volume `json:"volumes,omitempty"`
+	// Semaphores is a list of semaphores that can be acquired by tasks.
+	Semaphores map[string]int `json:"semaphores,omitempty"`
 }
 
 func (s PodSpec) GetTerminationGracePeriod() time.Duration {

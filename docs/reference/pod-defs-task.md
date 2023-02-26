@@ -33,6 +33,7 @@ A task is a container or a command to run.
 | [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
 | [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
 | [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
+| [semaphore](#semaphore)             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/semaphore")             |
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
 
@@ -305,6 +306,24 @@ A mutex to prevent multiple tasks with the same mutex from running at the same t
 ### mutex Type
 
 `string` ([mutex](pod-defs-task-properties-mutex.md))
+
+## semaphore
+
+A semaphore to limit the number of tasks with the same semaphore that can run at the same time
+
+`semaphore`
+
+*   is optional
+
+*   Type: `string` ([semaphore](pod-defs-task-properties-semaphore.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/semaphore")
+
+### semaphore Type
+
+`string` ([semaphore](pod-defs-task-properties-semaphore.md))
 
 ## dependencies
 

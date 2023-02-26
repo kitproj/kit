@@ -21,6 +21,7 @@ Task is a unit of work that should be run.
 | [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
 | [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
 | [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
+| [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
 
 ## terminationGracePeriodSeconds
 
@@ -75,3 +76,21 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 ### volumes Type
 
 `object[]` ([Volume](pod-defs-volume.md))
+
+## semaphores
+
+Semaphores is a list of semaphores that can be acquired by tasks.
+
+`semaphores`
+
+*   is optional
+
+*   Type: `object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")
+
+### semaphores Type
+
+`object` ([semaphores](pod-defs-podspec-properties-semaphores.md))

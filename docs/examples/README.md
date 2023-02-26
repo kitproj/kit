@@ -95,3 +95,32 @@ In most cases you will probably only have 1 top node in your command dependency 
     - name: up
       command: "mvn spring-boot:run"
 ```
+
+## Locks
+
+## Mutexes
+
+If you want to prevent two tasks from running at the same time, you can use a mutex:
+
+```yaml
+tasks:
+- name: foo
+  mutex: my-mutex
+- name: bar
+  mutex: my-mutex
+```
+
+### Semaphores
+
+If you want to limit the number of tasks that can run at the same time, you can use a semaphore:
+
+```yaml
+# only two can run at the same time
+semaphores:
+  my-semaphore: 2
+tasks:
+- name: foo
+  semaphore: my-semaphore
+- name: bar
+  semaphore: my-semaphore
+```

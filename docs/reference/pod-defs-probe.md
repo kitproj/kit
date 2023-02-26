@@ -45,7 +45,7 @@ TCPSocketAction describes an action based on opening a socket
 
 ## httpGet
 
-HTTPGetAction describes an action based on HTTP Get requests.
+HTTPGetAction describes an action based on HTTP Locks requests.
 
 `httpGet`
 

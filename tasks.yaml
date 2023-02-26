@@ -3,38 +3,43 @@ kind: Tasks
 metadata:
   name: kit
 spec:
+  semaphores:
+    two: 2
   tasks:
   - name: awn
     command: ./demo/awn/awn.sh
     ports: 9000
-  - command: go run ./demo/foo
-    name: foo
+  - name: foo
+    command: go run ./demo/foo
     ports: "8080"
-  - command: go build -v .
-    name: build-bar
+    semaphore: two
+  - name: build-bar
+    command: go build -v .
     watch: demo/bar/main.go
     workingDir: demo/bar
-  - command: ./demo/bar/bar
+    semaphore: two
+  - name: bar
+    command: ./demo/bar/bar
     dependencies: build-bar
     env:
     - PORT=9090
-    name: bar
     ports: "9090"
     readinessProbe: http://:9090
-  - image: httpd
-    name: baz
+    semaphore: two
+  - name: baz
+    image: httpd
     ports: 80:10080
     readinessProbe: http://:10080?initialDelay=3s
-  - command: ls /work
+  - name: init
+    command: ls /work
     image: ubuntu
-    name: init
     volumeMounts:
     - mountPath: /work
       name: work
-  - command: exit 1
-    name: error
-  - dependencies: awn foo bar baz
-    name: up
+  - name: error
+    command: exit 1
+  - name: up
+    dependencies: awn foo bar baz
   terminationGracePeriodSeconds: 3
   volumes:
   - hostPath:

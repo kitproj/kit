@@ -323,6 +323,7 @@ Reference this group by using
 | [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
 | [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
 | [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
+| [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
 
 ### terminationGracePeriodSeconds
 
@@ -377,6 +378,24 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 #### volumes Type
 
 `object[]` ([Volume](pod-defs-volume.md))
+
+### semaphores
+
+Semaphores is a list of semaphores that can be acquired by tasks.
+
+`semaphores`
+
+*   is optional
+
+*   Type: `object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")
+
+#### semaphores Type
+
+`object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
 
 ## Definitions group Port
 
@@ -475,7 +494,7 @@ TCPSocketAction describes an action based on opening a socket
 
 ### httpGet
 
-HTTPGetAction describes an action based on HTTP Get requests.
+HTTPGetAction describes an action based on HTTP Locks requests.
 
 `httpGet`
 
@@ -629,6 +648,7 @@ Reference this group by using
 | [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
 | [watch](#watch)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/watch")                                   |
 | [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
+| [semaphore](#semaphore)             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/semaphore")             |
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
 
@@ -901,6 +921,24 @@ A mutex to prevent multiple tasks with the same mutex from running at the same t
 #### mutex Type
 
 `string` ([mutex](pod-defs-task-properties-mutex.md))
+
+### semaphore
+
+A semaphore to limit the number of tasks with the same semaphore that can run at the same time
+
+`semaphore`
+
+*   is optional
+
+*   Type: `string` ([semaphore](pod-defs-task-properties-semaphore.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/semaphore")
+
+#### semaphore Type
+
+`string` ([semaphore](pod-defs-task-properties-semaphore.md))
 
 ### dependencies
 

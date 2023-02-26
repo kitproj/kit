@@ -4,7 +4,7 @@
 https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe/properties/httpGet
 ```
 
-HTTPGetAction describes an action based on HTTP Get requests.
+HTTPGetAction describes an action based on HTTP Locks requests.
 
 | Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |

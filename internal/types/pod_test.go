@@ -20,7 +20,6 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, 3*time.Second, pod.Spec.GetTerminationGracePeriod())
 	assert.Len(t, pod.Spec.Tasks, 2)
 	task := pod.Spec.Tasks[0]
-	assert.Equal(t, "foo", task.GetMutex())
 	assert.Equal(t, []uint16{8080}, task.GetHostPorts())
 	assert.Equal(t, "OnFailure", task.GetRestartPolicy())
 	probe := task.GetLivenessProbe()

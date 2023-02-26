@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kitproj/kit/internal/util"
+
 	"github.com/mattn/go-isatty"
 
 	"github.com/fatih/color"
@@ -179,6 +181,9 @@ func main() {
 		}
 
 		work := make(chan types.Task)
+		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
+
+		log.Printf("semaphores=%v\n", semaphores)
 
 		go func() {
 			defer handleCrash(stopEverything)
@@ -320,12 +325,23 @@ func main() {
 
 				stop.Store(name, stopProcess)
 
-				m := t.GetMutex()
-				mutex := proc.KeyLock("/main/proc/" + m)
-				logEntry.Printf("waiting for mutex %q\n", m)
-				mutex.Lock()
-				logEntry.Printf("locked mutex %q\n", m)
-				defer mutex.Unlock()
+				if m := t.Mutex; m != "" {
+					mutex := util.GetMutex(m)
+					logEntry.Printf("waiting for mutex %q\n", m)
+					mutex.Lock()
+					logEntry.Printf("locked mutex %q\n", m)
+					defer mutex.Unlock()
+				}
+
+				if s := t.Semaphore; s != "" {
+					logEntry.Printf("waiting for semaphore %q\n", s)
+					semaphore := semaphores.Get(s)
+					if err := semaphore.Acquire(ctx, 1); err != nil {
+						return
+					}
+					logEntry.Printf("acquired semaphore %q\n", s)
+					defer semaphore.Release(1)
+				}
 
 				var stdout io.Writer = os.Stdout
 				var stderr io.Writer = os.Stderr
