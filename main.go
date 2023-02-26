@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mattn/go-isatty"
+
 	"github.com/fatih/color"
 	"golang.org/x/crypto/ssh/terminal"
 	k8sstrings "k8s.io/utils/strings"
@@ -32,7 +34,13 @@ import (
 //go:embed tag
 var tag string
 
-var muxOutput = os.Stdout.Fd() == 1 && os.Getenv("NO_MUX_OUTPUT") != "1"
+// GitHub Actions
+var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor, CodeShip, dsari
+	os.Getenv("BUILD_ID") != "" || // Jenkins, TeamCity
+	os.Getenv("RUN_ID") != "" || // TaskCluster, Codefresh
+	os.Getenv("GITHUB_ACTIONS") == "true"
+var isTerminal = isatty.IsTerminal(os.Stdin.Fd())
+var muxOutput = isTerminal && !isCI
 
 func init() {
 	if muxOutput {
@@ -43,7 +51,8 @@ func init() {
 		}
 		log.SetOutput(f)
 	}
-	log.Println(tag)
+	log.Printf("tag=%v\n", tag)
+	log.Printf("isTerminal=%v, isCI=%v\n", isTerminal, isCI)
 }
 
 const escape = "\x1b"
