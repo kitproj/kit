@@ -2,6 +2,7 @@ package util
 
 import (
 	"log"
+	"runtime"
 	"sync"
 
 	"golang.org/x/sync/semaphore"
@@ -22,7 +23,7 @@ func NewSemaphores(seatPerKey map[string]int) *Semaphores {
 func (s Semaphores) Get(key string) *semaphore.Weighted {
 	seats, ok := s.seats[key]
 	if !ok {
-		seats = 1
+		seats = runtime.NumCPU()
 	}
 	log.Printf("seat for key %s is %d", key, seats)
 	actual, _ := s.values.LoadOrStore(key, semaphore.NewWeighted(int64(seats)))
