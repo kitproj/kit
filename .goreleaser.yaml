@@ -33,7 +33,7 @@ changelog:
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 brews:
   - homepage: "https://github.com/kitproj/kit"
-    description: "Kitful local dev."
+    description: "Crazy fast local dev loop."
     folder: Formula
     commit_author:
       name: Alex Collins
