@@ -74,6 +74,8 @@ func main() {
 		os.Exit(0)
 	}
 
+	started := time.Now()
+
 	err := func() error {
 
 		ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
@@ -164,6 +166,7 @@ func main() {
 				}
 				fmt.Println(prefix + " " + msg)
 			}
+			fmt.Printf("%v\n", time.Since(started).Truncate(time.Second))
 			if terminating {
 				fmt.Println("terminating...")
 			}
