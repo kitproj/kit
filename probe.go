@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -15,7 +14,6 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 	defer handleCrash(stopEverything)
 	initialDelay := probe.GetInitialDelay()
 	period := probe.GetPeriod()
-	log.Printf("probe=%v\n", probe)
 	time.Sleep(initialDelay)
 	successes, failures := 0, 0
 	for {
@@ -48,8 +46,6 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 				successes = 0
 				failures++
 			}
-
-			log.Printf("probe=%v err=%v sucessess=%d failures=%d ", probe, err, successes, failures)
 
 			if successes == probe.GetSuccessThreshold() {
 				callback(true, nil)

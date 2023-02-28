@@ -8,23 +8,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/errdefs"
-
-	"k8s.io/utils/strings/slices"
-
-	"github.com/docker/docker/api/types/strslice"
-
-	"github.com/docker/docker/pkg/stdcopy"
-
-	"github.com/kitproj/kit/internal/types"
-
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
+	"github.com/kitproj/kit/internal/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"k8s.io/utils/strings/slices"
 )
 
 type container struct {
@@ -46,22 +41,26 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	} else if id != "" {
-		_, _ = fmt.Fprintf(stdout, "container already exists, skipping build/pull")
+		log.Printf("%s: container already exists, skipping build/pull\n", c.Name)
 	} else if _, err := os.Stat(dockerfile); err == nil {
+		log.Printf("%s: creating tar image from %q", c.Name, dockerfile)
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
 			return err
 		}
 		defer r.Close()
+		log.Printf("%s: building image from %q", c.Name, dockerfile)
 		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{c.Name}})
 		if err != nil {
 			return fmt.Errorf("failed to build image: %w", err)
 		}
 		defer resp.Body.Close()
+		log.Printf("%s: building image from %q (logs)", c.Name, dockerfile)
 		if _, err = io.Copy(stdout, resp.Body); err != nil {
 			return fmt.Errorf("failed to build image (logs): %w", err)
 		}
 	} else if c.ImagePullPolicy != "Never" {
+		log.Printf("%s: pulling image %q", c.Name, c.Image)
 		r, err := cli.ImagePull(ctx, c.Image, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %w", err)
@@ -86,7 +85,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
 		image = c.Name
 	}
-	_, _ = fmt.Fprintf(stdout, "creating container")
+	log.Printf("%s: creating container", c.Name)
 	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
@@ -116,12 +115,13 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		<-ctx.Done()
 		c.Reset(context.Background())
 	}()
-	_, _ = fmt.Fprintf(stdout, "logging container")
+	log.Printf("%s: logging container\n", c.Name)
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
 	})
+	log.Printf("%s: logged container %v", c.Name, err)
 	if err != nil {
 		return fmt.Errorf("failed to log container: %w", err)
 	}
@@ -184,13 +184,17 @@ func (c *container) Reset(ctx context.Context) error {
 	}
 	if id != "" {
 		grace := c.PodSpec.GetTerminationGracePeriod()
-		log.Printf("stopping container %q\n", id)
-		if err := cli.ContainerStop(ctx, id, &grace); ignoreNotExist(err) != nil {
+		log.Printf("%s: stopping container %q\n", c.Name, id)
+		err := cli.ContainerStop(ctx, id, &grace)
+		log.Printf("%s: stopped container %q: %v\n", c.Name, id, err)
+		if ignoreNotExist(err) != nil {
 			return fmt.Errorf("failed to stop container: %w", err)
 		}
 		if c.remove {
-			log.Printf("removing container %q\n", id)
-			if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
+			log.Printf("%s: removing container %q\n", c.Name, id)
+			err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true})
+			log.Printf("%s: removed container %q: %v\n", c.Name, id, err)
+			if err != nil {
 				return fmt.Errorf("failed to remove container: %w", err)
 			}
 		}

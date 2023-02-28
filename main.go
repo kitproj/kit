@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -60,6 +61,18 @@ func init() {
 const escape = "\x1b"
 
 const defaultConfigFile = "tasks.yaml"
+
+type taskStatus struct {
+	reason  string
+	message struct{ text, level string }
+	stdout  io.Writer
+	stderr  io.Writer
+}
+
+func last(p string) string {
+	parts := strings.Split(strings.TrimSpace(p), "\n")
+	return parts[len(parts)-1]
+}
 
 func main() {
 	help := false
@@ -111,15 +124,31 @@ func main() {
 		log.Printf("tasks: %v\n", tasks)
 
 		statuses := sync.Map{}
-		logEntries := make(map[string]*types.LogEntry)
 
 		for _, task := range tasks {
-			logEntries[task.Name] = &types.LogEntry{}
-			statuses.Store(task.Name, &types.TaskStatus{
-				State: types.TaskState{
-					Waiting: &types.TaskStateWaiting{Reason: "waiting"},
-				},
-			})
+			x := &taskStatus{
+				reason: "waiting",
+				stdout: &prefixWriter{task.Name + ": ", os.Stdout},
+				stderr: &prefixWriter{task.Name + ": ", os.Stderr},
+			}
+			if muxOutput {
+
+				x.stdout = funcWriter(func(p []byte) (n int, err error) {
+					x.message = struct{ text, level string }{last(string(p)), "info"}
+					return len(p), nil
+				})
+				x.stderr = funcWriter(func(p []byte) (n int, err error) {
+					x.message = struct{ text, level string }{last(string(p)), "error"}
+					return len(p), nil
+				})
+				logFile, err := os.Create(filepath.Join("logs", task.Name+".log"))
+				if err != nil {
+					panic(err)
+				}
+				x.stdout = io.MultiWriter(logFile, x.stdout)
+				x.stderr = io.MultiWriter(logFile, x.stderr)
+			}
+			statuses.Store(task.Name, x)
 		}
 		terminating := false
 		printTasks := func() {
@@ -134,11 +163,11 @@ func main() {
 				if !ok {
 					continue
 				}
-				state := v.(*types.TaskStatus)
-				if state.IsSuccess() {
+				status := v.(*taskStatus)
+				if status.reason == "success" {
 					continue
 				}
-				reason := state.GetReason()
+				reason := status.reason
 				const blackSquare = "■"
 				icon := blackSquare
 				switch reason {
@@ -148,20 +177,18 @@ func main() {
 					icon = color.GreenString(blackSquare)
 				case "error":
 					icon = color.RedString(blackSquare)
-				case "skipped":
-					icon = color.HiBlackString(blackSquare)
 				}
 				prefix := fmt.Sprintf("%s %-10s %-8s", icon, k8sstrings.ShortenString(t.Name, 10), reason)
 				if ports := t.GetHostPorts(); len(ports) > 0 {
 					prefix = prefix + " " + color.HiBlackString(fmt.Sprint(ports))
 				}
-				entry := logEntries[t.Name]
+				entry := status.message
 				msgWidth := width - len(prefix) - 1
 				msg := ""
 				if msgWidth > 0 {
-					msg = k8sstrings.ShortenString(entry.Msg, msgWidth)
-					if entry.IsError() {
-						msg = color.YellowString(msg)
+					msg = k8sstrings.ShortenString(entry.text, msgWidth)
+					if entry.level == "error" {
+						msg = color.RedString(msg)
 					}
 				}
 				fmt.Println(prefix + " " + msg)
@@ -210,14 +237,14 @@ func main() {
 			select {
 			case <-ctx.Done():
 			default:
-				log.Printf("starting downstream of %v\n", name)
+				log.Printf("%s: starting downstream \n", name)
 				for _, downstream := range tasks.GetDownstream(name) {
 					fulfilled := true
 					for _, upstream := range downstream.Dependencies {
 						v, ok := statuses.Load(upstream)
 						if ok {
-							status := v.(*types.TaskStatus)
-							fulfilled = fulfilled && status.IsFulfilled()
+							status := v.(*taskStatus)
+							fulfilled = fulfilled && (status.reason == "success" || status.reason == "ready")
 						} else {
 							fulfilled = false
 						}
@@ -237,8 +264,8 @@ func main() {
 				complete := true
 				for _, task := range tasks {
 					if v, ok := statuses.Load(task.Name); ok {
-						status := v.(*types.TaskStatus)
-						complete = complete && !task.IsBackground() && status.IsTerminated()
+						status := v.(*taskStatus)
+						complete = complete && !task.IsBackground() && (status.reason == "success" || status.reason == "error")
 					} else {
 						complete = false
 					}
@@ -253,9 +280,9 @@ func main() {
 		for t := range work {
 			name := t.Name
 
-			logEntry := logEntries[name]
-
 			prc := proc.New(t, pod.Spec)
+			v, _ := statuses.Load(t.Name)
+			status := v.(*taskStatus)
 
 			processCtx, stopProcess := context.WithCancel(ctx)
 			defer stopProcess()
@@ -282,7 +309,7 @@ func main() {
 								return err
 							}
 							if d.IsDir() {
-								logEntry.Printf("%q watching %q\n", t.Name, path)
+								_, _ = fmt.Fprintf(status.stdout, " watching %q\n", path)
 								return watcher.Add(path)
 							}
 							return nil
@@ -304,7 +331,7 @@ func main() {
 					case e := <-watcher.Events:
 						// ignore chmod events, these can be triggered by the editor, but we don't care
 						if e.Op != fsnotify.Chmod {
-							logEntry.Printf("%v changed\n", e)
+							_, _ = fmt.Fprintf(status.stdout, "%s: %v changed\n", t.Name, e)
 							timer.Reset(time.Second)
 						}
 					case err := <-watcher.Errors:
@@ -315,14 +342,12 @@ func main() {
 
 			// run the process
 			wg.Add(1)
-			v, _ := statuses.Load(t.Name)
-			status := v.(*types.TaskStatus)
-			go func(t types.Task, status *types.TaskStatus, stopProcess func()) {
+			go func(t types.Task, status *taskStatus, stopProcess func()) {
 				defer handleCrash(stopEverything)
 				defer wg.Done()
 
 				if f, ok := stop.Load(name); ok {
-					logEntry.Printf("stopping process")
+					log.Printf("%s: stopping process\n", t.Name)
 					f.(func())()
 				}
 
@@ -330,39 +355,30 @@ func main() {
 
 				if m := t.Mutex; m != "" {
 					mutex := util.GetMutex(m)
-					logEntry.Printf("waiting for mutex %q\n", m)
+					_, _ = fmt.Fprintf(status.stdout, "waiting for mutex %q\n", m)
 					mutex.Lock()
-					logEntry.Printf("locked mutex %q\n", m)
+					_, _ = fmt.Fprintf(status.stdout, "locked mutex %q\n", m)
 					defer mutex.Unlock()
 				}
 
 				if s := t.Semaphore; s != "" {
-					logEntry.Printf("waiting for semaphore %q\n", s)
+					fmt.Fprintf(status.stdout, "waiting for semaphore %q\n", s)
 					semaphore := semaphores.Get(s)
 					if err := semaphore.Acquire(ctx, 1); err != nil {
 						return
 					}
-					logEntry.Printf("acquired semaphore %q\n", s)
+					fmt.Fprintf(status.stdout, "acquired semaphore %q\n", s)
 					defer semaphore.Release(1)
 				}
 
-				var stdout io.Writer = os.Stdout
-				var stderr io.Writer = os.Stderr
-				if muxOutput {
-					logFile, err := os.Create(filepath.Join("logs", name+".log"))
-					if err != nil {
-						panic(err)
-					}
-					defer logFile.Close()
-					stdout = io.MultiWriter(logFile, logEntry.Stdout())
-					stderr = io.MultiWriter(logFile, logEntry.Stderr())
-				}
+				var stdout = status.stdout
+				var stderr = status.stderr
 				for {
 					select {
 					case <-processCtx.Done():
 						return
 					default:
-						logEntry.Printf("starting process\n")
+						_, _ = fmt.Fprintf(stdout, "starting process\n")
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
@@ -374,61 +390,45 @@ func main() {
 							if err := prc.Reset(runCtx); err != nil {
 								return err
 							}
-							status.Ready = false
-							status.State = types.TaskState{
-								Waiting: &types.TaskStateWaiting{Reason: "port"},
-							}
 							for _, port := range t.GetHostPorts() {
 								if err := isPortFree(port); err != nil {
 									return err
 								}
 							}
-							status.State = types.TaskState{
-								Running: &types.TaskStateRunning{},
-							}
+							status.reason = "running"
 							if probe := t.GetLivenessProbe(); probe != nil {
+								log.Printf("%s: liveness probe=%v\n", t.Name, probe)
 								liveFunc := func(live bool, err error) {
+									log.Printf("%s: live %v: %v\n", t.Name, live, err)
 									if !live {
-										logEntry.Printf("not live\n")
 										stopRun()
-									} else {
-										logEntry.Printf("live\n")
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, liveFunc)
 							}
 							if probe := t.GetReadinessProbe(); probe != nil {
+								log.Printf("%s: readiness probe=%v\n", t.Name, probe)
 								readyFunc := func(ready bool, err error) {
-									status.Ready = ready
+									log.Printf("%s: ready %v: %v\n", t.Name, ready, err)
 									if ready {
-										logEntry.Printf("ready\n")
+										status.reason = "ready"
 										maybeStartDownstream(name)
 									} else {
-										_, _ = fmt.Fprintf(stderr, "not ready: %v\n", err)
+										status.reason = "running"
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
 							}
-							logEntry.Printf("running\n")
 							return prc.Run(runCtx, stdout, stderr)
 						}()
 						if err != nil {
 							if errors.Is(err, context.Canceled) {
 								return
 							}
-							status.State = types.TaskState{
-								Terminated: &types.TaskStateTerminated{Reason: "error"},
-							}
+							status.reason = "error"
 							_, _ = fmt.Fprintln(stderr, err.Error())
-							if t.RestartPolicy == "Never" {
-								for _, downstream := range tasks.GetDownstream(t.Name) {
-									statuses.Store(downstream.Name, &types.TaskStatus{State: types.TaskState{Terminated: &types.TaskStateTerminated{Reason: "skipped"}}})
-								}
-							}
 						} else {
-							status.State = types.TaskState{
-								Terminated: &types.TaskStateTerminated{Reason: "success"},
-							}
+							status.reason = "success"
 							maybeStartDownstream(name)
 							if !t.IsBackground() && t.GetRestartPolicy() != "Always" {
 								return
@@ -438,17 +438,17 @@ func main() {
 							return
 						}
 					}
-					time.Sleep(2 * time.Second)
+					time.Sleep(3 * time.Second)
 				}
 			}(t, status, stopProcess)
 
-			time.Sleep(time.Second / 4)
+			time.Sleep(time.Second)
 		}
 
 		wg.Wait()
 
 		for _, task := range tasks {
-			if v, ok := statuses.Load(task.Name); ok && v.(*types.TaskStatus).Failed() {
+			if v, ok := statuses.Load(task.Name); ok && v.(*taskStatus).reason == "error" {
 				return fmt.Errorf("%s failed", task.Name)
 			}
 		}
