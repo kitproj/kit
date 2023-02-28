@@ -71,6 +71,36 @@ You can specify a set of files to watch for changes that result in a re-build:
 
 If the process is not alive (i.e. "dead"), then it is killed and restarted. Just like Kubernetes.
 
+## Shell Scripts
+
+You might want to put a multi-line a shell script. You can do this using the YAML `|` character: 
+
+```yaml
+  - name: foo
+    command:
+      - sh
+      - -c
+      - |
+        echo "hello"
+        echo "world"
+```
+
+## Forking Tasks
+
+Kit's job is to manage your tasks for you. As a result, if you fork a task in a script, and the script exists, kit will terminate that forked task.
+
+If you fork tasks, you can add a wait:
+
+```yaml
+  - name: foo
+    command:
+      - sh
+      - -c
+      - |
+        sleep 60 &
+        wait
+```
+
 ## Quitting
 
 Enter Ctrl+C to send a `SIGTERM` to the process. Each sub-process is then gets sent `SIGTERM`. If they do not exit
