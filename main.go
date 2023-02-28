@@ -132,7 +132,6 @@ func main() {
 				stderr: &prefixWriter{task.Name + ": ", os.Stderr},
 			}
 			if muxOutput {
-
 				x.stdout = funcWriter(func(p []byte) (n int, err error) {
 					x.message = struct{ text, level string }{last(string(p)), "info"}
 					return len(p), nil

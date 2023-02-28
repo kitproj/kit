@@ -38,8 +38,16 @@ spec:
       name: work
   - name: error
     command: exit 1
+  - name: script
+    command:
+      - sh
+      - -c
+      - |
+        echo "hello"
+        sleep 5 & 
+        echo "world"
   - name: up
-    dependencies: awn foo bar baz
+    dependencies: awn foo bar baz script
   terminationGracePeriodSeconds: 3
   volumes:
   - hostPath:

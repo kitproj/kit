@@ -12,5 +12,7 @@ func (w *prefixWriter) Write(p []byte) (int, error) {
 	output := make([]byte, len(prefixBytes)+len(p))
 	copy(output, prefixBytes)
 	copy(output[len(prefixBytes):], p)
-	return w.writer.Write(output)
+	_, err := w.writer.Write(output)
+	// we must return the original length of p, not the length of the output, because we'll get broken pipes if we don't (SIGPIPE)
+	return len(p), err
 }
