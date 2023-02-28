@@ -50,9 +50,9 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
-	log.Printf("waiting for process %d(%q)", pid, h.Command)
+	log.Printf("waiting for process %d pgid %d (%q)", pid, pgid, h.Command)
 	err = cmd.Wait()
-	log.Printf("process %d exited : %v", pid, err)
+	log.Printf("process exited %d: %v", pid, err)
 	return err
 }
 
