@@ -14,6 +14,9 @@ Kit is a software development tool designed to turbo-charge the software develop
 
 It is designed to work seamlessly with both local-dev and cloud-dev environments, such as Codespaces and Gitpod.
 
+[![Watch the video](https://img.youtube.com/vi/IafQwT1rYOU/hqdefault.jpg)](https://youtu.be/IafQwT1rYOU)
+
+
 Key features of Kit include:
 
 * **Local testing**: Kit is designed for local testing, allowing developers to test their code on their local machines before pushing it to a test environment or production. This speeds up the testing process and helps developers catch and fix bugs more quickly.
