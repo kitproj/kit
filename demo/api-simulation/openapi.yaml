@@ -1,0 +1,11 @@
+openapi: 3.0.1
+paths:
+  /v1/foo:
+    get:
+      responses:
+        204:
+          description: Ok
+
+info:
+  title: api-simulation
+  version: 0.0.0

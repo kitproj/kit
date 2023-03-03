@@ -46,6 +46,13 @@ spec:
         echo "hello"
         sleep 5 & 
         echo "world"
+  - name: api-simulation
+    image: stoplight/prism
+    args: mock /work/demo/api-simulation/openapi.yaml
+    ports: 4010
+    volumeMounts:
+      - name: work
+        mountPath: /work
   - name: up
     dependencies: awn foo bar baz script
   terminationGracePeriodSeconds: 3

@@ -116,15 +116,39 @@ running and you must manually clean up.
 
 ## Prebuild Patterns for Cloud Development
 
-In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds" where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java service that you need to run, it might make sense to have a separate `dependency-pull` task that is run as part of the prebuild `kit dependency-pull` separate from your primary `kit up` task
+In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds" where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java service that you need to run, it might make sense to have a separate `pre-up` task that is run as part of the prebuild `kit pre-up` separate from your primary `kit up` task
 
 ```yaml
   tasks:
-    - name: dependency-pull
-      command: "mvn clean install"
+    - name: pre-up
+      command: "mvn dependency:go-offline"
     - name: up
       command: "mvn spring-boot:run"
+      dependencies: pre-up
 ```
+
+## API Simulation
+
+You can easily simulation upstream dependencies using Stoplight Prism. 
+
+1. Add you `openapi.yaml` into a directory.
+2. Use a volume to make the spec available to the container.
+
+```yaml
+spec:
+  tasks:
+  - name: api-simulation
+    image: stoplight/prism
+    args: mock /work/openapi.yaml
+    ports: 4010
+    volumeMounts:
+      - name: work
+        mountPath: /work
+  volumes:
+    - hostPath:
+        path: .
+      name: work
+  ```
 
 ## Locks
 
