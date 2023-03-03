@@ -2,6 +2,9 @@ package proc
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -25,10 +28,14 @@ import (
 type container struct {
 	types.PodSpec
 	types.Task
-	remove bool
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
+
+	data, _ := json.Marshal(c.Task)
+	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))
+
+	log.Printf("%s: expected hash: %s", c.Name, expectedHash)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -37,9 +44,21 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	defer cli.Close()
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
-	id, err := c.getContainerID(ctx, cli)
+	id, existingHash, err := c.getContainer(ctx, cli)
+
+	log.Printf("%s: existing hash: %s", c.Name, existingHash)
+
+	// If the container exists and the hash is different, remove it.
+	if id != "" && existingHash != expectedHash {
+		log.Printf("%s: removing container %s", c.Name, id)
+		if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
+			return fmt.Errorf("failed to remove container: %w", err)
+		}
+		id = ""
+	}
+
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get container ID: %w", err)
 	} else if id != "" {
 		log.Printf("%s: container already exists, skipping build/pull\n", c.Name)
 	} else if _, err := os.Stat(dockerfile); err == nil {
@@ -85,6 +104,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
 		image = c.Name
 	}
+
 	log.Printf("%s: creating container", c.Name)
 	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     c.Name,
@@ -95,8 +115,8 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Image:        image,
 		User:         c.User,
 		WorkingDir:   c.WorkingDir,
-		// TODO support entrypoint
-		Entrypoint: strslice.StrSlice(c.Command),
+		Entrypoint:   strslice.StrSlice(c.Command),
+		Labels:       map[string]string{hashLabel: expectedHash},
 	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,
 		Binds:        binds,
@@ -104,7 +124,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if ignoreConflict(err) != nil {
 		return fmt.Errorf("failed to create container: %w", err)
 	}
-	id, err = c.getContainerID(ctx, cli)
+	id, _, err = c.getContainer(ctx, cli)
 	if err != nil {
 		return err
 	}
@@ -178,7 +198,7 @@ func (c *container) Reset(ctx context.Context) error {
 		return err
 	}
 	defer cli.Close()
-	id, err := c.getContainerID(ctx, cli)
+	id, _, err := c.getContainer(ctx, cli)
 	if err != nil {
 		return err
 	}
@@ -190,30 +210,24 @@ func (c *container) Reset(ctx context.Context) error {
 		if ignoreNotExist(err) != nil {
 			return fmt.Errorf("failed to stop container: %w", err)
 		}
-		if c.remove {
-			log.Printf("%s: removing container %q\n", c.Name, id)
-			err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true})
-			log.Printf("%s: removed container %q: %v\n", c.Name, id, err)
-			if err != nil {
-				return fmt.Errorf("failed to remove container: %w", err)
-			}
-		}
 	}
 	return nil
 }
 
-func (c *container) getContainerID(ctx context.Context, cli *client.Client) (string, error) {
+const hashLabel = "kit.hash"
+
+func (c *container) getContainer(ctx context.Context, cli *client.Client) (string, string, error) {
 	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	for _, existing := range list {
 		if slices.Contains(existing.Names, "/"+c.Name) {
 			id := existing.ID
-			return id, nil
+			return id, existing.Labels[hashLabel], nil
 		}
 	}
-	return "", nil
+	return "", "", nil
 }
 
 func ignoreConflict(err error) error {
