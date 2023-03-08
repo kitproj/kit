@@ -264,9 +264,6 @@ func (t *Task) GetLivenessProbe() *Probe {
 	if t.LivenessProbe != nil {
 		return t.LivenessProbe
 	}
-	if len(t.Ports) > 0 {
-		return &Probe{TCPSocket: &TCPSocketAction{Port: t.Ports[0].GetHostPort()}}
-	}
 	return nil
 
 }
