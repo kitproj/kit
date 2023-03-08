@@ -18,18 +18,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kitproj/kit/internal/util"
-
-	"github.com/mattn/go-isatty"
-
 	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
+	"github.com/kitproj/kit/internal/proc"
+	"github.com/kitproj/kit/internal/types"
+	"github.com/kitproj/kit/internal/util"
+	"github.com/mattn/go-isatty"
 	"golang.org/x/crypto/ssh/terminal"
 	k8sstrings "k8s.io/utils/strings"
-
-	"github.com/kitproj/kit/internal/proc"
-
-	"github.com/fsnotify/fsnotify"
-	"github.com/kitproj/kit/internal/types"
 	"sigs.k8s.io/yaml"
 )
 
@@ -44,6 +40,7 @@ var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor,
 	os.Getenv("GITHUB_ACTIONS") == "true"
 var isTerminal = isatty.IsTerminal(os.Stdin.Fd())
 var muxOutput = isTerminal && !isCI
+var faint = color.New(color.Faint).Sprint
 
 func init() {
 	if muxOutput {
@@ -179,7 +176,7 @@ func main() {
 				}
 				prefix := fmt.Sprintf("%s %-10s %-8s", icon, k8sstrings.ShortenString(t.Name, 10), reason)
 				if ports := t.GetHostPorts(); len(ports) > 0 {
-					prefix = prefix + " " + color.HiBlackString(fmt.Sprint(ports))
+					prefix = prefix + " " + faint(ports)
 				}
 				entry := status.message
 				msgWidth := width - len(prefix) - 1
@@ -200,7 +197,7 @@ func main() {
 			if terminating {
 				items = append(items, "terminating...")
 			}
-			fmt.Println(color.HiBlackString(strings.Join(items, " | ")))
+			fmt.Println(faint(strings.Join(items, "   ")))
 		}
 
 		if muxOutput {
