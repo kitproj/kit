@@ -50,7 +50,8 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		if err := h.stop(pgid, stdout); err != nil {
+		log.Printf("%s: context cancelled, stopping process", h.Name)
+		if err := h.stop(pgid); err != nil {
 			_, _ = fmt.Fprintln(stderr, err.Error())
 		}
 	}()
@@ -60,7 +61,8 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return err
 }
 
-func (h *host) stop(pid int, stdout io.Writer) error {
+func (h *host) stop(pid int) error {
+	log.Printf("%s: stopping process %d", h.Name, pid)
 	log.Printf("%s: finding process %d\n", h.Name, pid)
 	target, err := os.FindProcess(-pid)
 	if err != nil {

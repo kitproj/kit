@@ -192,10 +192,15 @@ func main() {
 				}
 				fmt.Println(prefix + " " + msg)
 			}
-			fmt.Printf("%v\n", time.Since(started).Truncate(time.Second))
-			if terminating {
-				fmt.Println("terminating...")
+			items := []string{
+				strings.TrimSpace(tag),
+				fmt.Sprint(time.Since(started).Truncate(time.Second)),
+				"logs in ./logs",
 			}
+			if terminating {
+				items = append(items, "terminating...")
+			}
+			fmt.Println(color.HiBlackString(strings.Join(items, " | ")))
 		}
 
 		if muxOutput {
@@ -236,7 +241,7 @@ func main() {
 			select {
 			case <-ctx.Done():
 			default:
-				log.Printf("%s: starting downstream \n", name)
+				log.Printf("%s: starting downstream tasks\n", name)
 				for _, downstream := range tasks.GetDownstream(name) {
 					fulfilled := true
 					for _, upstream := range downstream.Dependencies {
@@ -249,7 +254,7 @@ func main() {
 						}
 					}
 					if fulfilled {
-						log.Printf("starting: %v\n", downstream.Name)
+						log.Printf("%s: starting: %s\n", name, downstream.Name)
 						work <- downstream
 					}
 				}
@@ -308,7 +313,7 @@ func main() {
 								return err
 							}
 							if d.IsDir() {
-								_, _ = fmt.Fprintf(status.stdout, " watching %q\n", path)
+								log.Printf("%s: watching %q\n", t.Name, path)
 								return watcher.Add(path)
 							}
 							return nil
@@ -330,7 +335,7 @@ func main() {
 					case e := <-watcher.Events:
 						// ignore chmod events, these can be triggered by the editor, but we don't care
 						if e.Op != fsnotify.Chmod {
-							_, _ = fmt.Fprintf(status.stdout, "%s: %v changed\n", t.Name, e)
+							log.Printf("%s: %v changed\n", t.Name, e)
 							timer.Reset(time.Second)
 						}
 					case err := <-watcher.Errors:
@@ -361,14 +366,20 @@ func main() {
 				}
 
 				if s := t.Semaphore; s != "" {
-					fmt.Fprintf(status.stdout, "waiting for semaphore %q\n", s)
+					_, _ = fmt.Fprintf(status.stdout, "waiting for semaphore %q\n", s)
 					semaphore := semaphores.Get(s)
 					if err := semaphore.Acquire(ctx, 1); err != nil {
 						return
 					}
-					fmt.Fprintf(status.stdout, "acquired semaphore %q\n", s)
+					_, _ = fmt.Fprintf(status.stdout, "acquired semaphore %q\n", s)
 					defer semaphore.Release(1)
 				}
+
+				go func() {
+					defer handleCrash(stopEverything)
+					<-ctx.Done()
+					stopProcess()
+				}()
 
 				var stdout = status.stdout
 				var stderr = status.stderr
@@ -377,19 +388,16 @@ func main() {
 					case <-processCtx.Done():
 						return
 					default:
-						_, _ = fmt.Fprintf(stdout, "starting process\n")
+						log.Printf("%s: starting process\n", t.Name)
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
-							go func() {
-								defer handleCrash(stopEverything)
-								<-ctx.Done()
-								stopProcess()
-							}()
+							log.Printf("%s: resetting process\n", t.Name)
 							if err := prc.Reset(runCtx); err != nil {
 								return err
 							}
 							for _, port := range t.GetHostPorts() {
+								log.Printf("%s: waiting for port %d to be free\n", t.Name, port)
 								if err := isPortFree(port); err != nil {
 									return err
 								}
@@ -398,8 +406,8 @@ func main() {
 							if probe := t.GetLivenessProbe(); probe != nil {
 								log.Printf("%s: liveness probe=%v\n", t.Name, probe)
 								liveFunc := func(live bool, err error) {
-									log.Printf("%s: live %v: %v\n", t.Name, live, err)
 									if !live {
+										log.Printf("%s: is dead, stopping\n", t.Name)
 										stopRun()
 									}
 								}
@@ -408,16 +416,18 @@ func main() {
 							if probe := t.GetReadinessProbe(); probe != nil {
 								log.Printf("%s: readiness probe=%v\n", t.Name, probe)
 								readyFunc := func(ready bool, err error) {
-									log.Printf("%s: ready %v: %v\n", t.Name, ready, err)
 									if ready {
+										log.Printf("%s: is ready, starting downstream\n", t.Name)
 										status.reason = "ready"
 										maybeStartDownstream(name)
 									} else {
+										log.Printf("%s: is not ready\n", t.Name)
 										status.reason = "running"
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
 							}
+							log.Printf("%s: running process\n", t.Name)
 							return prc.Run(runCtx, stdout, stderr)
 						}()
 						if err != nil {

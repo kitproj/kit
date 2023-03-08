@@ -133,7 +133,8 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		c.Reset(context.Background())
+		log.Printf("%s: context cancelled, stopping container", c.Name)
+		_ = c.stop(context.Background())
 	}()
 	log.Printf("%s: logging container\n", c.Name)
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
@@ -193,6 +194,11 @@ func (c *container) createBinds() ([]string, error) {
 }
 
 func (c *container) Reset(ctx context.Context) error {
+	return c.stop(ctx)
+}
+
+func (c *container) stop(ctx context.Context) error {
+	log.Printf("%s: stopping container\n", c.Name)
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
