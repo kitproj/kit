@@ -384,8 +384,8 @@ func (p Probe) URL() *url.URL {
 	var x = url.Values{}
 	x.Add("initialDelay", p.GetInitialDelay().String())
 	x.Add("period", p.GetPeriod().String())
-	x.Add("successThreshold", fmt.Sprint(p.SuccessThreshold))
-	x.Add("failureThreshold", fmt.Sprint(p.FailureThreshold))
+	x.Add("successThreshold", fmt.Sprint(p.GetSuccessThreshold()))
+	x.Add("failureThreshold", fmt.Sprint(p.GetFailureThreshold()))
 	u.RawQuery = x.Encode()
 	return u
 }
