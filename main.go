@@ -50,6 +50,8 @@ func init() {
 			panic(err)
 		}
 		log.SetOutput(f)
+	} else {
+		log.SetOutput(os.Stdout)
 	}
 	log.Printf("tag=%v\n", tag)
 	log.Printf("isTerminal=%v, isCI=%v\n", isTerminal, isCI)
