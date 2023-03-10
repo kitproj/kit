@@ -129,6 +129,19 @@ In most cases you will probably only have 1 top node in your command dependency 
 
 ## API Simulation
 
+[sim](https://github.com/kitproj/sim) is a straighn-forward API simulation tool that is orders of magnitude smaller and faster than the competition.
+
+```yaml
+spec:
+  tasks:
+  - name: api-simulation
+    # a directory containing OpenAPI specs
+    command: sim examples
+    ports: 4010
+```
+
+## Stoplight Prism
+
 You can easily simulation upstream dependencies using Stoplight Prism. 
 
 1. Add you `openapi.yaml` into a directory.
