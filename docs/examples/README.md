@@ -129,7 +129,7 @@ In most cases you will probably only have 1 top node in your command dependency 
 
 ## API Simulation
 
-[sim](https://github.com/kitproj/sim) is a straighn-forward API simulation tool that is orders of magnitude smaller and faster than the competition.
+[sim](https://github.com/kitproj/sim) is a straight-forward API simulation tool that is orders of magnitude smaller and faster than the competition.
 
 ```yaml
 spec:
