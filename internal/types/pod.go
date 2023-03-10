@@ -533,8 +533,11 @@ func (t Tasks) NeededFor(names []string) Tasks {
 		}
 	}
 	var out Tasks
-	for name := range done {
-		out = append(out, t.Get(name))
+	// ensures tasks are queued in order
+	for _, task := range t {
+		if done[task.Name] {
+			out = append(out, task)
+		}
 	}
 	return out
 }
