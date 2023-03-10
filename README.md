@@ -61,8 +61,6 @@ Apps are described by a DAG, for example:
 title: Example of an app
 ---
 flowchart LR
-    classDef container fill:#f1d3a1,stroke-width:0
-    classDef host fill:#e6eff6,stroke-width:0
     api(name: api\ncommand: java -jar target/api.jar\nworkingDir: ./api\nports: 8080):::host --> build-api(name: build-api\ncommand: mvn package\nworkingDir: ./api\nwatch: ./api):::host
     api --> mysql(name: mysql\n image: mysql:latest):::container
     processor(name: processor\ncommand: ./processor):::host --> build-processor(name: build-processor\ncommand: go build ./processor\nwatch: ./processor):::host
