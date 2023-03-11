@@ -61,9 +61,10 @@ const escape = "\x1b"
 
 const defaultConfigFile = "tasks.yaml"
 
+type message struct{ text, level string }
 type taskStatus struct {
 	reason  string
-	message struct{ text, level string }
+	message message
 	stdout  io.Writer
 	stderr  io.Writer
 }
@@ -122,6 +123,10 @@ func main() {
 
 		log.Printf("tasks: %v\n", tasks)
 
+		if err := createMermaidDiagram(pod.Spec.Tasks, configFile); err != nil {
+			return err
+		}
+
 		statuses := sync.Map{}
 
 		for _, task := range tasks {
@@ -132,11 +137,11 @@ func main() {
 			}
 			if muxOutput {
 				x.stdout = funcWriter(func(p []byte) (n int, err error) {
-					x.message = struct{ text, level string }{last(string(p)), "info"}
+					x.message = message{last(string(p)), "info"}
 					return len(p), nil
 				})
 				x.stderr = funcWriter(func(p []byte) (n int, err error) {
-					x.message = struct{ text, level string }{last(string(p)), "error"}
+					x.message = message{last(string(p)), "error"}
 					return len(p), nil
 				})
 				logFile, err := os.Create(filepath.Join("logs", task.Name+".log"))
@@ -467,6 +472,25 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
+}
+
+func createMermaidDiagram(tasks types.Tasks, file string) error {
+	f, err := os.Create(file + ".mermaid")
+	if err != nil {
+		return fmt.Errorf("failed to create mermaid file: %w", err)
+	}
+	defer f.Close()
+	_, _ = f.WriteString("flowchart TD\n")
+	for _, task := range tasks {
+		escaped := strings.Replace(task.String(), "\n", "\\n", -1)
+		dequoted := strings.Replace(escaped, "\"", "'", -1)
+		// escape quotes
+		f.WriteString(fmt.Sprintf("\t%s(\"%s\\n%s\")\n", task.Name, task.Name, dequoted))
+		for _, dependency := range task.Dependencies {
+			f.WriteString(fmt.Sprintf("\t%s --> %s\n", dependency, task.Name))
+		}
+	}
+	return nil
 }
 
 func handleCrash(stop func()) {

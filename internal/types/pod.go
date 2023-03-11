@@ -275,6 +275,19 @@ func (t *Task) GetRestartPolicy() string {
 	return "OnFailure"
 }
 
+func (t *Task) String() string {
+	if t.Image != "" {
+		return t.Image
+	}
+	if len(t.Command) > 0 {
+		return t.Command.String()
+	}
+	if t.Args != nil {
+		return t.Args.String()
+	}
+	return "noop"
+}
+
 type Pod struct {
 	// The specification of tasks to run.
 	Spec PodSpec `json:"spec"`
@@ -557,6 +570,14 @@ func (t Tasks) Get(name string) Task {
 
 	}
 	panic(fmt.Errorf("no task named %q", name))
+}
+
+func (t Tasks) Names() []string {
+	var out []string
+	for _, task := range t {
+		out = append(out, task.Name)
+	}
+	return out
 }
 
 // Task is a unit of work that should be run.

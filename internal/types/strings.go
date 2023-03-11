@@ -46,3 +46,7 @@ func (p Strings) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(strings.TrimSpace(b.String()))
 }
+
+func (p Strings) String() string {
+	return strings.Join(p, " ")
+}
