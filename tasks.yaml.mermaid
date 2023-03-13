@@ -8,7 +8,8 @@ flowchart TD
 	init("init\nubuntu")
 	error("error\nexit 1")
 	script("script\nsh -c echo 'hello'\nsleep 5 & \necho 'world'\n")
-	api-simulation("api-simulation\nstoplight/prism")
+	stoplight("stoplight\nstoplight/prism")
+	sim("sim\nghcr.io/kitproj/sim:latest")
 	up("up\nnoop")
 	awn --> up
 	foo --> up

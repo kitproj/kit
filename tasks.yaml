@@ -46,9 +46,17 @@ spec:
         echo "hello"
         sleep 5 & 
         echo "world"
-  - name: api-simulation
+  - name: stoplight
     image: stoplight/prism
     args: mock /work/demo/api-simulation/openapi.yaml
+    ports: 4010
+    volumeMounts:
+      - name: work
+        mountPath: /work
+  - name: sim
+    image: ghcr.io/kitproj/sim:latest
+    command: /sim
+    args: /work/demo/api-simulation
     ports: 4010
     volumeMounts:
       - name: work

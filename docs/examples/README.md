@@ -140,6 +140,23 @@ spec:
     ports: 4010
 ```
 
+
+```yaml
+spec:
+  tasks:
+  - name: api-simulation
+    image: ghcr.io/kitproj/sim
+    args: /apis
+    ports: 4010
+    volumeMounts:
+      - name: work
+        mountPath: /work
+  volumes:
+    - hostPath:
+        path: .
+      name: work
+```
+
 ## Stoplight Prism
 
 You can easily simulation upstream dependencies using Stoplight Prism. 
@@ -161,7 +178,7 @@ spec:
     - hostPath:
         path: .
       name: work
-  ```
+```
 
 ## Locks
 
