@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.0.64"
+  version "0.1.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.0.64/kit_0.0.64_Darwin_x86_64.tar.gz"
-      sha256 "1995d60971dbe2767faf95cd5afd9f505330fbed942b2f1432d6dba60f36b8b0"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Darwin_x86_64.tar.gz"
+      sha256 "eccf76f89b08628b37ce9dea3c8e490655fc55041aa7d704efbcb114fccb60b0"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.0.64/kit_0.0.64_Darwin_arm64.tar.gz"
-      sha256 "48b3087fd9314f509e744095a0ad44402a5103b39c535ec0c213c910e8cfb32a"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Darwin_arm64.tar.gz"
+      sha256 "a9b3ac69972f594cfa40c556f0cfce5350a448c561a10a09484bbd6af1dbc277"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.0.64/kit_0.0.64_Linux_arm64.tar.gz"
-      sha256 "46dcd7051b786d4edc42d98511843fa6870c8d3ca844204ac69cb29a6e9f7b3c"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Linux_arm64.tar.gz"
+      sha256 "c712637d5cf8ae8db2f509b107098dd6474253c6974488f6be729e7a3a2de8d7"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.0.64/kit_0.0.64_Linux_x86_64.tar.gz"
-      sha256 "30a471c14c42e18fa36f0f4ed7e94ad6f13775f636f2dff2d384dddb285ff1ec"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Linux_x86_64.tar.gz"
+      sha256 "2c900ba59fe89e178fe15666cc2c328e530179ff312439d34d31498a2153eb4f"
 
       def install
         bin.install "kit"
