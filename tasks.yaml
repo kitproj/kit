@@ -46,6 +46,9 @@ spec:
         echo "hello"
         sleep 5 & 
         echo "world"
+  - name: kafka
+    image: ghcr.io/kitproj/kafka
+    ports: 9092
   - name: stoplight
     image: stoplight/prism
     args: mock /work/demo/api-simulation/openapi.yaml

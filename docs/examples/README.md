@@ -140,6 +140,7 @@ spec:
     ports: 4010
 ```
 
+Or using Docker image:
 
 ```yaml
 spec:
@@ -157,7 +158,7 @@ spec:
       name: work
 ```
 
-## Stoplight Prism
+### Stoplight Prism
 
 You can easily simulation upstream dependencies using Stoplight Prism. 
 
@@ -178,6 +179,16 @@ spec:
     - hostPath:
         path: .
       name: work
+```
+
+## Kafka
+
+Kit provides a simple way to run Kafka:
+
+```yaml
+  - name: kafka
+    image: ghcr.io/kitproj/kafka
+    ports: 9092
 ```
 
 ## Locks
