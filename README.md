@@ -39,8 +39,7 @@ Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the
 If you're on MacOS, you can use `brew`:
 
 ```bash
-brew tap kitproj/kit --custom-remote https://github.com/kitproj/kit
-brew install kit
+brew install kit --custom-remote https://github.com/kitproj/kit
 ```
 
 Otherwise, you can use `curl`:

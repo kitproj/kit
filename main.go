@@ -123,10 +123,6 @@ func main() {
 
 		log.Printf("tasks: %v\n", tasks)
 
-		if err := createMermaidDiagram(pod.Spec.Tasks, configFile); err != nil {
-			return err
-		}
-
 		statuses := sync.Map{}
 
 		for _, task := range tasks {
@@ -472,25 +468,6 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
-}
-
-func createMermaidDiagram(tasks types.Tasks, file string) error {
-	f, err := os.Create(file + ".mermaid")
-	if err != nil {
-		return fmt.Errorf("failed to create mermaid file: %w", err)
-	}
-	defer f.Close()
-	_, _ = f.WriteString("flowchart TD\n")
-	for _, task := range tasks {
-		escaped := strings.Replace(task.String(), "\n", "\\n", -1)
-		dequoted := strings.Replace(escaped, "\"", "'", -1)
-		// escape quotes
-		f.WriteString(fmt.Sprintf("\t%s(\"%s\\n%s\")\n", task.Name, task.Name, dequoted))
-		for _, dependency := range task.Dependencies {
-			f.WriteString(fmt.Sprintf("\t%s --> %s\n", dependency, task.Name))
-		}
-	}
-	return nil
 }
 
 func handleCrash(stop func()) {
