@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.0"
+  version "0.1.1"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Darwin_x86_64.tar.gz"
-      sha256 "eccf76f89b08628b37ce9dea3c8e490655fc55041aa7d704efbcb114fccb60b0"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.1/kit_0.1.1_Darwin_x86_64.tar.gz"
+      sha256 "39caccf4a4ef1746352a4751c239689dcb2e00c553052785689a43edefea61e3"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Darwin_arm64.tar.gz"
-      sha256 "a9b3ac69972f594cfa40c556f0cfce5350a448c561a10a09484bbd6af1dbc277"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.1/kit_0.1.1_Darwin_arm64.tar.gz"
+      sha256 "2a0a20fbb8baf6aa3b66a51f4092e5bf0933e956832c153c4f5f14a151e9db13"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Linux_arm64.tar.gz"
-      sha256 "c712637d5cf8ae8db2f509b107098dd6474253c6974488f6be729e7a3a2de8d7"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.1/kit_0.1.1_Linux_arm64.tar.gz"
+      sha256 "4d4015e1f3cf24acd6deebea5a8b855fa99b0def5204b871d4c4521f31bc30b8"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.0/kit_0.1.0_Linux_x86_64.tar.gz"
-      sha256 "2c900ba59fe89e178fe15666cc2c328e530179ff312439d34d31498a2153eb4f"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.1/kit_0.1.1_Linux_x86_64.tar.gz"
+      sha256 "91869e3b8dff58d29d04fd3b39f0cd48485eff17525023f60dc53048d45a2161"
 
       def install
         bin.install "kit"
