@@ -237,8 +237,8 @@ func (c *container) getContainer(ctx context.Context, cli *client.Client) (strin
 	}
 	for _, existing := range list {
 		if slices.Contains(existing.Names, "/"+c.Name) {
-			log.Printf("%s: found container", c.Name)
 			id := existing.ID
+			log.Printf("%s: found container: %s", c.Name, id)
 			return id, existing.Labels[hashLabel], nil
 		}
 	}
