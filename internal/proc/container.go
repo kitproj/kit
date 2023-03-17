@@ -160,7 +160,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return ctx.Err()
 	case wait := <-waitC:
 		if wait.StatusCode != 0 {
-			return fmt.Errorf("failed with exist code %d: %s", wait.StatusCode, wait.Error.Message)
+			return fmt.Errorf("exit code %d", wait.StatusCode)
 		}
 		return nil
 	case err := <-errC:
