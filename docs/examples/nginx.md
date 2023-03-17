@@ -1,5 +1,7 @@
 # Nginx
 
+The nginx container image is a lightweight and high-performance web server designed to efficiently serve static and dynamic content.
+
 > Maintainer: NGINX Docker Maintainers <docker-maint@nginx.com>
 
 ```yaml

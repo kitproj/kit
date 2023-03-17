@@ -1,5 +1,7 @@
 # Influxdb
 
+The influxdb container image provides a pre-configured instance of the InfluxDB database that can be easily deployed for time-series data storage and analysis.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

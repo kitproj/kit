@@ -10,6 +10,7 @@ require (
 	github.com/invopop/jsonschema v0.7.0
 	github.com/mattn/go-isatty v0.0.17
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
+	github.com/sashabaranov/go-openai v1.5.2
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4

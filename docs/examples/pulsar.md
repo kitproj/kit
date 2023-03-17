@@ -1,5 +1,7 @@
 # Pulsar
 
+The apachepulsar/pulsar container image provides a scalable and distributed messaging system for enterprise-grade applications.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

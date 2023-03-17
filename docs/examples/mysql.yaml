@@ -8,7 +8,7 @@ spec:
     - MYSQL_ROOT_PASSWORD=password
     image: mysql
     name: mysql
-    ports: 33060 3306
+    ports: 3306 33060
     volumeMounts:
     - mountPath: /var/lib/mysql
       name: mysql.mysql

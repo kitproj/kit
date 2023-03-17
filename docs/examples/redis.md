@@ -1,5 +1,7 @@
 # Redis
 
+The Redis container image is a lightweight, open-source, and in-memory data structure store used as a cache, database, and message broker.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

@@ -8,11 +8,13 @@ import (
 	url "net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/kitproj/kit/internal/types"
+	"github.com/sashabaranov/go-openai"
 	"sigs.k8s.io/yaml"
 )
 
@@ -38,10 +40,17 @@ func updateExamples(ctx context.Context) error {
 		return err
 	}
 	for _, example := range examples {
-		if err := updateExample(ctx, example); err != nil {
+		if err := updateExample(ctx, &example); err != nil {
+			return err
+		}
+		if err := writeExampleMarkdown(example.Name, example); err != nil {
+			return err
+		}
+		if err := writeExampleYAML(example.Name, example); err != nil {
 			return err
 		}
 	}
+
 	if err := createExamplesReadme(err, examples); err != nil {
 		return err
 	}
@@ -59,7 +68,7 @@ func createExamplesReadme(err error, examples []Example) error {
 		return err
 	}
 	for _, example := range examples {
-		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s)\n", strings.Title(example.Name), example.Name+".md"))
+		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", strings.Title(example.Name), example.Name+".md", example.Description))
 		if err != nil {
 			return err
 		}
@@ -67,7 +76,7 @@ func createExamplesReadme(err error, examples []Example) error {
 	return nil
 }
 
-func updateExample(ctx context.Context, example Example) error {
+func updateExample(ctx context.Context, example *Example) error {
 	log.Printf("updating %s", example.Name)
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -79,7 +88,7 @@ func updateExample(ctx context.Context, example Example) error {
 		return err
 	}
 
-	resp, _, err := cli.ImageInspectWithRaw(ctx, image)
+	inspection, _, err := cli.ImageInspectWithRaw(ctx, image)
 	if err != nil {
 		return fmt.Errorf("failed to inspect %s: %w", image, err)
 	}
@@ -91,7 +100,7 @@ func updateExample(ctx context.Context, example Example) error {
 	example.Pod.Spec.Tasks[0].Name = example.Name
 
 	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
-	for k, v := range resp.Config.Labels {
+	for k, v := range inspection.Config.Labels {
 		switch k {
 		case "org.opencontainers.image.title", "org.label-schema.name", "title", "name":
 			example.Title = v
@@ -110,7 +119,38 @@ func updateExample(ctx context.Context, example Example) error {
 			example.Maintainer = v
 		}
 	}
-	for port := range resp.Config.ExposedPorts {
+
+	gpt := openai.NewClient(os.Getenv("OPENAI_TOKEN"))
+
+	if example.Description == "" {
+		log.Printf("asking openai to describe %s", image)
+		resp, err := gpt.CreateChatCompletion(
+			ctx,
+			openai.ChatCompletionRequest{
+				Model: openai.GPT3Dot5Turbo,
+				Messages: []openai.ChatCompletionMessage{
+					{
+						Role:    openai.ChatMessageRoleSystem,
+						Content: "You are a maintainer of the " + image + " container image. Be concise.",
+					},
+					{
+						Role:    openai.ChatMessageRoleUser,
+						Content: "Describe the image in one sentence.",
+					},
+				},
+				N: 1,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		content := resp.Choices[0].Message.Content
+		if !strings.Contains(content, "don't have access") {
+			example.Description = content
+		}
+	}
+	for port := range inspection.Config.ExposedPorts {
 		port := port.Int()
 		hostPort := port
 		if port < 1024 {
@@ -118,7 +158,9 @@ func updateExample(ctx context.Context, example Example) error {
 		}
 		example.Pod.Spec.Tasks[0].Ports = append(example.Pod.Spec.Tasks[0].Ports, types.Port{ContainerPort: uint16(port), HostPort: uint16(hostPort)})
 	}
-	for volume := range resp.Config.Volumes {
+
+	sort.Sort(example.Pod.Spec.Tasks[0].Ports)
+	for volume := range inspection.Config.Volumes {
 		n := example.Name + "." + filepath.Base(volume)
 		example.Pod.Spec.Tasks[0].VolumeMounts = append(example.Pod.Spec.Tasks[0].VolumeMounts, types.VolumeMount{
 			Name:      n,
@@ -127,14 +169,6 @@ func updateExample(ctx context.Context, example Example) error {
 		example.Pod.Spec.Volumes = append(example.Pod.Spec.Volumes, types.Volume{
 			Name:     n,
 			HostPath: types.HostPath{Path: filepath.Join("volumes", example.Name, filepath.Base(volume))}})
-	}
-
-	if err := writeExampleMarkdown(example.Name, example); err != nil {
-		return err
-	}
-
-	if err := writeExampleYAML(example.Name, example); err != nil {
-		return err
 	}
 
 	return nil

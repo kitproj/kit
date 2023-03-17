@@ -59,6 +59,18 @@ func (v EnvVar) MarshalJSON() ([]byte, error) {
 // A list of ports to expose.
 type Ports []Port
 
+func (p Ports) Len() int {
+	return len(p)
+}
+
+func (p Ports) Less(i, j int) bool {
+	return p[i].HostPort < p[j].HostPort
+}
+
+func (p Ports) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
 func (p *Ports) UnmarshalJSON(data []byte) error {
 	if data[0] == '[' {
 		var x []Port

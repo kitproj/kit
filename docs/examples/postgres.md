@@ -1,5 +1,7 @@
 # Postgres
 
+The postgres container image provides a preconfigured PostgreSQL database server for easy deployment in containerized environments.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

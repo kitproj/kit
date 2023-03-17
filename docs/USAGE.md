@@ -1,6 +1,6 @@
-# Usage
+# How to
 
-## Container
+## How to run a container from an image.
 
 The `image` field can be either:
 
@@ -21,7 +21,7 @@ If it is a path to a directory containing `Dockerfile`, that file is built, and 
 Any container with the same name as the container name in the YAML is stopped and re-created whenever the process
 starts.
 
-## Host Process
+## How to run a process on the host
 
 If `image` field is omitted, the value of `command` is used to start the process on the host:
 
@@ -39,7 +39,7 @@ If `image` field is omitted and `command` is omitted, the task does nothing. Thi
     - name: foo
 ```
 
-## Parameters
+## How to parameterize your tasks
 
 You can specify environment variables for the task:
 
@@ -58,7 +58,7 @@ env FOO=qux kit up
 
 Would print `qux` instead of `bar`.
 
-### Auto Rebuild and Restart
+## How to automatically re-build and restart a task
 
 You can specify a set of files to watch for changes that result in a re-build:
 
@@ -67,11 +67,18 @@ You can specify a set of files to watch for changes that result in a re-build:
     name: bar
 ```        
 
-## Liveness Probe
+## How to automatically kill a broken task
 
 If the process is not alive (i.e. "dead"), then it is killed and restarted. Just like Kubernetes.
 
-## Shell Scripts
+```yaml
+- name: foo
+  image: httpd
+  ports: 80:8080
+  livenessProbe: http://:8080/health
+```
+
+## How to run a shell script
 
 You might want to put a multi-line a shell script. You can do this using the YAML `|` character: 
 
@@ -85,7 +92,7 @@ You might want to put a multi-line a shell script. You can do this using the YAM
         echo "world"
 ```
 
-## Forking Tasks
+## How to wait for forked tasks
 
 Kit's job is to manage your tasks for you. As a result, if you fork a task in a script, and the script exists, kit will terminate that forked task.
 
@@ -109,12 +116,12 @@ _within 3s, then they get a `SIGKILL`.
 You can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
 running and you must manually clean up.
 
-## Killing One Task
+## How to kill a single taks
 
 * To kill a host process: `kill $(lsof -ti:$host_port)`
 * To kill a container : `docker kill $name`.
 
-## Prebuild Patterns for Cloud Development
+## How to pre-build for Cloud Development environments
 
 In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds" where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java service that you need to run, it might make sense to have a separate `pre-up` task that is run as part of the prebuild `kit pre-up` separate from your primary `kit up` task
 
@@ -127,9 +134,9 @@ In most cases you will probably only have 1 top node in your command dependency 
       dependencies: pre-up
 ```
 
-## Locks
+## How to prevent two tasks from running at the same time
 
-## Mutexes
+### Mutexes
 
 If you want to prevent two tasks from running at the same time, you can use a mutex:
 

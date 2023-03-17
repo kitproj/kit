@@ -101,6 +101,9 @@ You'll see something like this:
 
 Logs are stored in `./logs`.
 
-What next?
+## Documentation
 
-Open the [docs](docs) to see examples of how to use Kit, as well as the reference.
+- [Usage](docs/USAGE.md) - how to use the various features of kit
+- [Examples](docs/examples) - examples of how to use kit, e.g. with MySQL, or Kafka
+- [Reference](docs/reference) - reference documentation for the various types in kit
+

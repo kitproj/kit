@@ -1,5 +1,7 @@
 # Httpd
 
+The httpd container image provides an Apache HTTP server for serving web content.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

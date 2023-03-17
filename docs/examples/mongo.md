@@ -1,5 +1,7 @@
 # Mongo
 
+The mongo container image provides a lightweight and scalable solution for running MongoDB databases in a containerized environment.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks

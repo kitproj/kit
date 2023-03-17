@@ -1,5 +1,7 @@
 # Mysql
 
+The MySQL container image provides a pre-configured and optimized environment for running the MySQL database service within a container.
+
 ```yaml
 apiVersion: kit/v1
 kind: Tasks
@@ -11,7 +13,7 @@ spec:
     - MYSQL_ROOT_PASSWORD=password
     image: mysql
     name: mysql
-    ports: 33060 3306
+    ports: 3306 33060
     volumeMounts:
     - mountPath: /var/lib/mysql
       name: mysql.mysql
