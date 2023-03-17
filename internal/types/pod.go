@@ -236,7 +236,7 @@ type Task struct {
 }
 
 func (t *Task) IsBackground() bool {
-	return t != nil && t.GetReadinessProbe() != nil && t.GetLivenessProbe() != nil
+	return t != nil && t.GetReadinessProbe() != nil
 }
 
 func (t Task) GetHostPorts() []uint16 {
