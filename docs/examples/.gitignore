@@ -1,0 +1,6 @@
+/logs
+/volumes/kafka
+/volumes/mariadb
+/volumes/mysql
+/volumes/postgres
+/volumes/rabbitmq

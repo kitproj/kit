@@ -1,0 +1,14 @@
+# Memcached
+
+```yaml
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: example
+spec:
+  tasks:
+  - image: memcached
+    name: memcached
+    ports: "11211"
+```
+

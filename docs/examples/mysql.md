@@ -1,0 +1,23 @@
+# Mysql
+
+```yaml
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: example
+spec:
+  tasks:
+  - env:
+    - MYSQL_ROOT_PASSWORD=password
+    image: mysql
+    name: mysql
+    ports: 33060 3306
+    volumeMounts:
+    - mountPath: /var/lib/mysql
+      name: mysql.mysql
+  volumes:
+  - hostPath:
+      path: volumes/mysql/mysql
+    name: mysql.mysql
+```
+

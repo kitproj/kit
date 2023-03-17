@@ -34,7 +34,7 @@ type container struct {
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	data, _ := json.Marshal(c.Task)
-	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))[0:15]
+	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))
 
 	log.Printf("%s: expected hash: %s", c.Name, expectedHash)
 

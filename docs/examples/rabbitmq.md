@@ -1,0 +1,21 @@
+# Rabbitmq
+
+```yaml
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: example
+spec:
+  tasks:
+  - image: rabbitmq
+    name: rabbitmq
+    ports: 15692 25672 4369 5671 5672 15691
+    volumeMounts:
+    - mountPath: /var/lib/rabbitmq
+      name: rabbitmq.rabbitmq
+  volumes:
+  - hostPath:
+      path: volumes/rabbitmq/rabbitmq
+    name: rabbitmq.rabbitmq
+```
+

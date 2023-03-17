@@ -1,0 +1,33 @@
+# MariaDB Database
+
+[Help](https://github.com/MariaDB/mariadb-docker)
+
+MariaDB Database for relational SQL
+
+https://hub.docker.com/_/mariadb/
+
+> Maintainer: MariaDB Community
+
+```yaml
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: example
+spec:
+  tasks:
+  - env:
+    - MARIADB_ROOT_PASSWORD=password
+    image: mariadb
+    name: mariadb
+    ports: "3306"
+    volumeMounts:
+    - mountPath: /var/lib/mysql
+      name: mariadb.mysql
+  volumes:
+  - hostPath:
+      path: volumes/mariadb/mysql
+    name: mariadb.mysql
+```
+
+Licence(s): GPL-2.0
+

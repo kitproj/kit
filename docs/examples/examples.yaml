@@ -1,0 +1,122 @@
+
+# Kubernetes
+
+- name: k3s
+  pod:
+    spec:
+      tasks:
+        - image: rancher/k3s
+
+# SQL
+
+- name: postgres
+  pod:
+    spec:
+      tasks:
+        - image: postgres
+          env:
+            - POSTGRES_PASSWORD=password
+- name: mysql
+  pod:
+    spec:
+      tasks:
+        - image: mysql
+          env:
+            - MYSQL_ROOT_PASSWORD=password
+- name: mariadb
+  pod:
+    spec:
+      tasks:
+        - image: mariadb
+          env:
+            - MARIADB_ROOT_PASSWORD=password
+
+# NoSQL
+
+- name: redis
+  pod:
+    spec:
+      tasks:
+        - image: redis
+- name: mongo
+  pod:
+    spec:
+      tasks:
+        - image: mongo
+
+- name: memcached
+  pod:
+    spec:
+      tasks:
+        - image: memcached
+
+# Time-series database
+
+- name: influxdb
+  pod:
+    spec:
+      tasks:
+        - image: influxdb
+
+# Streaming
+
+- name: kafka
+  pod:
+    spec:
+      tasks:
+        - image: ghcr.io/kitproj/kafka
+- name: rabbitmq
+  pod:
+    spec:
+      tasks:
+        - image: rabbitmq
+- name: nats
+  pod:
+    spec:
+      tasks:
+        - image: nats
+- name: pulsar
+  pod:
+    spec:
+      tasks:
+        - image: apachepulsar/pulsar
+          ports: 6650 8080
+          command: [ "/pulsar/bin/pulsar", "standalone" ]
+
+# Simulation
+
+- name: sim
+  pod:
+    spec:
+      tasks:
+        - image: ghcr.io/kitproj/sim
+          ports: 8080
+          readinessProbe: http://:8080/hello
+
+# Webserver
+
+- name: nginx
+  pod:
+    spec:
+      tasks:
+        - image: nginx
+          volumeMounts:
+            - name: nginx.html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - hostPath:
+            path: volumes/nginx/html
+          name: nginx.html
+
+- name: httpd
+  pod:
+    spec:
+      tasks:
+        - image: httpd
+          volumeMounts:
+            - name: apache2.htdocs
+              mountPath: /usr/local/apache2/htdocs
+      volumes:
+        - hostPath:
+            path: volumes/httpd/htdocs
+          name: httpd.apis
