@@ -155,6 +155,9 @@ func (p Port) String() string {
 	if p.ContainerPort == 0 {
 		return fmt.Sprint(p.HostPort)
 	}
+	if p.HostPort == p.ContainerPort {
+		return fmt.Sprint(p.ContainerPort)
+	}
 	return fmt.Sprintf("%d:%d", p.ContainerPort, p.HostPort)
 }
 
