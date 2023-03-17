@@ -152,12 +152,11 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	defer logs.Close()
 	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
-		return err
+		// ignore errors, might be content cancelled, we still need to wait for the container to exit
+		log.Printf("%s: failed to log container: %v", c.Name, err)
 	}
-	waitC, errC := cli.ContainerWait(ctx, id, dockercontainer.WaitConditionNotRunning)
+	waitC, errC := cli.ContainerWait(context.Background(), id, dockercontainer.WaitConditionNotRunning)
 	select {
-	case <-ctx.Done():
-		return ctx.Err()
 	case wait := <-waitC:
 		if wait.StatusCode != 0 {
 			return fmt.Errorf("exit code %d", wait.StatusCode)
