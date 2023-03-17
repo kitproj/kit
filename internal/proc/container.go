@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -33,7 +34,7 @@ type container struct {
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	data, _ := json.Marshal(c.Task)
-	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))
+	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))[0:15]
 
 	log.Printf("%s: expected hash: %s", c.Name, expectedHash)
 
@@ -134,13 +135,16 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	go func() {
 		<-ctx.Done()
 		log.Printf("%s: context cancelled, stopping container", c.Name)
-		_ = c.stop(context.Background())
+		if err := c.stop(context.Background()); err != nil {
+			log.Printf("%s: failed to stop: %v", c.Name, err)
+		}
 	}()
 	log.Printf("%s: logging container\n", c.Name)
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
+		Since:      time.Now().Format(time.RFC3339),
 	})
 	log.Printf("%s: logged container %v", c.Name, err)
 	if err != nil {
@@ -150,14 +154,18 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
 		return err
 	}
-	inspect, err := cli.ContainerInspect(ctx, id)
-	if err != nil {
+	waitC, errC := cli.ContainerWait(ctx, id, dockercontainer.WaitConditionNotRunning)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case wait := <-waitC:
+		if wait.StatusCode != 0 {
+			return fmt.Errorf("failed with exist code %d: %s", wait.StatusCode, wait.Error.Message)
+		}
+		return nil
+	case err := <-errC:
 		return err
 	}
-	if inspect.State.ExitCode > 0 {
-		return fmt.Errorf("exit code %d", inspect.State.ExitCode)
-	}
-	return nil
 }
 
 func (c *container) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, error) {
@@ -208,14 +216,12 @@ func (c *container) stop(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if id != "" {
-		grace := c.PodSpec.GetTerminationGracePeriod()
-		log.Printf("%s: stopping container %q\n", c.Name, id)
-		err := cli.ContainerStop(ctx, id, &grace)
-		log.Printf("%s: stopped container %q: %v\n", c.Name, id, err)
-		if ignoreNotExist(err) != nil {
-			return fmt.Errorf("failed to stop container: %w", err)
-		}
+	grace := c.PodSpec.GetTerminationGracePeriod()
+	log.Printf("%s: stopping container %q\n", c.Name, id)
+	err = cli.ContainerStop(ctx, id, &grace)
+	log.Printf("%s: stopped container %q: %v\n", c.Name, id, err)
+	if ignoreNotExist(err) != nil {
+		return fmt.Errorf("failed to stop container: %w", err)
 	}
 	return nil
 }
@@ -223,16 +229,20 @@ func (c *container) stop(ctx context.Context) error {
 const hashLabel = "kit.hash"
 
 func (c *container) getContainer(ctx context.Context, cli *client.Client) (string, string, error) {
+	log.Printf("%s: listing containers", c.Name)
 	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+	log.Printf("%s: listed %d containers: %v", c.Name, len(list), err)
 	if err != nil {
 		return "", "", err
 	}
 	for _, existing := range list {
 		if slices.Contains(existing.Names, "/"+c.Name) {
+			log.Printf("%s: found container", c.Name)
 			id := existing.ID
 			return id, existing.Labels[hashLabel], nil
 		}
 	}
+	log.Printf("%s: container not found", c.Name)
 	return "", "", nil
 }
 
