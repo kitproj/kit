@@ -12,7 +12,7 @@ go install .
 
 # docs
 rm -Rf out docs/reference
-go run ./hack
+go run ./hack update-schema
 command -v jsonschema2md || npm install -g @adobe/jsonschema2md
 jsonschema2md -d schema -f yaml -o docs/reference
 git diff --exit-code

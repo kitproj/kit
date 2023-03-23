@@ -67,6 +67,7 @@ type taskStatus struct {
 	message message
 	stdout  io.Writer
 	stderr  io.Writer
+	recent  *util.LastNLinesWriter
 }
 
 func last(p string) string {
@@ -126,37 +127,41 @@ func main() {
 		statuses := sync.Map{}
 
 		for _, task := range tasks {
+			nLinesWriter := util.NewLastNLinesWriter(20)
 			x := &taskStatus{
 				reason: "waiting",
-				stdout: &prefixWriter{task.Name + ": ", os.Stdout},
-				stderr: &prefixWriter{task.Name + ": ", os.Stderr},
+				stdout: io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
+				stderr: io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
+				recent: nLinesWriter,
 			}
 			if muxOutput {
-				x.stdout = funcWriter(func(p []byte) (n int, err error) {
-					x.message = message{last(string(p)), "info"}
-					return len(p), nil
-				})
-				x.stderr = funcWriter(func(p []byte) (n int, err error) {
-					x.message = message{last(string(p)), "error"}
-					return len(p), nil
-				})
 				logFile, err := os.Create(filepath.Join("logs", task.Name+".log"))
 				if err != nil {
 					panic(err)
 				}
-				x.stdout = io.MultiWriter(logFile, x.stdout)
-				x.stderr = io.MultiWriter(logFile, x.stderr)
+				x.stdout = io.MultiWriter(nLinesWriter, logFile, funcWriter(func(p []byte) (n int, err error) {
+					x.message = message{last(string(p)), "info"}
+					return len(p), nil
+				}))
+				x.stderr = io.MultiWriter(nLinesWriter, logFile, io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
+					x.message = message{last(string(p)), "error"}
+					return len(p), nil
+				})))
 			}
 			statuses.Store(task.Name, x)
 		}
 		terminating := false
 		printTasks := func() {
-			width, _, _ := terminal.GetSize(0)
+			width, height, _ := terminal.GetSize(0)
 			if width == 0 {
 				width = 80
 			}
+			if height == 0 {
+				height = 24
+			}
 			fmt.Printf("%s[2J", escape)   // clear screen
 			fmt.Printf("%s[0;0H", escape) // move to 0,0
+			space := height - 2
 			for _, t := range pod.Spec.Tasks {
 				v, ok := statuses.Load(t.Name)
 				if !ok {
@@ -191,6 +196,7 @@ func main() {
 					}
 				}
 				fmt.Println(prefix + " " + msg)
+				space--
 			}
 			items := []string{
 				strings.TrimSpace(tag),
@@ -201,6 +207,25 @@ func main() {
 				items = append(items, "terminating...")
 			}
 			fmt.Println(faint(strings.Join(items, "   ")))
+
+			for _, t := range pod.Spec.Tasks {
+				v, ok := statuses.Load(t.Name)
+				if !ok {
+					continue
+				}
+				status := v.(*taskStatus)
+				if status.reason != "error" {
+					continue
+				}
+				for _, msg := range status.recent.Lines() {
+					if space <= 0 {
+						break
+					}
+					msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
+					fmt.Println(color.YellowString(msg))
+					space--
+				}
+			}
 		}
 
 		if muxOutput {

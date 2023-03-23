@@ -37,7 +37,14 @@ spec:
     - mountPath: /work
       name: work
   - name: error
-    command: exit 1
+    command:
+    - sh
+    - -c
+    - |
+      echo "hello" >&2
+      echo "I'm an error" >&2
+      sleep 3s
+      exit 1
   - name: script
     command:
       - sh
