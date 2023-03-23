@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.3"
+  version "0.1.4"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.3/kit_0.1.3_Darwin_x86_64.tar.gz"
-      sha256 "6f6f0ac711a62682950c18010c502e1f7dde460f0e34a7152549896d2c6577ab"
+    if Hardware::CPU.arm?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.4/kit_0.1.4_Darwin_arm64.tar.gz"
+      sha256 "e19be4979646897ba2d72882ae710b75480a9f3f2855457f2cf936f4c411f749"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.3/kit_0.1.3_Darwin_arm64.tar.gz"
-      sha256 "a90bde058a3219c478e385b5fde014e17f32bc01ea92e92360db4875edf861b0"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.4/kit_0.1.4_Darwin_x86_64.tar.gz"
+      sha256 "fac3690bc424ec1872b8d0507c25caa04fe9b361fa017fa1b18b09682021abd1"
 
       def install
         bin.install "kit"
@@ -27,17 +27,17 @@ class Kit < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.3/kit_0.1.3_Linux_arm64.tar.gz"
-      sha256 "f1b7482e2b1d3b3b374ef680b11a42b902951cd7cfb8125a245ea09e1912233c"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.4/kit_0.1.4_Linux_x86_64.tar.gz"
+      sha256 "9b7c284ac42ece072b81949252749a8f3dbf17928ef4f4f1e6909c50eae0a29e"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.3/kit_0.1.3_Linux_x86_64.tar.gz"
-      sha256 "acb50ed9e8d62490a297557aa325736148aa31e73f6f5b2ee135de8ff1c435f0"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.4/kit_0.1.4_Linux_arm64.tar.gz"
+      sha256 "a87defd3cf5e018a99a0e1dccc094991b47995c7e72835adc41e75027e9ba55f"
 
       def install
         bin.install "kit"
