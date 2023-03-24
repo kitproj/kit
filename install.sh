@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -eux
+#!/usr/bin/env bash
+set -eux -o pipefail
 
 tag=$(curl --retry 3 -fsL "https://api.github.com/repos/kitproj/kit/releases/latest" | jq -r '.tag_name')
 version=$(echo $tag | cut -c 2-)
