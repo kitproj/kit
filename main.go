@@ -214,16 +214,32 @@ func main() {
 					continue
 				}
 				status := v.(*taskStatus)
-				if status.reason != "error" {
+				if status.reason == "error" {
+					for _, msg := range status.recent.Lines() {
+						if space <= 0 {
+							break
+						}
+						msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
+						fmt.Println(color.YellowString(msg))
+						space--
+					}
+				}
+			}
+			for _, t := range pod.Spec.Tasks {
+				v, ok := statuses.Load(t.Name)
+				if !ok {
 					continue
 				}
-				for _, msg := range status.recent.Lines() {
-					if space <= 0 {
-						break
+				status := v.(*taskStatus)
+				if t.ReadinessProbe != nil && status.reason == "running" {
+					for _, msg := range status.recent.Lines() {
+						if space <= 0 {
+							break
+						}
+						msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
+						fmt.Println(color.YellowString(msg))
+						space--
 					}
-					msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
-					fmt.Println(color.YellowString(msg))
-					space--
 				}
 			}
 		}
