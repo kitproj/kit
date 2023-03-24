@@ -14,7 +14,6 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/kitproj/kit/internal/types"
-	"github.com/sashabaranov/go-openai"
 	"sigs.k8s.io/yaml"
 )
 
@@ -68,7 +67,11 @@ func createExamplesReadme(err error, examples []Example) error {
 		return err
 	}
 	for _, example := range examples {
-		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", strings.Title(example.Name), example.Name+".md", example.Description))
+		description := example.Description
+		if description == "" {
+			description = example.Documentation
+		}
+		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", example.Title, example.Name+".md", description))
 		if err != nil {
 			return err
 		}
@@ -120,36 +123,6 @@ func updateExample(ctx context.Context, example *Example) error {
 		}
 	}
 
-	gpt := openai.NewClient(os.Getenv("OPENAI_TOKEN"))
-
-	if example.Description == "" {
-		log.Printf("asking openai to describe %s", image)
-		resp, err := gpt.CreateChatCompletion(
-			ctx,
-			openai.ChatCompletionRequest{
-				Model: openai.GPT3Dot5Turbo,
-				Messages: []openai.ChatCompletionMessage{
-					{
-						Role:    openai.ChatMessageRoleSystem,
-						Content: "You are a maintainer of the " + image + " container image. Be concise.",
-					},
-					{
-						Role:    openai.ChatMessageRoleUser,
-						Content: "Describe the image in one sentence.",
-					},
-				},
-				N: 1,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		content := resp.Choices[0].Message.Content
-		if !strings.Contains(content, "don't have access") {
-			example.Description = content
-		}
-	}
 	for port := range inspection.Config.ExposedPorts {
 		port := port.Int()
 		hostPort := port

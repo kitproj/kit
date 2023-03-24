@@ -18,6 +18,7 @@
           env:
             - MYSQL_ROOT_PASSWORD=password
 - name: mariadb
+  description: MariaDB is an open-source relational database management system (RDBMS) and a community-driven fork of MySQL, designed to be a drop-in replacement for MySQL with enhanced performance, stability, and security features, including support for advanced clustering, storage engines, and plugins.
   pod:
     spec:
       tasks:
@@ -123,3 +124,20 @@
         - hostPath:
             path: volumes/httpd/htdocs
           name: httpd.apis
+
+# AWS
+- name: dynamo
+  description: Dynamo is a distributed key-value storage system developed by Amazon Web Services (AWS) for highly available, scalable and reliable NoSQL data storage.
+  pod:
+    spec:
+      tasks:
+        - name: dynamo
+          image: amazon/dynamodb-local
+
+- name: timestream
+  description: Timestream is a fully-managed, scalable time-series database service developed by Amazon Web Services (AWS) that enables users to store, process, and analyze time-series data, such as logs, sensor data, and industrial telemetry, with high precision and accuracy, and built-in analytics and visualization tools.
+  pod:
+    spec:
+      tasks:
+      - name: timestream
+        image: motoserver/moto

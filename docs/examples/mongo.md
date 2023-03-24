@@ -13,16 +13,16 @@ spec:
     name: mongo
     ports: "27017"
     volumeMounts:
-    - mountPath: /data/configdb
-      name: mongo.configdb
     - mountPath: /data/db
       name: mongo.db
+    - mountPath: /data/configdb
+      name: mongo.configdb
   volumes:
-  - hostPath:
-      path: volumes/mongo/configdb
-    name: mongo.configdb
   - hostPath:
       path: volumes/mongo/db
     name: mongo.db
+  - hostPath:
+      path: volumes/mongo/configdb
+    name: mongo.configdb
 ```
 

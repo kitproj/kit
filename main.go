@@ -127,7 +127,7 @@ func main() {
 		statuses := sync.Map{}
 
 		for _, task := range tasks {
-			nLinesWriter := util.NewLastNLinesWriter(20)
+			nLinesWriter := util.NewLastNLinesWriter(48)
 			x := &taskStatus{
 				reason: "waiting",
 				stdout: io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),

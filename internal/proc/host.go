@@ -69,8 +69,8 @@ func (h *host) stop(pid int) error {
 		return fmt.Errorf("failed to find process: %w", err)
 	}
 	log.Printf("%s: terminating process %d\n", h.Name, pid)
-	if err := target.Signal(syscall.SIGTERM); err == nil {
-		return nil
+	if err := target.Signal(syscall.SIGTERM); ignoreProcessFinishedErr(err) != nil {
+		log.Printf("%s: failed to terminate: %v", h.Name, err)
 	}
 	gracePeriod := h.PodSpec.GetTerminationGracePeriod()
 	log.Printf("%s: waiting %v before killing %d\n", h.Name, gracePeriod, pid)

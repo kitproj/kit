@@ -1,0 +1,9 @@
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: example
+spec:
+  tasks:
+  - image: amazon/dynamodb-local
+    name: dynamo
+    ports: "8000"
