@@ -134,6 +134,23 @@ In most cases you will probably only have 1 top node in your command dependency 
       dependencies: pre-up
 ```
 
+## How to just start downstream tasks?
+
+Have a task named `downstream`, e.g.
+
+```yaml
+  tasks:
+    - name: kafka
+      image: ghcr.io/kitproj/kafka
+    - name: sim
+      image: ghcr.io/kitproj/sim
+    - name: downstream
+      dependencies: kafka sim
+    - name: up
+      command: "mvn spring-boot:run"
+      dependencies: downstream
+```
+
 ## How to prevent two tasks from running at the same time
 
 ### Mutexes
