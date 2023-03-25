@@ -161,6 +161,7 @@ func main() {
 			}
 			fmt.Printf("%s[2J", escape)   // clear screen
 			fmt.Printf("%s[0;0H", escape) // move to 0,0
+			// how many spaces left to print logs
 			space := height - 2
 			for _, t := range pod.Spec.Tasks {
 				v, ok := statuses.Load(t.Name)
@@ -208,40 +209,32 @@ func main() {
 			}
 			fmt.Println(faint(strings.Join(items, "   ")))
 
-			for _, t := range pod.Spec.Tasks {
-				v, ok := statuses.Load(t.Name)
-				if !ok {
-					continue
-				}
-				status := v.(*taskStatus)
-				if status.reason == "error" {
-					for _, msg := range status.recent.Lines() {
-						if space <= 0 {
-							break
+			if terminating {
+				return
+			}
+
+			var printLogs = func(test func(task types.Task, status *taskStatus) bool) {
+				for _, t := range pod.Spec.Tasks {
+					v, ok := statuses.Load(t.Name)
+					if !ok {
+						continue
+					}
+					status := v.(*taskStatus)
+					if test(t, status) {
+						for _, msg := range status.recent.Lines() {
+							if space <= 0 {
+								break
+							}
+							fmt.Println(k8sstrings.ShortenString(fmt.Sprintf("%s-10s: %s", k8sstrings.ShortenString(t.Name, 10), msg), width))
+							space--
 						}
-						msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
-						fmt.Println(color.YellowString(msg))
-						space--
 					}
 				}
 			}
-			for _, t := range pod.Spec.Tasks {
-				v, ok := statuses.Load(t.Name)
-				if !ok {
-					continue
-				}
-				status := v.(*taskStatus)
-				if t.ReadinessProbe != nil && status.reason == "running" {
-					for _, msg := range status.recent.Lines() {
-						if space <= 0 {
-							break
-						}
-						msg = k8sstrings.ShortenString(fmt.Sprintf("%s: %s", t.Name, msg), width)
-						fmt.Println(color.YellowString(msg))
-						space--
-					}
-				}
-			}
+			printLogs(func(task types.Task, status *taskStatus) bool { return status.reason == "error" })
+			printLogs(func(task types.Task, status *taskStatus) bool {
+				return status.reason == "running" && task.ReadinessProbe != nil
+			})
 		}
 
 		if muxOutput {
