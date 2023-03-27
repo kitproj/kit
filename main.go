@@ -225,7 +225,7 @@ func main() {
 							if space <= 0 {
 								break
 							}
-							fmt.Println(k8sstrings.ShortenString(fmt.Sprintf("%s-10s: %s", k8sstrings.ShortenString(t.Name, 10), msg), width))
+							fmt.Println(k8sstrings.ShortenString(fmt.Sprintf("%-10s: %s", k8sstrings.ShortenString(t.Name, 10), msg), width))
 							space--
 						}
 					}
