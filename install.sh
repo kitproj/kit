@@ -2,14 +2,14 @@
 set -eux
 
 # retry for all errors up to 10m
-curl --retry 99 --retry-all-errors -fsL "https://api.github.com/repos/kitproj/kit/releases/latest" -o /tmp/latest
+curl --retry 99 --retry-all-errors -vfsL "https://api.github.com/repos/kitproj/kit/releases/latest" -o /tmp/latest
 
 tag=$(jq -r .tag_name /tmp/latest)
 version=$(echo $tag | cut -c 2-)
 url="https://github.com/kitproj/kit/releases/download/${tag}/kit_${version}_$(uname)_$(uname -m | sed 's/aarch64/arm64/').tar.gz"
 
 # retry for all errors up to 10m
-curl --retry 99 --retry-all-errors -fsL $url -o /tmp/kit.tar.gz
+curl --retry 99 --retry-all-errors -vfsL $url -o /tmp/kit.tar.gz
 tar -zxvf /tmp/kit.tar.gz kit
 chmod +x kit
 sudo mv kit /usr/local/bin/kit
