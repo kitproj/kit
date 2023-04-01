@@ -303,6 +303,10 @@ func (t *Task) String() string {
 	return "noop"
 }
 
+func (t *Task) IsRestart() bool {
+	return t.IsBackground() && t.GetRestartPolicy() != "Always"
+}
+
 type Pod struct {
 	// The specification of tasks to run.
 	Spec PodSpec `json:"spec"`

@@ -42,20 +42,7 @@ var isTerminal = isatty.IsTerminal(os.Stdin.Fd())
 var muxOutput = isTerminal && !isCI
 var faint = color.New(color.Faint).Sprint
 
-func init() {
-	if muxOutput {
-		_ = os.Mkdir("logs", 0o777)
-		f, err := os.Create("logs/kit.log")
-		if err != nil {
-			panic(err)
-		}
-		log.SetOutput(f)
-	} else {
-		log.SetOutput(os.Stdout)
-	}
-	log.Printf("tag=%v\n", tag)
-	log.Printf("isTerminal=%v, isCI=%v\n", isTerminal, isCI)
-}
+const logsEnv = "KIT_LOGS"
 
 const escape = "\x1b"
 
@@ -96,8 +83,6 @@ func main() {
 		ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 		defer stopEverything()
 
-		_ = os.Mkdir("logs", 0777)
-
 		pod := &types.Pod{}
 
 		in, err := os.ReadFile(configFile)
@@ -121,6 +106,30 @@ func main() {
 			return errors.New("metadata.name is required")
 		}
 
+		// set-up logs
+		var logs string
+		if v, ok := os.LookupEnv(logsEnv); ok {
+			logs = v
+		} else {
+			logs = filepath.Join(os.Getenv("HOME"), ".kit", "logs", pod.Metadata.Name)
+			// remove legacy logs
+			if _, err := os.Stat(filepath.Join("logs", "kit.log")); err == nil {
+				_ = os.RemoveAll("logs")
+			}
+		}
+		_ = os.MkdirAll(logs, 0o777)
+		if muxOutput {
+			f, err := os.Create(filepath.Join(logs, "kit.log"))
+			if err != nil {
+				panic(err)
+			}
+			log.SetOutput(f)
+		} else {
+			log.SetOutput(os.Stdout)
+		}
+		log.Printf("tag=%v\n", tag)
+		log.Printf("isTerminal=%v, isCI=%v\n", isTerminal, isCI)
+
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
 		log.Printf("tasks: %v\n", tasks)
@@ -137,7 +146,7 @@ func main() {
 				backoff: defaultBackoff,
 			}
 			if muxOutput {
-				logFile, err := os.Create(filepath.Join("logs", task.Name+".log"))
+				logFile, err := os.Create(filepath.Join(logs, task.Name+".log"))
 				if err != nil {
 					panic(err)
 				}
@@ -204,7 +213,7 @@ func main() {
 			items := []string{
 				strings.TrimSpace(tag),
 				fmt.Sprint(time.Since(started).Truncate(time.Second)),
-				"logs in ./logs",
+				logsEnv + "=" + strings.Replace(logs, os.Getenv("HOME"), "~", 1),
 			}
 			if terminating {
 				items = append(items, "terminating...")
