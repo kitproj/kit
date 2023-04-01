@@ -68,6 +68,7 @@ type taskStatus struct {
 	stdout  io.Writer
 	stderr  io.Writer
 	recent  *util.LastNLinesWriter
+	backoff backoff
 }
 
 func last(p string) string {
@@ -129,10 +130,11 @@ func main() {
 		for _, task := range tasks {
 			nLinesWriter := util.NewLastNLinesWriter(48)
 			x := &taskStatus{
-				reason: "waiting",
-				stdout: io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
-				stderr: io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
-				recent: nLinesWriter,
+				reason:  "waiting",
+				stdout:  io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
+				stderr:  io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
+				recent:  nLinesWriter,
+				backoff: defaultBackoff,
 			}
 			if muxOutput {
 				logFile, err := os.Create(filepath.Join("logs", task.Name+".log"))
@@ -470,6 +472,7 @@ func main() {
 							}
 							status.reason = "error"
 							_, _ = fmt.Fprintln(stderr, err.Error())
+							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
 							maybeStartDownstream(name)
@@ -481,11 +484,10 @@ func main() {
 							return
 						}
 					}
-					time.Sleep(3 * time.Second)
+					_, _ = fmt.Fprintf(stdout, "backing off %s\n", status.backoff.Duration)
+					time.Sleep(status.backoff.Duration)
 				}
 			}(t, status, stopProcess)
-
-			time.Sleep(time.Second)
 		}
 
 		wg.Wait()
