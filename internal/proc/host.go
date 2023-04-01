@@ -26,7 +26,6 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	path := h.Command[0]
 	cmd := exec.Command(path, append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
-	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{
