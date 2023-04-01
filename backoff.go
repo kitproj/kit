@@ -14,4 +14,4 @@ func (t backoff) next() backoff {
 	return backoff{t.Duration * 2}
 }
 
-var defaultBackoff = backoff{time.Second}
+var defaultBackoff = backoff{2 * time.Second}

@@ -180,7 +180,7 @@ func main() {
 					continue
 				}
 				status := v.(*taskStatus)
-				if status.reason == "success" {
+				if status.reason == "success" && !t.IsRestart() {
 					continue
 				}
 				reason := status.reason
@@ -254,7 +254,7 @@ func main() {
 				defer handleCrash(stopEverything)
 				for {
 					printTasks()
-					time.Sleep(time.Second / 10)
+					time.Sleep(time.Second / 5)
 				}
 			}()
 		}
@@ -480,12 +480,14 @@ func main() {
 								return
 							}
 							status.reason = "error"
-							_, _ = fmt.Fprintln(stderr, err.Error())
+							_, _ = fmt.Fprintf(stderr, "process finished: %v\n", err)
 							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
+							_, _ = fmt.Fprintf(stdout, "process succeeded\n")
+							status.backoff = defaultBackoff
 							maybeStartDownstream(name)
-							if !t.IsBackground() && t.GetRestartPolicy() != "Always" {
+							if !t.IsRestart() {
 								return
 							}
 						}
@@ -493,8 +495,10 @@ func main() {
 							return
 						}
 					}
-					_, _ = fmt.Fprintf(stdout, "backing off %s\n", status.backoff.Duration)
-					time.Sleep(status.backoff.Duration)
+					if !terminating {
+						_, _ = fmt.Fprintf(stdout, "backing off %s\n", status.backoff.Duration)
+						time.Sleep(status.backoff.Duration)
+					}
 				}
 			}(t, status, stopProcess)
 		}
