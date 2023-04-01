@@ -243,7 +243,7 @@ func main() {
 				defer handleCrash(stopEverything)
 				for {
 					printTasks()
-					time.Sleep(time.Second / 2)
+					time.Sleep(time.Second / 10)
 				}
 			}()
 		}
