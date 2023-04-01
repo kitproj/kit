@@ -187,8 +187,14 @@ func main() {
 				const blackSquare = "■"
 				icon := blackSquare
 				switch reason {
-				case "running":
+				case "starting":
 					icon = color.BlueString(blackSquare)
+				case "running":
+					if t.ReadinessProbe != nil {
+						icon = color.YellowString(blackSquare)
+					} else {
+						icon = color.GreenString(blackSquare)
+					}
 				case "ready":
 					icon = color.GreenString(blackSquare)
 				case "error":
@@ -437,6 +443,7 @@ func main() {
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
+							status.reason = "starting"
 							log.Printf("%s: resetting process\n", t.Name)
 							if err := prc.Reset(runCtx); err != nil {
 								return err
@@ -447,7 +454,6 @@ func main() {
 									return err
 								}
 							}
-							status.reason = "running"
 							if probe := t.GetLivenessProbe(); probe != nil {
 								log.Printf("%s: liveness probe=%v\n", t.Name, probe)
 								liveFunc := func(live bool, err error) {
@@ -459,6 +465,7 @@ func main() {
 								go probeLoop(runCtx, stopEverything, *probe, liveFunc)
 							}
 							if probe := t.GetReadinessProbe(); probe != nil {
+								status.reason = "starting"
 								log.Printf("%s: readiness probe=%v\n", t.Name, probe)
 								readyFunc := func(ready bool, err error) {
 									if ready {
@@ -467,10 +474,11 @@ func main() {
 										maybeStartDownstream(name)
 									} else {
 										log.Printf("%s: is not ready\n", t.Name)
-										status.reason = "running"
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
+							} else {
+								status.reason = "running"
 							}
 							log.Printf("%s: running process\n", t.Name)
 							return prc.Run(runCtx, stdout, stderr)
@@ -480,11 +488,10 @@ func main() {
 								return
 							}
 							status.reason = "error"
-							_, _ = fmt.Fprintf(stderr, "process finished: %v\n", err)
+							_, _ = fmt.Fprintf(stderr, "%v\n", err)
 							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
-							_, _ = fmt.Fprintf(stdout, "process succeeded\n")
 							status.backoff = defaultBackoff
 							maybeStartDownstream(name)
 							if !t.IsRestart() {
@@ -496,7 +503,7 @@ func main() {
 						}
 					}
 					if !terminating {
-						_, _ = fmt.Fprintf(stdout, "backing off %s\n", status.backoff.Duration)
+						log.Printf("%s: backing off %s\n", t.Name, status.backoff.Duration)
 						time.Sleep(status.backoff.Duration)
 					}
 				}
