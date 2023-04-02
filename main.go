@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	_ "embed"
 	"errors"
@@ -20,10 +21,10 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
+	kitio "github.com/kitproj/kit/internal/io"
 	"github.com/kitproj/kit/internal/proc"
 	"github.com/kitproj/kit/internal/types"
 	"github.com/kitproj/kit/internal/util"
-	"github.com/mattn/go-isatty"
 	"golang.org/x/crypto/ssh/terminal"
 	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
@@ -38,8 +39,6 @@ var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor,
 	os.Getenv("BUILD_ID") != "" || // Jenkins, TeamCity
 	os.Getenv("RUN_ID") != "" || // TaskCluster, Codefresh
 	os.Getenv("GITHUB_ACTIONS") == "true"
-var isTerminal = isatty.IsTerminal(os.Stdin.Fd())
-var muxOutput = isTerminal && !isCI
 var faint = color.New(color.Faint).Sprint
 
 const logsEnv = "KIT_LOGS"
@@ -54,7 +53,6 @@ type taskStatus struct {
 	message message
 	stdout  io.Writer
 	stderr  io.Writer
-	recent  *util.LastNLinesWriter
 	backoff backoff
 }
 
@@ -117,48 +115,45 @@ func main() {
 				_ = os.RemoveAll("logs")
 			}
 		}
-		_ = os.MkdirAll(logs, 0o777)
-		if muxOutput {
-			f, err := os.Create(filepath.Join(logs, "kit.log"))
-			if err != nil {
-				panic(err)
-			}
-			log.SetOutput(f)
-		} else {
-			log.SetOutput(os.Stdout)
+
+		stdout := kitio.NewLogLevelWriter(types.LogLevelOff, kitio.NewLogColorizer(os.Stdout))
+
+		if isCI {
+			stdout.SetLogLevel(types.LogLevelDebug)
 		}
+
+		_ = os.MkdirAll(logs, 0o777)
+		f, err := os.Create(filepath.Join(logs, "kit.log"))
+		if err != nil {
+			panic(err)
+		}
+		log.SetOutput(io.MultiWriter(f, stdout))
+
 		log.Printf("tag=%v\n", tag)
-		log.Printf("isTerminal=%v, isCI=%v\n", isTerminal, isCI)
+		log.Printf("isCI=%v\n", isCI)
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
 		log.Printf("tasks: %v\n", tasks)
 
 		statuses := sync.Map{}
-
 		for _, task := range tasks {
-			nLinesWriter := util.NewLastNLinesWriter(48)
+			logFile, err := os.Create(filepath.Join(logs, task.Name+".log"))
+			if err != nil {
+				panic(err)
+			}
 			x := &taskStatus{
 				reason:  "waiting",
-				stdout:  io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
-				stderr:  io.MultiWriter(nLinesWriter, &prefixWriter{task.Name + ": ", os.Stdout}),
-				recent:  nLinesWriter,
 				backoff: defaultBackoff,
 			}
-			if muxOutput {
-				logFile, err := os.Create(filepath.Join(logs, task.Name+".log"))
-				if err != nil {
-					panic(err)
-				}
-				x.stdout = io.MultiWriter(nLinesWriter, logFile, funcWriter(func(p []byte) (n int, err error) {
-					x.message = message{last(string(p)), "info"}
-					return len(p), nil
-				}))
-				x.stderr = io.MultiWriter(nLinesWriter, logFile, io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
-					x.message = message{last(string(p)), "error"}
-					return len(p), nil
-				})))
-			}
+			x.stdout = io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
+				x.message = message{last(string(p)), "info"}
+				return len(p), nil
+			}), kitio.NewPrefixWriter(task.Name+": ", stdout))
+			x.stderr = io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
+				x.message = message{last(string(p)), "error"}
+				return len(p), nil
+			}), kitio.NewPrefixWriter(task.Name+": ", stdout))
 			statuses.Store(task.Name, x)
 		}
 		terminating := false
@@ -172,8 +167,7 @@ func main() {
 			}
 			fmt.Printf("%s[2J", escape)   // clear screen
 			fmt.Printf("%s[0;0H", escape) // move to 0,0
-			// how many spaces left to print logs
-			space := height - 2
+
 			for _, t := range pod.Spec.Tasks {
 				v, ok := statuses.Load(t.Name)
 				if !ok {
@@ -214,56 +208,51 @@ func main() {
 					}
 				}
 				fmt.Println(prefix + " " + msg)
-				space--
 			}
 			items := []string{
 				strings.TrimSpace(tag),
 				fmt.Sprint(time.Since(started).Truncate(time.Second)),
 				logsEnv + "=" + strings.Replace(logs, os.Getenv("HOME"), "~", 1),
+				"[1..4+Enter] enable logging at ERROR..DEBUG",
+				"[0+Enter] disable logging",
 			}
 			if terminating {
 				items = append(items, "terminating...")
 			}
-			fmt.Println(faint(strings.Join(items, "   ")))
-
-			if terminating {
-				return
-			}
-
-			var printLogs = func(test func(task types.Task, status *taskStatus) bool) {
-				for _, t := range pod.Spec.Tasks {
-					v, ok := statuses.Load(t.Name)
-					if !ok {
-						continue
-					}
-					status := v.(*taskStatus)
-					if test(t, status) {
-						for _, msg := range status.recent.Lines() {
-							if space <= 0 {
-								break
-							}
-							fmt.Println(k8sstrings.ShortenString(fmt.Sprintf("%-10s: %s", k8sstrings.ShortenString(t.Name, 10), msg), width))
-							space--
-						}
-					}
-				}
-			}
-			printLogs(func(task types.Task, status *taskStatus) bool { return status.reason == "error" })
-			printLogs(func(task types.Task, status *taskStatus) bool {
-				return status.reason == "running" && task.ReadinessProbe != nil
-			})
+			fmt.Println(faint(strings.Join(items, "  ")))
 		}
 
-		if muxOutput {
-			// every 1/2 second print the current status to the terminal
-			go func() {
-				defer handleCrash(stopEverything)
-				for {
+		// every 1/2 second print the current status to the terminal
+		go func() {
+			defer handleCrash(stopEverything)
+			for {
+				if stdout.GetLogLevel() == types.LogLevelOff {
 					printTasks()
-					time.Sleep(time.Second / 5)
 				}
-			}()
-		}
+				time.Sleep(time.Second / 5)
+			}
+		}()
+
+		go func() {
+			defer handleCrash(stopEverything)
+			for {
+				r := bufio.NewReader(os.Stdin)
+				b, _, _ := r.ReadRune()
+				switch b {
+				case '1':
+					stdout.SetLogLevel(types.LogLevelError)
+				case '2':
+					stdout.SetLogLevel(types.LogLevelWarn)
+				case '3':
+					stdout.SetLogLevel(types.LogLevelInfo)
+				case '4':
+					stdout.SetLogLevel(types.LogLevelDebug)
+				case '0':
+					stdout.SetLogLevel("")
+				}
+				_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
+			}
+		}()
 
 		work := make(chan types.Task)
 		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
@@ -432,8 +421,6 @@ func main() {
 					stopProcess()
 				}()
 
-				var stdout = status.stdout
-				var stderr = status.stderr
 				for {
 					select {
 					case <-processCtx.Done():
@@ -481,14 +468,14 @@ func main() {
 								status.reason = "running"
 							}
 							log.Printf("%s: running process\n", t.Name)
-							return prc.Run(runCtx, stdout, stderr)
+							return prc.Run(runCtx, status.stdout, status.stderr)
 						}()
 						if err != nil {
 							if errors.Is(err, context.Canceled) {
 								return
 							}
 							status.reason = "error"
-							_, _ = fmt.Fprintf(stderr, "%v\n", err)
+							_, _ = fmt.Fprintf(status.stderr, "%v\n", err)
 							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
