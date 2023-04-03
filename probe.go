@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -31,7 +32,8 @@ func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, ca
 						return err
 					}
 					if resp.StatusCode >= 300 {
-						return fmt.Errorf("%s", resp.Status)
+						data, _ := io.ReadAll(resp.Body)
+						return fmt.Errorf("%s: %q", resp.Status, data)
 					}
 					return nil
 				}()
