@@ -7,7 +7,7 @@ type backoff struct {
 }
 
 func (t backoff) next() backoff {
-	const max = time.Second * 16
+	const max = time.Second * 8
 	if t.Duration > max {
 		return backoff{max}
 	}
