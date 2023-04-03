@@ -392,7 +392,7 @@ func main() {
 
 				if f, ok := stop.Load(name); ok {
 					log.Printf("%s: stopping process\n", t.Name)
-					f.(func())()
+					f.(context.CancelFunc)()
 				}
 
 				stop.Store(name, stopProcess)
@@ -461,6 +461,7 @@ func main() {
 										maybeStartDownstream(name)
 									} else {
 										log.Printf("%s: is not ready\n", t.Name)
+										status.reason = "error"
 									}
 								}
 								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
