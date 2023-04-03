@@ -215,6 +215,7 @@ func main() {
 				logsEnv + "=" + strings.Replace(logs, os.Getenv("HOME"), "~", 1),
 				"[1..4+Enter] enable logging at ERROR..DEBUG",
 				"[0+Enter] disable logging",
+				"[kill name] to kill process",
 			}
 			if terminating {
 				items = append(items, "terminating...")
@@ -233,24 +234,36 @@ func main() {
 			}
 		}()
 
+		stopRuns := &sync.Map{}
+
 		go func() {
 			defer handleCrash(stopEverything)
-			for {
-				r := bufio.NewReader(os.Stdin)
-				b, _, _ := r.ReadRune()
-				switch b {
-				case '1':
-					stdout.SetLogLevel(types.LogLevelError)
-				case '2':
-					stdout.SetLogLevel(types.LogLevelWarn)
-				case '3':
-					stdout.SetLogLevel(types.LogLevelInfo)
-				case '4':
-					stdout.SetLogLevel(types.LogLevelDebug)
-				case '0':
-					stdout.SetLogLevel("")
+			r := bufio.NewScanner(os.Stdin)
+			for r.Scan() {
+				parts := strings.Split(r.Text(), " ")
+				switch parts[0] {
+				case "1", "2", "3", "4", "0":
+					switch parts[0] {
+					case "1":
+						stdout.SetLogLevel(types.LogLevelError)
+					case "2":
+						stdout.SetLogLevel(types.LogLevelWarn)
+					case "3":
+						stdout.SetLogLevel(types.LogLevelInfo)
+					case "4":
+						stdout.SetLogLevel(types.LogLevelDebug)
+					case "0":
+						stdout.SetLogLevel("")
+					}
+					_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
+				case "kill":
+					name := parts[1]
+					if f, ok := stopRuns.Load(name); ok {
+						_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
+						f.(context.CancelFunc)()
+					}
+
 				}
-				_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
 			}
 		}()
 
@@ -332,7 +345,7 @@ func main() {
 			defer stopProcess()
 
 			// watch files for changes
-			go func(t types.Task, stopProcess func()) {
+			go func(t types.Task, stopProcess context.CancelFunc) {
 				defer handleCrash(stopEverything)
 				watcher, err := fsnotify.NewWatcher()
 				if err != nil {
@@ -386,7 +399,7 @@ func main() {
 
 			// run the process
 			wg.Add(1)
-			go func(t types.Task, status *taskStatus, stopProcess func()) {
+			go func(t types.Task, status *taskStatus, stopProcess context.CancelFunc) {
 				defer handleCrash(stopEverything)
 				defer wg.Done()
 
@@ -430,6 +443,7 @@ func main() {
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
+							stopRuns.Store(t.Name, stopRun)
 							status.reason = "starting"
 							log.Printf("%s: resetting process\n", t.Name)
 							if err := prc.Reset(runCtx); err != nil {
@@ -514,7 +528,7 @@ func main() {
 	}
 }
 
-func handleCrash(stop func()) {
+func handleCrash(stop context.CancelFunc) {
 	if r := recover(); r != nil {
 		fmt.Println(r)
 		debug.PrintStack()
