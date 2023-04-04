@@ -3,7 +3,7 @@ module github.com/kitproj/kit
 go 1.19
 
 require (
-	github.com/docker/docker v20.10.22+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.6.1-0.20221221211819-c6f5cfa163ed
