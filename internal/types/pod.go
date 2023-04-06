@@ -247,8 +247,8 @@ type Task struct {
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
 
-func (t *Task) IsBackground() bool {
-	return t != nil && t.GetReadinessProbe() != nil
+func (t Task) IsBackground() bool {
+	return t.GetReadinessProbe() != nil
 }
 
 func (t Task) GetHostPorts() []uint16 {
@@ -597,6 +597,23 @@ func (t Tasks) Names() []string {
 		out = append(out, task.Name)
 	}
 	return out
+}
+
+func (t Tasks) All(f func(Task) bool) bool {
+	for _, task := range t {
+		if !f(task) {
+			return false
+		}
+	}
+	return true
+}
+func (t Tasks) Any(f func(Task) bool) bool {
+	for _, task := range t {
+		if f(task) {
+			return true
+		}
+	}
+	return false
 }
 
 // Task is a unit of work that should be run.

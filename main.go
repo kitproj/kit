@@ -41,8 +41,6 @@ var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor,
 	os.Getenv("GITHUB_ACTIONS") == "true"
 var faint = color.New(color.Faint).Sprint
 
-const logsEnv = "KIT_LOGS"
-
 const escape = "\x1b"
 
 const defaultConfigFile = "tasks.yaml"
@@ -105,22 +103,14 @@ func main() {
 		}
 
 		// set-up logs
-		var logs string
-		if v, ok := os.LookupEnv(logsEnv); ok {
-			logs = v
-		} else {
-			logs = filepath.Join(os.Getenv("HOME"), ".kit", "logs", pod.Metadata.Name)
-			// remove legacy logs
-			if _, err := os.Stat(filepath.Join("logs", "kit.log")); err == nil {
-				_ = os.RemoveAll("logs")
-			}
-		}
 
 		stdout := kitio.NewLogLevelWriter(types.LogLevelOff, kitio.NewLogColorizer(os.Stdout))
 
 		if isCI {
 			stdout.SetLogLevel(types.LogLevelDebug)
 		}
+
+		logs := "logs"
 
 		_ = os.MkdirAll(logs, 0o777)
 		f, err := os.Create(filepath.Join(logs, "kit.log"))
@@ -184,12 +174,6 @@ func main() {
 				case "starting":
 					icon = color.BlueString(blackSquare)
 				case "running":
-					if t.ReadinessProbe != nil {
-						icon = color.YellowString(blackSquare)
-					} else {
-						icon = color.GreenString(blackSquare)
-					}
-				case "ready":
 					icon = color.GreenString(blackSquare)
 				case "error":
 					icon = color.RedString(blackSquare)
@@ -212,10 +196,10 @@ func main() {
 			items := []string{
 				strings.TrimSpace(tag),
 				fmt.Sprint(time.Since(started).Truncate(time.Second)),
-				logsEnv + "=" + strings.Replace(logs, os.Getenv("HOME"), "~", 1),
+				"logs in " + logs,
 				"[1..4+Enter] enable logging at ERROR..DEBUG",
 				"[0+Enter] disable logging",
-				"[kill name] to kill process",
+				"[kill|run name] to kill|run process",
 			}
 			if terminating {
 				items = append(items, "terminating...")
@@ -235,6 +219,7 @@ func main() {
 		}()
 
 		stopRuns := &sync.Map{}
+		work := make(chan types.Task)
 
 		go func() {
 			defer handleCrash(stopEverything)
@@ -259,15 +244,17 @@ func main() {
 				case "kill":
 					name := parts[1]
 					if f, ok := stopRuns.Load(name); ok {
-						_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
+						_, _ = stdout.Write([]byte(fmt.Sprintf("killing %s\n", name)))
 						f.(context.CancelFunc)()
 					}
-
+				case "run":
+					name := parts[1]
+					work <- tasks.Get(name)
+					_, _ = stdout.Write([]byte(fmt.Sprintf("running %s\n", name)))
 				}
 			}
 		}()
 
-		work := make(chan types.Task)
 		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
 
 		log.Printf("semaphores=%v\n", semaphores)
@@ -301,7 +288,7 @@ func main() {
 						v, ok := statuses.Load(upstream)
 						if ok {
 							status := v.(*taskStatus)
-							fulfilled = fulfilled && (status.reason == "success" || status.reason == "ready")
+							fulfilled = fulfilled && (status.reason == "success" || status.reason == "running" && tasks.Get(upstream).IsBackground())
 						} else {
 							fulfilled = false
 						}
@@ -314,20 +301,27 @@ func main() {
 			}
 		}
 
-		// stop everything if all tasks are complete/in error
 		go func() {
 			defer handleCrash(stopEverything)
 			for {
-				complete := true
-				for _, task := range tasks {
+				// stop everything if all tasks are complete/in error
+				allComplete := tasks.All(func(task types.Task) bool {
 					if v, ok := statuses.Load(task.Name); ok {
 						status := v.(*taskStatus)
-						complete = complete && !task.IsBackground() && (status.reason == "success" || status.reason == "error")
-					} else {
-						complete = false
+						return !task.IsBackground() && (status.reason == "success" || status.reason == "error")
 					}
-				}
-				if complete {
+					return false
+				})
+				// non-restarting tasks in error
+				anyError := tasks.Any(func(task types.Task) bool {
+					if v, ok := statuses.Load(task.Name); ok {
+						status := v.(*taskStatus)
+						return task.RestartPolicy == "Never" && status.reason == "error"
+					}
+					return false
+
+				})
+				if allComplete || anyError {
 					stopEverything()
 				}
 				time.Sleep(time.Second)
@@ -471,7 +465,7 @@ func main() {
 								readyFunc := func(ready bool, err error) {
 									if ready {
 										log.Printf("%s: is ready, starting downstream\n", t.Name)
-										status.reason = "ready"
+										status.reason = "running"
 										maybeStartDownstream(name)
 									} else {
 										log.Printf("%s: is not ready\n", t.Name)
