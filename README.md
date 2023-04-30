@@ -39,7 +39,8 @@ Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the
 If you're on MacOS, you can use `brew`:
 
 ```bash
-brew install kit --custom-remote https://github.com/kitproj/kit
+brew tap kitproj/kit --custom-remote https://github.com/kitproj/kit
+brew install kit
 ```
 
 Otherwise, you can use `curl`:
@@ -73,6 +74,10 @@ flowchart LR
 Create a [`tasks.yaml`](tasks.yaml) file, e.g.:
 
 ```yaml
+apiVersion: kit/v1
+kind: Tasks
+metadata:
+  name: my-proj
 spec:
   tasks:
     - command: go build -v .
