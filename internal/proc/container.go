@@ -217,7 +217,10 @@ func (c *container) stop(ctx context.Context) error {
 	}
 	grace := c.PodSpec.GetTerminationGracePeriod()
 	log.Printf("%s: stopping container %q\n", c.Name, id)
-	err = cli.ContainerStop(ctx, id, &grace)
+	timeout := int(grace.Seconds())
+	err = cli.ContainerStop(ctx, id, dockercontainer.StopOptions{
+		Timeout: &timeout,
+	})
 	log.Printf("%s: stopped container %q: %v\n", c.Name, id, err)
 	if ignoreNotExist(err) != nil {
 		return fmt.Errorf("failed to stop container: %w", err)
