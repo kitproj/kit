@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.8"
+  version "0.1.9"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.8/kit_0.1.8_Darwin_x86_64.tar.gz"
-      sha256 "a8d5a3ee98ca2cbaa2b4a98418ff376f6f55bdd231285f6bfb00d5c57c21a676"
+    if Hardware::CPU.arm?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.9/kit_0.1.9_Darwin_arm64.tar.gz"
+      sha256 "42dd10af0bcaad01f0332cfcb8582db04e7c98a39615faeb57ba324889f29faa"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.8/kit_0.1.8_Darwin_arm64.tar.gz"
-      sha256 "be63ccacf602a2733d81b4a5f870a9d27f27c994a40df117e052f2da1e7f126e"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.9/kit_0.1.9_Darwin_x86_64.tar.gz"
+      sha256 "3a0ff3413b062f45ebaa3be3e544284cd8ea75b058d185633ae35762d22a20e2"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.8/kit_0.1.8_Linux_arm64.tar.gz"
-      sha256 "86dacfec610553f54820eeef438c73ee0859ecbcd57d02b4baa17fc0086d84f7"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.9/kit_0.1.9_Linux_arm64.tar.gz"
+      sha256 "4ded8d60f9770f7033d69b5f6e00683c41182cea11c116951ea1c69cc13e24e7"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.8/kit_0.1.8_Linux_x86_64.tar.gz"
-      sha256 "f55f72740a871ae96891063c5361f3d50f212ef2fa364143bc049c39cf3330f9"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.9/kit_0.1.9_Linux_x86_64.tar.gz"
+      sha256 "ded7b1f6b93b8ca9c0449009e41cd0b0e841110e68e3312ca42d1e36d5b4fb89"
 
       def install
         bin.install "kit"
