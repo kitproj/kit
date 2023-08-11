@@ -1,17 +1,21 @@
 package proc
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/registry"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/docker/cli/cli/config"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -81,7 +85,45 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 	} else if c.ImagePullPolicy != "Never" {
 		log.Printf("%s: pulling image %q", c.Name, c.Image)
-		r, err := cli.ImagePull(ctx, c.Image, dockertypes.ImagePullOptions{})
+
+		ref, err := reference.ParseNormalizedNamed(c.Image)
+		if err != nil {
+			return fmt.Errorf("unable to parse image: %w", err)
+		}
+		repoInfo, err := registry.ParseRepositoryInfo(ref)
+		if err != nil {
+			return fmt.Errorf("unable to parse repository info: %w", err)
+		}
+
+		var server string
+		if repoInfo.Index.Official {
+			info, err := cli.Info(ctx)
+			if err != nil || info.IndexServerAddress == "" {
+				server = registry.IndexServer
+			} else {
+				server = info.IndexServerAddress
+			}
+		} else {
+			server = repoInfo.Index.Name
+		}
+		errBuf := &bytes.Buffer{}
+		cf := config.LoadDefaultConfigFile(errBuf)
+		if errBuf.Len() > 0 {
+			return fmt.Errorf("unable to load docker config: %s", errBuf.String())
+		}
+		authConfig, err := cf.GetAuthConfig(server)
+		if err != nil {
+			return fmt.Errorf("failed to get auth config: %w", err)
+		}
+		buf, err := json.Marshal(authConfig)
+		if err != nil {
+			return fmt.Errorf("failed to marshal auth config: %w", err)
+		}
+		encodedAuth := base64.URLEncoding.EncodeToString(buf)
+
+		r, err := cli.ImagePull(ctx, c.Image, dockertypes.ImagePullOptions{
+			RegistryAuth: encodedAuth,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %w", err)
 		}
