@@ -7,13 +7,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/registry"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/registry"
 
 	"github.com/docker/cli/cli/config"
 	dockertypes "github.com/docker/docker/api/types"
