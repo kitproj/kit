@@ -199,7 +199,6 @@ func main() {
 				"logs in " + logs,
 				"[1..4+Enter] enable logging at ERROR..DEBUG",
 				"[0+Enter] disable logging",
-				"[kill|run name] to kill|run process",
 			}
 			if terminating {
 				items = append(items, "terminating...")
@@ -241,16 +240,6 @@ func main() {
 						stdout.SetLogLevel("")
 					}
 					_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
-				case "kill":
-					name := parts[1]
-					if f, ok := stopRuns.Load(name); ok {
-						_, _ = stdout.Write([]byte(fmt.Sprintf("killing %s\n", name)))
-						f.(context.CancelFunc)()
-					}
-				case "run":
-					name := parts[1]
-					work <- tasks.Get(name)
-					_, _ = stdout.Write([]byte(fmt.Sprintf("running %s\n", name)))
 				}
 			}
 		}()
