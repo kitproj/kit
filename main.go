@@ -62,8 +62,10 @@ func last(p string) string {
 func main() {
 	help := false
 	configFile := ""
+	noWatch := os.Getenv("WATCH") == "0"
 	flag.BoolVar(&help, "h", false, "help")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
+	flag.BoolVar(&noWatch, "W", false, "do not watch for changes")
 	flag.Parse()
 	args := flag.Args()
 
@@ -121,6 +123,7 @@ func main() {
 
 		log.Printf("tag=%v\n", tag)
 		log.Printf("isCI=%v\n", isCI)
+		log.Printf("noWatch=%v\n", noWatch)
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
@@ -328,57 +331,60 @@ func main() {
 			defer stopProcess()
 
 			// watch files for changes
-			go func(t types.Task, stopProcess context.CancelFunc) {
-				defer handleCrash(stopEverything)
-				watcher, err := fsnotify.NewWatcher()
-				if err != nil {
-					panic(err)
-				}
-				defer watcher.Close()
-				for _, w := range t.Watch {
-					stat, err := os.Stat(w)
+			if !noWatch {
+				go func(t types.Task, stopProcess context.CancelFunc) {
+					defer handleCrash(stopEverything)
+					watcher, err := fsnotify.NewWatcher()
 					if err != nil {
 						panic(err)
 					}
-					if err := watcher.Add(w); err != nil {
-						panic(err)
+					defer watcher.Close()
+					for _, w := range t.Watch {
+
+						stat, err := os.Stat(w)
+						if err != nil {
+							panic(err)
+						}
+						if err := watcher.Add(w); err != nil {
+							panic(err)
+						}
+						if stat.IsDir() {
+							if err := filepath.WalkDir(w, func(path string, d fs.DirEntry, err error) error {
+								if err != nil {
+									return err
+								}
+								if d.IsDir() {
+									log.Printf("%s: watching %q\n", t.Name, path)
+									return watcher.Add(path)
+								}
+								return nil
+							}); err != nil {
+								panic(err)
+							}
+						}
 					}
-					if stat.IsDir() {
-						if err := filepath.WalkDir(w, func(path string, d fs.DirEntry, err error) error {
-							if err != nil {
-								return err
+
+					timer := time.AfterFunc(100*365*24*time.Hour, func() {
+						work <- t
+					})
+					defer timer.Stop()
+
+					for {
+						select {
+						case <-processCtx.Done():
+							return
+						case e := <-watcher.Events:
+							// ignore chmod events, these can be triggered by the editor, but we don't care
+							if e.Op != fsnotify.Chmod {
+								log.Printf("%s: %v changed\n", t.Name, e)
+								timer.Reset(time.Second)
 							}
-							if d.IsDir() {
-								log.Printf("%s: watching %q\n", t.Name, path)
-								return watcher.Add(path)
-							}
-							return nil
-						}); err != nil {
+						case err := <-watcher.Errors:
 							panic(err)
 						}
 					}
-				}
-
-				timer := time.AfterFunc(100*365*24*time.Hour, func() {
-					work <- t
-				})
-				defer timer.Stop()
-
-				for {
-					select {
-					case <-processCtx.Done():
-						return
-					case e := <-watcher.Events:
-						// ignore chmod events, these can be triggered by the editor, but we don't care
-						if e.Op != fsnotify.Chmod {
-							log.Printf("%s: %v changed\n", t.Name, e)
-							timer.Reset(time.Second)
-						}
-					case err := <-watcher.Errors:
-						panic(err)
-					}
-				}
-			}(t, stopProcess)
+				}(t, stopProcess)
+			}
 
 			// run the process
 			wg.Add(1)

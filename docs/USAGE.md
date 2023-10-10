@@ -67,6 +67,18 @@ You can specify a set of files to watch for changes that result in a re-build:
     name: bar
 ```        
 
+You can disable watches:
+
+```bash
+WATCH=0 kit up
+```
+
+OR
+
+```bash
+kit -W up
+```
+
 ## How to automatically kill a broken task
 
 If the process is not alive (i.e. "dead"), then it is killed and restarted. Just like Kubernetes.
