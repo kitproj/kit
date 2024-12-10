@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -185,22 +186,34 @@ type EnvVars []EnvVar
 
 // Environ returns a list of environment variables. If an environment variable is defined in both the task and the host, the host value is used.
 func (v EnvVars) Environ() []string {
-	osEnviron := make(map[string]string)
-	for _, env := range v {
-		osEnviron[env.Name] = env.Value
-	}
-	for _, env := range os.Environ() {
-		parts := strings.SplitN(env, "=", 2)
-		n, v := parts[0], parts[1]
-		if osEnviron[n] != "" {
-			osEnviron[n] = v
-		}
-	}
 	var environ []string
-	for k, v := range osEnviron {
-		environ = append(environ, fmt.Sprintf("%s=%s", k, v))
+	for _, env := range v {
+		environ = append(environ, env.String())
 	}
 	return environ
+}
+
+type Envfile string
+
+// Environ reads the returns the environ
+func (f Envfile) Environ() ([]string, error) {
+	if f == "" {
+		return nil, nil
+	}
+	file, err := os.Open(string(f))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	var environ []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "#") {
+			environ = append(environ, line)
+		}
+	}
+	return environ, scanner.Err()
 }
 
 func (t *Task) HasMutex() bool {
@@ -229,6 +242,8 @@ type Task struct {
 	User string `json:"user,omitempty"`
 	// Environment variables to set in the container or on the host
 	Env EnvVars `json:"env,omitempty"`
+	// Environment file (e.g. .env) to use
+	Envfile Envfile `json:"envfile,omitempty"`
 	// The ports to expose
 	Ports Ports `json:"ports,omitempty"`
 	// Volumes to mount in the container
@@ -247,11 +262,11 @@ type Task struct {
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
 
-func (t Task) IsBackground() bool {
+func (t *Task) IsBackground() bool {
 	return t.GetReadinessProbe() != nil
 }
 
-func (t Task) GetHostPorts() []uint16 {
+func (t *Task) GetHostPorts() []uint16 {
 	var ports []uint16
 	for _, p := range t.Ports {
 		ports = append(ports, p.GetHostPort())
@@ -305,6 +320,14 @@ func (t *Task) String() string {
 
 func (t *Task) IsRestart() bool {
 	return t.IsBackground() && t.GetRestartPolicy() != "Always"
+}
+
+func (t *Task) Environ() ([]string, error) {
+	environ, err := t.Envfile.Environ()
+	if err != nil {
+		return nil, err
+	}
+	return append(environ, t.Env.Environ()...), nil
 }
 
 type Pod struct {
@@ -626,11 +649,24 @@ type PodSpec struct {
 	Volumes []Volume `json:"volumes,omitempty"`
 	// Semaphores is a list of semaphores that can be acquired by tasks.
 	Semaphores map[string]int `json:"semaphores,omitempty"`
+	// Environment variables to set in the container or on the host
+	Env EnvVars `json:"env,omitempty"`
+	// Environment file (e.g. .env) to use
+	Envfile Envfile `json:"envfile,omitempty"`
 }
 
-func (s PodSpec) GetTerminationGracePeriod() time.Duration {
+func (s *PodSpec) GetTerminationGracePeriod() time.Duration {
 	if s.TerminationGracePeriodSeconds != nil {
 		return time.Duration(*s.TerminationGracePeriodSeconds) * time.Second
 	}
 	return 3 * time.Second
+}
+
+// Retuns the environment variables for the spec.
+func (s *PodSpec) Environ() ([]string, error) {
+	environ, err := s.Envfile.Environ()
+	if err != nil {
+		return nil, err
+	}
+	return append(environ, s.Env.Environ()...), nil
 }
