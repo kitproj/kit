@@ -15,13 +15,18 @@ import (
 )
 
 type host struct {
-	types.PodSpec
+	spec types.PodSpec
 	types.Task
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	environ, err := types.Environ(h.spec, h.Task)
+	if err != nil {
+		return fmt.Errorf("error getting spec environ: %w", err)
+	}
 
 	path := h.Command[0]
 	cmd := exec.Command(path, append(h.Command[1:], h.Args...)...)
@@ -31,9 +36,9 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Env = append(os.Environ(), h.Env.Environ()...)
+	cmd.Env = environ
 	log.Printf("%s: starting process %q\n", h.Name, h.Command)
-	err := cmd.Start()
+	err = cmd.Start()
 	log.Printf("%s: started process %q: %v\n", h.Name, h.Command, err)
 	if err != nil {
 		return err
@@ -71,7 +76,7 @@ func (h *host) stop(pid int) error {
 	if err := target.Signal(syscall.SIGTERM); ignoreProcessFinishedErr(err) != nil {
 		log.Printf("%s: failed to terminate: %v", h.Name, err)
 	}
-	gracePeriod := h.PodSpec.GetTerminationGracePeriod()
+	gracePeriod := h.spec.GetTerminationGracePeriod()
 	log.Printf("%s: waiting %v before killing %d\n", h.Name, gracePeriod, pid)
 	time.Sleep(gracePeriod)
 	log.Printf("%s: killing process %d\n", h.Name, pid)

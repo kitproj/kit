@@ -1,15 +1,15 @@
-# EnvVars Schema
+# envfile Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile
 ```
 
-A list of environment variables.
+Environment file (e.g. .env) to use
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## env Type
+## envfile Type
 
-`object[]` ([EnvVar](pod-defs-envvar.md))
+`string` ([envfile](pod-defs-task-properties-envfile.md))

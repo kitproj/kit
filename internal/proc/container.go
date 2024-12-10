@@ -32,7 +32,7 @@ import (
 )
 
 type container struct {
-	types.PodSpec
+	spec types.PodSpec
 	types.Task
 }
 
@@ -61,6 +61,11 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 			return fmt.Errorf("failed to remove container: %w", err)
 		}
 		id = ""
+	}
+
+	environ, err := types.Environ(c.spec, c.Task)
+	if err != nil {
+		return fmt.Errorf("error getting spec environ: %w", err)
 	}
 
 	if err != nil {
@@ -154,7 +159,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
 		Tty:          c.TTY,
-		Env:          c.Env.Environ(),
+		Env:          environ,
 		Cmd:          strslice.StrSlice(c.Args),
 		Image:        image,
 		User:         c.User,
@@ -230,7 +235,7 @@ func (c *container) createPorts() (nat.PortSet, map[nat.Port][]nat.PortBinding, 
 func (c *container) createBinds() ([]string, error) {
 	var binds []string
 	for _, mount := range c.VolumeMounts {
-		for _, volume := range c.PodSpec.Volumes {
+		for _, volume := range c.spec.Volumes {
 			if volume.Name == mount.Name {
 				abs, err := filepath.Abs(volume.HostPath.Path)
 				if err != nil {
@@ -258,7 +263,7 @@ func (c *container) stop(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	grace := c.PodSpec.GetTerminationGracePeriod()
+	grace := c.spec.GetTerminationGracePeriod()
 	log.Printf("%s: stopping container %q\n", c.Name, id)
 	timeout := int(grace.Seconds())
 	err = cli.ContainerStop(ctx, id, dockercontainer.StopOptions{

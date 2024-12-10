@@ -47,7 +47,7 @@ You can specify environment variables for the task:
     - name: foo
       command: echo $FOO
       env:
-        FOO: bar
+        - FOO: bar
 ```
 
 Environment variables specified in your shell environment are automatically passed to the task.
@@ -56,7 +56,25 @@ Environment variables specified in your shell environment are automatically pass
 env FOO=qux kit up
 ```
 
-Would print `qux` instead of `bar`.
+Would print `qux` instead of `bar`, but bear in mind that the shell environment variables takes precedence
+
+You can set-up environment variables for all tasks:
+
+```yaml
+spec:
+    env:
+        - FOO: bar
+    envfile: .env
+```
+
+Or per task:
+
+```yaml
+    - name: foo
+      command: sh -c 'echo $FOO'
+      env:
+        - FOO: bar
+```
 
 ## How to automatically re-build and restart a task
 
