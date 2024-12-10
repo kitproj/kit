@@ -72,7 +72,7 @@ func main() {
 	args := flag.Args()
 
 	if help {
-		fmt.Println("Usage: kit [-f tasks.yaml] [task1 task2 ...]")
+		fmt.Println("Usage: kit [-h] [-f tasks.yaml] [-l DEBUG|INFO|WARN|ERROR] [-W] task1 task2 ...")
 		os.Exit(0)
 	}
 
