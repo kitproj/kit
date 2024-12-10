@@ -62,15 +62,17 @@ func last(p string) string {
 func main() {
 	help := false
 	configFile := ""
-	noWatch := os.Getenv("WATCH") == "0"
+	logLevel := string(types.LogLevelOff)
+	noWatch := os.Getenv("WATCH") == "0" || os.Getenv("KIT_WATCH") == "0"
 	flag.BoolVar(&help, "h", false, "help")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
+	flag.StringVar(&logLevel, "l", os.Getenv("KIT_LOG_LEVEL"), "log level (DEBUG, INFO, WARN, ERROR)")
 	flag.BoolVar(&noWatch, "W", false, "do not watch for changes")
 	flag.Parse()
 	args := flag.Args()
 
 	if help {
-		fmt.Println("Usage: kit [-f tasks.yaml] [task1 task2 ...]")
+		fmt.Println("Usage: kit [-h] [-f tasks.yaml] [-l DEBUG|INFO|WARN|ERROR] [-W] task1 task2 ...")
 		os.Exit(0)
 	}
 
@@ -106,7 +108,7 @@ func main() {
 
 		// set-up logs
 
-		stdout := kitio.NewLogLevelWriter(types.LogLevelOff, kitio.NewLogColorizer(os.Stdout))
+		stdout := kitio.NewLogLevelWriter(types.LogLevel(logLevel), kitio.NewLogColorizer(os.Stdout))
 
 		if isCI {
 			stdout.SetLogLevel(types.LogLevelDebug)
@@ -161,6 +163,8 @@ func main() {
 			fmt.Printf("%s[2J", escape)   // clear screen
 			fmt.Printf("%s[0;0H", escape) // move to 0,0
 
+			numRunning := 0
+
 			for _, t := range pod.Spec.Tasks {
 				v, ok := statuses.Load(t.Name)
 				if !ok {
@@ -178,6 +182,7 @@ func main() {
 					icon = color.BlueString(blackSquare)
 				case "running":
 					icon = color.GreenString(blackSquare)
+					numRunning++
 				case "error":
 					icon = color.RedString(blackSquare)
 				}
