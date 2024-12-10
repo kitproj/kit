@@ -19,8 +19,8 @@ func New(t types.Task, spec types.PodSpec) Interface {
 		if len(t.Command) == 0 {
 			return &noop{}
 		}
-		return &host{Task: t, PodSpec: spec}
+		return &host{Task: t, spec: spec}
 	} else {
-		return &container{Task: t, PodSpec: spec}
+		return &container{Task: t, spec: spec}
 	}
 }

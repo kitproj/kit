@@ -3,10 +3,10 @@ set -eux
 
 # build
 go mod tidy
-go generate .
-go vet .
+go generate ./...
+go vet ./...
 command -v goimports || go install golang.org/x/tools/cmd/goimports@latest
-goimports -w .
+goimports -w ./...
 go test -cover ./...
 go install .
 

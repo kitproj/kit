@@ -15,7 +15,7 @@ import (
 )
 
 type host struct {
-	types.PodSpec
+	spec types.PodSpec
 	types.Task
 }
 
@@ -23,7 +23,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	environ, err := types.Environ(h.PodSpec, h.Task)
+	environ, err := types.Environ(h.spec, h.Task)
 	if err != nil {
 		return fmt.Errorf("error getting spec environ: %w", err)
 	}
@@ -76,7 +76,7 @@ func (h *host) stop(pid int) error {
 	if err := target.Signal(syscall.SIGTERM); ignoreProcessFinishedErr(err) != nil {
 		log.Printf("%s: failed to terminate: %v", h.Name, err)
 	}
-	gracePeriod := h.PodSpec.GetTerminationGracePeriod()
+	gracePeriod := h.spec.GetTerminationGracePeriod()
 	log.Printf("%s: waiting %v before killing %d\n", h.Name, gracePeriod, pid)
 	time.Sleep(gracePeriod)
 	log.Printf("%s: killing process %d\n", h.Name, pid)
