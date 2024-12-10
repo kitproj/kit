@@ -324,6 +324,8 @@ Reference this group by using
 | [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
 | [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
 | [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
+| [env](#env)                                                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")                                                                    |
+| [envfile](#envfile)                                             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")                                             |
 
 ### terminationGracePeriodSeconds
 
@@ -396,6 +398,42 @@ Semaphores is a list of semaphores that can be acquired by tasks.
 #### semaphores Type
 
 `object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
+
+### env
+
+A list of environment variables.
+
+`env`
+
+*   is optional
+
+*   Type: `object[]` ([EnvVar](pod-defs-envvar.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")
+
+#### env Type
+
+`object[]` ([EnvVar](pod-defs-envvar.md))
+
+### envfile
+
+Environment file (e.g. .env) to use
+
+`envfile`
+
+*   is optional
+
+*   Type: `string` ([envfile](pod-defs-podspec-properties-envfile.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-podspec-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")
+
+#### envfile Type
+
+`string` ([envfile](pod-defs-podspec-properties-envfile.md))
 
 ## Definitions group Port
 
@@ -642,7 +680,8 @@ Reference this group by using
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
-| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [env](#env-1)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [envfile](#envfile-1)               | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")                 |
 | [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
 | [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
 | [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
@@ -831,6 +870,24 @@ A list of environment variables.
 #### env Type
 
 `object[]` ([EnvVar](pod-defs-envvar.md))
+
+### envfile
+
+Environment file (e.g. .env) to use
+
+`envfile`
+
+*   is optional
+
+*   Type: `string` ([envfile](pod-defs-task-properties-envfile.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")
+
+#### envfile Type
+
+`string` ([envfile](pod-defs-task-properties-envfile.md))
 
 ### ports
 

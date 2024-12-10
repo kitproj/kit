@@ -262,7 +262,7 @@ type Task struct {
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
 
-func (t *Task) IsBackground() bool {
+func (t Task) IsBackground() bool {
 	return t.GetReadinessProbe() != nil
 }
 

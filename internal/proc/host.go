@@ -23,6 +23,11 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	environ, err := types.Environ(h.PodSpec, h.Task)
+	if err != nil {
+		return fmt.Errorf("error getting spec environ: %w", err)
+	}
+
 	path := h.Command[0]
 	cmd := exec.Command(path, append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
@@ -31,9 +36,9 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Env = append(os.Environ(), h.Env.Environ()...)
+	cmd.Env = environ
 	log.Printf("%s: starting process %q\n", h.Name, h.Command)
-	err := cmd.Start()
+	err = cmd.Start()
 	log.Printf("%s: started process %q: %v\n", h.Name, h.Command, err)
 	if err != nil {
 		return err

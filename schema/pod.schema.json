@@ -154,6 +154,16 @@
           "type": "object",
           "title": "semaphores",
           "description": "Semaphores is a list of semaphores that can be acquired by tasks."
+        },
+        "env": {
+          "$ref": "#/$defs/EnvVars",
+          "title": "env",
+          "description": "Environment variables to set in the container or on the host"
+        },
+        "envfile": {
+          "type": "string",
+          "title": "envfile",
+          "description": "Environment file (e.g. .env) to use"
         }
       },
       "additionalProperties": false,
@@ -299,6 +309,11 @@
           "$ref": "#/$defs/EnvVars",
           "title": "env",
           "description": "Environment variables to set in the container or on the host"
+        },
+        "envfile": {
+          "type": "string",
+          "title": "envfile",
+          "description": "Environment file (e.g. .env) to use"
         },
         "ports": {
           "$ref": "#/$defs/Ports",

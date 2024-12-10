@@ -1,12 +1,17 @@
 package types
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEnviron(t *testing.T) {
+
+	os.Clearenv()
+	err := os.Setenv("FUZ", "5")
+	assert.NoError(t, err)
 
 	environ, err := Environ(PodSpec{
 		Envfile: "testdata/spec.env",
@@ -28,11 +33,6 @@ func TestEnviron(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.True(t, len(environ) >= 4, "has at least 4 elements (including OS values))")
-
-	// remove OS values
-	environ = environ[:len(environ)-len(os.Environ())]
-
-	assert.Equal(t, []string{"FOO=1", "BAR=2", "BAZ=3", "QUX=4"}, environ)
+	assert.ElementsMatch(t, []string{"FOO=1", "BAR=2", "BAZ=3", "QUX=4", "FUZ=5"}, environ)
 
 }

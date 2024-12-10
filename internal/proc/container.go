@@ -68,9 +68,6 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("error getting spec environ: %w", err)
 	}
 
-	// put OS first
-	environ = append(os.Environ(), environ...)
-
 	if err != nil {
 		return fmt.Errorf("failed to get container ID: %w", err)
 	} else if id != "" {
@@ -162,7 +159,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
 		Tty:          c.TTY,
-		Env:          append(c.PodSpec.Environ(), c.Task.Environ()),
+		Env:          environ,
 		Cmd:          strslice.StrSlice(c.Args),
 		Image:        image,
 		User:         c.User,
