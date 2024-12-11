@@ -24,14 +24,14 @@ type EnvVar struct {
 }
 
 func (v EnvVar) String() (string, error) {
-	if v.Value != "" {
-		return fmt.Sprintf("%s=%s", v.Name, v.Value), nil
+	if v.ValueFrom != nil {
+		value, err := os.ReadFile(v.ValueFrom.File)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s=%s", v.Name, string(value)), nil
 	}
-	value, err := os.ReadFile(v.ValueFrom.File)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s=%s", v.Name, string(value)), nil
+	return fmt.Sprintf("%s=%s", v.Name, v.Value), nil
 }
 
 func (v *EnvVar) Unstring(s string) error {

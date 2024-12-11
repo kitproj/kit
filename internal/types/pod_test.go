@@ -33,3 +33,16 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, pod.Spec.Tasks[1].Command)
 	assert.Equal(t, Strings{"baz", "qux"}, pod.Spec.Tasks[1].Dependencies)
 }
+
+func TestEnvVar_String(t *testing.T) {
+	t.Run("Value", func(t *testing.T) {
+		s, err := EnvVar{Name: "FOO", Value: "1"}.String()
+		assert.NoError(t, err)
+		assert.Equal(t, "FOO=1", s)
+	})
+	t.Run("ValueFrom", func(t *testing.T) {
+		s, err := EnvVar{Name: "FOO", ValueFrom: &EnvVarSource{File: "testdata/six"}}.String()
+		assert.NoError(t, err)
+		assert.Equal(t, "FOO=6", s)
+	})
+}
