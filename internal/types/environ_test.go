@@ -20,6 +20,10 @@ func TestEnviron(t *testing.T) {
 				Name:  "BAR",
 				Value: "2",
 			},
+			{
+				Name:      "GAK",
+				ValueFrom: &EnvVarSource{File: "testdata/GAK"},
+			},
 		},
 	}, Task{
 		Envfile: "testdata/task.env",
@@ -37,6 +41,6 @@ func TestEnviron(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.ElementsMatch(t, []string{"FOO=1", "BAR=2", "BAZ=3", "QUX=4", "FUZ=5"}, environ)
+	assert.ElementsMatch(t, []string{"FOO=1", "BAR=2", "BAZ=3", "QUX=4", "FUZ=5", "GAK=6"}, environ)
 
 }

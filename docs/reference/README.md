@@ -10,6 +10,8 @@
 
 *   [EnvVar](./pod-defs-envvar.md "A environment variable") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar`
 
+*   [EnvVarSource](./pod-defs-envvarsource.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource`
+
 *   [HTTPGetAction](./pod-defs-httpgetaction.md "HTTPGetAction describes an action based on HTTP Locks requests") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction`
 
 *   [HostPath](./pod-defs-hostpath.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath`

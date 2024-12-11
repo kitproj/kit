@@ -24,10 +24,11 @@ Reference this group by using
 {"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar"}
 ```
 
-| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                |
-| :-------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
-| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                |
+| :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)           | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
+| [value](#value)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| [valueFrom](#valuefrom) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")        |
 
 ### name
 
@@ -64,6 +65,54 @@ Reference this group by using
 #### value Type
 
 `string` ([value](pod-defs-envvar-properties-value.md))
+
+### valueFrom
+
+
+
+`valueFrom`
+
+*   is optional
+
+*   Type: `object` ([EnvVarSource](pod-defs-envvarsource.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")
+
+#### valueFrom Type
+
+`object` ([EnvVarSource](pod-defs-envvarsource.md))
+
+## Definitions group EnvVarSource
+
+Reference this group by using
+
+```json
+{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource"}
+```
+
+| Property      | Type     | Required | Nullable       | Defined by                                                                                                                                          |
+| :------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [file](#file) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvarsource-properties-file.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource/properties/file") |
+
+### file
+
+From a file
+
+`file`
+
+*   is required
+
+*   Type: `string` ([file](pod-defs-envvarsource-properties-file.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvarsource-properties-file.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource/properties/file")
+
+#### file Type
+
+`string` ([file](pod-defs-envvarsource-properties-file.md))
 
 ## Definitions group EnvVars
 

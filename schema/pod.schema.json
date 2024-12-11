@@ -12,6 +12,10 @@
         "value": {
           "type": "string",
           "title": "value"
+        },
+        "valueFrom": {
+          "$ref": "#/$defs/EnvVarSource",
+          "title": "valueFrom"
         }
       },
       "additionalProperties": false,
@@ -22,6 +26,21 @@
       ],
       "title": "EnvVar",
       "description": "A environment variable."
+    },
+    "EnvVarSource": {
+      "properties": {
+        "file": {
+          "type": "string",
+          "title": "file",
+          "description": "From a file"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "file"
+      ],
+      "title": "EnvVarSource"
     },
     "EnvVars": {
       "items": {

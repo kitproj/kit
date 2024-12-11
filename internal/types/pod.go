@@ -11,14 +11,27 @@ import (
 	"time"
 )
 
-// A environment variable.
-type EnvVar struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+type EnvVarSource struct {
+	// From a file
+	File string `json:"file"`
 }
 
-func (v EnvVar) String() string {
-	return fmt.Sprintf("%s=%s", v.Name, v.Value)
+// A environment variable.
+type EnvVar struct {
+	Name      string        `json:"name"`
+	Value     string        `json:"value"`
+	ValueFrom *EnvVarSource `json:"valueFrom,omitempty"`
+}
+
+func (v EnvVar) String() (string, error) {
+	if v.Value != "" {
+		return fmt.Sprintf("%s=%s", v.Name, v.Value), nil
+	}
+	value, err := os.ReadFile(v.ValueFrom.File)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s=%s", v.Name, string(value)), nil
 }
 
 func (v *EnvVar) Unstring(s string) error {
@@ -54,7 +67,11 @@ func (v *EnvVar) UnmarshalJSON(data []byte) error {
 }
 
 func (v EnvVar) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.String())
+	s, err := v.String()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(s)
 }
 
 // A list of ports to expose.
@@ -185,12 +202,16 @@ func (p Port) GetHostPort() uint16 {
 type EnvVars []EnvVar
 
 // Environ returns a list of environment variables. If an environment variable is defined in both the task and the host, the host value is used.
-func (v EnvVars) Environ() []string {
+func (v EnvVars) Environ() ([]string, error) {
 	var environ []string
 	for _, env := range v {
-		environ = append(environ, env.String())
+		s, err := env.String()
+		if err != nil {
+			return nil, err
+		}
+		environ = append(environ, s)
 	}
-	return environ
+	return environ, nil
 }
 
 type Envfile string
@@ -327,7 +348,8 @@ func (t *Task) Environ() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(environ, t.Env.Environ()...), nil
+	s, err := t.Env.Environ()
+	return append(environ, s...), err
 }
 
 type Pod struct {
@@ -668,5 +690,6 @@ func (s *PodSpec) Environ() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(environ, s.Env.Environ()...), nil
+	e, err := s.Env.Environ()
+	return append(environ, e...), err
 }

@@ -16,10 +16,11 @@ A environment variable.
 
 # items Properties
 
-| Property        | Type     | Required | Nullable       | Defined by                                                                                                                                |
-| :-------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)   | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
-| [value](#value) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                |
+| :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| [name](#name)           | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
+| [value](#value)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
+| [valueFrom](#valuefrom) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")        |
 
 ## name
 
@@ -56,3 +57,21 @@ A environment variable.
 ### value Type
 
 `string` ([value](pod-defs-envvar-properties-value.md))
+
+## valueFrom
+
+
+
+`valueFrom`
+
+*   is optional
+
+*   Type: `object` ([EnvVarSource](pod-defs-envvarsource.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")
+
+### valueFrom Type
+
+`object` ([EnvVarSource](pod-defs-envvarsource.md))

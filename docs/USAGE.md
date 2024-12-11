@@ -76,6 +76,16 @@ Or per task:
         - FOO: bar
 ```
 
+Environment variables can come from files:
+
+```yaml
+    - name: foo
+      env:
+        - name: FOO
+          valueFrom:
+            file: foo  
+```
+
 ## How to automatically re-build and restart a task
 
 You can specify a set of files to watch for changes that result in a re-build:
