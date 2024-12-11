@@ -36,7 +36,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Env = environ
+	cmd.Env = append(environ, os.Environ()...)
 	log.Printf("%s: starting process %q\n", h.Name, h.Command)
 	err = cmd.Start()
 	log.Printf("%s: started process %q: %v\n", h.Name, h.Command, err)

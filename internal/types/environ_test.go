@@ -1,17 +1,12 @@
 package types
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEnviron(t *testing.T) {
-
-	os.Clearenv()
-	err := os.Setenv("FUZ", "5")
-	assert.NoError(t, err)
 
 	environ, err := Environ(PodSpec{
 		Envfile: "testdata/spec.env",
@@ -34,7 +29,7 @@ func TestEnviron(t *testing.T) {
 			},
 			{
 				Name:  "FUZ",
-				Value: "0",
+				Value: "5",
 			},
 		},
 	})
