@@ -372,6 +372,11 @@
           "title": "dependencies",
           "description": "A list of tasks to run before this task"
         },
+        "targets": {
+          "$ref": "#/$defs/Strings",
+          "title": "targets",
+          "description": "A list of files this task will create. If these exist, the task is skipped."
+        },
         "restartPolicy": {
           "type": "string",
           "title": "restartPolicy",

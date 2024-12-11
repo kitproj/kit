@@ -46,3 +46,19 @@ func TestEnvVar_String(t *testing.T) {
 		assert.Equal(t, "FOO=6", s)
 	})
 }
+
+func TestTask_AllTargetsExist(t *testing.T) {
+	t.Run("Empty targets", func(t *testing.T) {
+		task := &Task{}
+		assert.False(t, task.AllTargetsExist())
+	})
+	t.Run("Missing targets", func(t *testing.T) {
+		task := &Task{Targets: []string{"missing"}}
+		assert.False(t, task.AllTargetsExist())
+	})
+	t.Run("Empty targets", func(t *testing.T) {
+		task := &Task{Targets: []string{"testdata"}}
+		assert.True(t, task.AllTargetsExist())
+	})
+
+}

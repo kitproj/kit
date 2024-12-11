@@ -738,6 +738,7 @@ Reference this group by using
 | [mutex](#mutex)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/mutex")                     |
 | [semaphore](#semaphore)             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/semaphore")             |
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
+| [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
 
 ### name
@@ -1061,6 +1062,24 @@ A list of tasks to run before this task
 *   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")
 
 #### dependencies Type
+
+`string[]`
+
+### targets
+
+A list of files this task will create. If these exist, the task is skipped.
+
+`targets`
+
+*   is optional
+
+*   Type: `string[]`
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/targets")
+
+#### targets Type
 
 `string[]`
 

@@ -279,6 +279,8 @@ type Task struct {
 	Semaphore string `json:"semaphore,omitempty"`
 	// A list of tasks to run before this task
 	Dependencies Strings `json:"dependencies,omitempty"`
+	// A list of files this task will create. If these exist, the task is skipped.
+	Targets Strings `json:"targets,omitempty"`
 	// The restart policy, e.g. Always, Never, OnFailure
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
@@ -350,6 +352,18 @@ func (t *Task) Environ() ([]string, error) {
 	}
 	s, err := t.Env.Environ()
 	return append(environ, s...), err
+}
+
+func (t *Task) AllTargetsExist() bool {
+	if len(t.Targets) == 0 {
+		return false
+	}
+	for _, target := range t.Targets {
+		if _, err := os.Stat(target); err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 type Pod struct {

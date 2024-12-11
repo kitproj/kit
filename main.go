@@ -46,6 +46,7 @@ const escape = "\x1b"
 const defaultConfigFile = "tasks.yaml"
 
 type message struct{ text, level string }
+
 type taskStatus struct {
 	reason  string
 	message message
@@ -441,6 +442,15 @@ func main() {
 					case <-processCtx.Done():
 						return
 					default:
+
+						// if the task targets exist, we can skip the task
+						if t.AllTargetsExist() {
+							log.Printf("%s: skipping process\n", t.Name)
+							status.reason = "success"
+							maybeStartDownstream(name)
+							break
+						}
+
 						log.Printf("%s: starting process\n", t.Name)
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
