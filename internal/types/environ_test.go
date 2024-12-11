@@ -28,6 +28,10 @@ func TestEnviron(t *testing.T) {
 				Name:  "QUX",
 				Value: "4",
 			},
+			{
+				Name:  "FUZ",
+				Value: "0",
+			},
 		},
 	})
 
