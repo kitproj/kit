@@ -380,12 +380,31 @@ Reference this group by using
 
 | Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                  |
 | :-------------------------------------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [logLevel](#loglevel)                                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-loglevel.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/logLevel")                                           |
 | [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
 | [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
 | [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
 | [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
 | [env](#env)                                                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")                                                                    |
 | [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")                                                                |
+
+### logLevel
+
+LogLevel the log level to use by default.
+
+`logLevel`
+
+*   is optional
+
+*   Type: `string` ([logLevel](pod-defs-podspec-properties-loglevel.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-podspec-properties-loglevel.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/logLevel")
+
+#### logLevel Type
+
+`string` ([logLevel](pod-defs-podspec-properties-loglevel.md))
 
 ### terminationGracePeriodSeconds
 

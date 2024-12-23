@@ -54,8 +54,8 @@ func TestTask_AllTargetsExist(t *testing.T) {
 		targets Strings
 		exist   bool
 	}{
-		{name: "No source, no target", sources: nil, targets: nil, exist: true},
-		{name: "Source, no target", sources: Strings{"testdata"}, targets: nil, exist: true},
+		{name: "No source, no target", sources: nil, targets: nil, exist: false},
+		{name: "Source, no target", sources: Strings{"testdata"}, targets: nil, exist: false},
 		{name: "Target, no source", sources: nil, targets: Strings{"testdata"}, exist: true},
 		{name: "Missing source", sources: Strings{"missing"}, targets: Strings{"testdata"}, exist: true},
 		{name: "Missing targets", sources: Strings{"testdata"}, targets: Strings{"missing"}, exist: false},
@@ -66,7 +66,7 @@ func TestTask_AllTargetsExist(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			task := &Task{Watch: test.sources, Targets: test.targets}
-			assert.Equal(t, test.exist, task.AllTargetsExist())
+			assert.Equal(t, test.exist, task.Skip())
 		})
 	}
 }

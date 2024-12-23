@@ -444,7 +444,7 @@ func main() {
 					default:
 
 						// if the task targets exist, we can skip the task
-						if t.AllTargetsExist() {
+						if t.Skip() {
 							log.Printf("%s: skipping process\n", t.Name)
 							status.reason = "success"
 							maybeStartDownstream(name)
