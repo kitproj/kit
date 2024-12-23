@@ -115,13 +115,20 @@ func main() {
 			return errors.New("metadata.name is required")
 		}
 
-		// set-up logs
+		if logLevel == "" {
+			logLevel = string(pod.Spec.LogLevel)
+		}
 
-		stdout := kitio.NewLogLevelWriter(types.LogLevel(logLevel), kitio.NewLogColorizer(os.Stdout))
+		if logLevel == "" {
+			logLevel = string(types.LogLevelOff)
+		}
 
 		if isCI {
-			stdout.SetLogLevel(types.LogLevelDebug)
+			logLevel = string(types.LogLevelDebug)
 		}
+
+		// set-up logs
+		stdout := kitio.NewLogLevelWriter(types.LogLevel(logLevel), kitio.NewLogColorizer(os.Stdout))
 
 		logs := "logs"
 
