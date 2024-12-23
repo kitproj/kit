@@ -48,17 +48,25 @@ func TestEnvVar_String(t *testing.T) {
 }
 
 func TestTask_AllTargetsExist(t *testing.T) {
-	t.Run("Empty targets", func(t *testing.T) {
-		task := &Task{}
-		assert.False(t, task.AllTargetsExist())
-	})
-	t.Run("Missing targets", func(t *testing.T) {
-		task := &Task{Targets: []string{"missing"}}
-		assert.False(t, task.AllTargetsExist())
-	})
-	t.Run("Empty targets", func(t *testing.T) {
-		task := &Task{Targets: []string{"testdata"}}
-		assert.True(t, task.AllTargetsExist())
-	})
+	tests := []struct {
+		name    string
+		sources Strings
+		targets Strings
+		exist   bool
+	}{
+		{name: "No source, no target", sources: nil, targets: nil, exist: true},
+		{name: "Source, no target", sources: Strings{"testdata"}, targets: nil, exist: true},
+		{name: "Target, no source", sources: nil, targets: Strings{"testdata"}, exist: true},
+		{name: "Missing source", sources: Strings{"missing"}, targets: Strings{"testdata"}, exist: true},
+		{name: "Missing targets", sources: Strings{"testdata"}, targets: Strings{"missing"}, exist: false},
+		{name: "Target younger than source", sources: Strings{"testdata/older"}, targets: Strings{"testdata/younger"}, exist: true},
+		{name: "Target older than source", sources: Strings{"testdata/younger"}, targets: Strings{"testdata/older"}, exist: false},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			task := &Task{Watch: test.sources, Targets: test.targets}
+			assert.Equal(t, test.exist, task.AllTargetsExist())
+		})
+	}
 }

@@ -281,7 +281,7 @@ type Task struct {
 	Semaphore string `json:"semaphore,omitempty"`
 	// A list of tasks to run before this task
 	Dependencies Strings `json:"dependencies,omitempty"`
-	// A list of files this task will create. If these exist, the task is skipped.
+	// A list of files this task will create. If these exist, and they're newer than the watched files, the task is skipped.
 	Targets Strings `json:"targets,omitempty"`
 	// The restart policy, e.g. Always, Never, OnFailure
 	RestartPolicy string `json:"restartPolicy,omitempty"`
@@ -356,16 +356,32 @@ func (t *Task) Environ() ([]string, error) {
 	return append(environ, s...), err
 }
 
+// AllTargetsExist Determines if all the targets exist. And if they're all newer that the newest source file.
 func (t *Task) AllTargetsExist() bool {
-	if len(t.Targets) == 0 {
-		return false
-	}
-	for _, target := range t.Targets {
-		if _, err := os.Stat(target); err != nil {
-			return false
+	youngestSource := time.Time{}
+	for _, source := range t.Watch {
+		stat, err := os.Stat(source)
+		if err != nil {
+			continue
+		}
+		if stat.ModTime().After(youngestSource) {
+			youngestSource = stat.ModTime()
 		}
 	}
-	return true
+
+	oldestTarget := time.Now()
+	for _, target := range t.Targets {
+		stat, err := os.Stat(target)
+		// if the target does not exist, we must run the task
+		if err != nil {
+			return false
+		}
+		if stat.ModTime().Before(oldestTarget) {
+			oldestTarget = stat.ModTime()
+		}
+	}
+
+	return oldestTarget.After(youngestSource)
 }
 
 type Pod struct {

@@ -1078,7 +1078,7 @@ A list of tasks to run before this task
 
 ### targets
 
-A list of files this task will create. If these exist, the task is skipped.
+A list of files this task will create. If these exist, and they're newer than the watched files, the task is skipped.
 
 `targets`
 

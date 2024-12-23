@@ -382,7 +382,7 @@
         "targets": {
           "$ref": "#/$defs/Strings",
           "title": "targets",
-          "description": "A list of files this task will create. If these exist, the task is skipped."
+          "description": "A list of files this task will create. If these exist, and they're newer than the watched files, the task is skipped."
         },
         "restartPolicy": {
           "type": "string",
