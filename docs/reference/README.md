@@ -42,6 +42,8 @@
 
 *   [EnvVars](./pod-defs-envvars.md "A list of environment variables") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars`
 
+*   [Envfile](./pod-defs-envfile.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Envfile`
+
 *   [Ports](./pod-defs-ports.md "A list of ports to expose") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Ports`
 
 *   [Strings](./pod-defs-strings.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Strings`

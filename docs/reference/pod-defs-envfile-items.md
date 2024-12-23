@@ -1,15 +1,15 @@
-# envfile Schema
+# Untitled string in undefined Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Envfile/items
 ```
 
-Environment file (e.g. .env) to use
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## envfile Type
+## items Type
 
-`string` ([envfile](pod-defs-task-properties-envfile.md))
+`string`

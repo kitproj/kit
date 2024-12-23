@@ -9,7 +9,7 @@ import (
 func TestEnviron(t *testing.T) {
 
 	environ, err := Environ(PodSpec{
-		Envfile: "testdata/spec.env",
+		Envfile: Envfile{"testdata/spec.env"},
 		Env: EnvVars{
 			{
 				Name:  "BAR",
@@ -21,7 +21,7 @@ func TestEnviron(t *testing.T) {
 			},
 		},
 	}, Task{
-		Envfile: "testdata/task.env",
+		Envfile: Envfile{"testdata/task.env"},
 		Env: EnvVars{
 			{
 				Name:  "QUX",

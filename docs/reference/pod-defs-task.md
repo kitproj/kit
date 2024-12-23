@@ -28,7 +28,7 @@ A task is a container or a command to run.
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
 | [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
-| [envfile](#envfile)                 | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")                 |
+| [envfile](#envfile)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")                                 |
 | [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
 | [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
 | [tty](#tty)                         | `boolean` | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/tty")                         |
@@ -227,15 +227,15 @@ Environment file (e.g. .env) to use
 
 *   is optional
 
-*   Type: `string` ([envfile](pod-defs-task-properties-envfile.md))
+*   Type: `string[]`
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")
+*   defined in: [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")
 
 ### envfile Type
 
-`string` ([envfile](pod-defs-task-properties-envfile.md))
+`string[]`
 
 ## ports
 

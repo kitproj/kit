@@ -50,6 +50,13 @@
       "title": "EnvVars",
       "description": "A list of environment variables."
     },
+    "Envfile": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "title": "Envfile"
+    },
     "HTTPGetAction": {
       "properties": {
         "scheme": {
@@ -180,7 +187,7 @@
           "description": "Environment variables to set in the container or on the host"
         },
         "envfile": {
-          "type": "string",
+          "$ref": "#/$defs/Envfile",
           "title": "envfile",
           "description": "Environment file (e.g. .env) to use"
         }
@@ -330,7 +337,7 @@
           "description": "Environment variables to set in the container or on the host"
         },
         "envfile": {
-          "type": "string",
+          "$ref": "#/$defs/Envfile",
           "title": "envfile",
           "description": "Environment file (e.g. .env) to use"
         },

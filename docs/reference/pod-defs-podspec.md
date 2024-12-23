@@ -23,7 +23,7 @@ Task is a unit of work that should be run.
 | [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
 | [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
 | [env](#env)                                                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")                                                                    |
-| [envfile](#envfile)                                             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")                                             |
+| [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")                                                                |
 
 ## terminationGracePeriodSeconds
 
@@ -123,12 +123,12 @@ Environment file (e.g. .env) to use
 
 *   is optional
 
-*   Type: `string` ([envfile](pod-defs-podspec-properties-envfile.md))
+*   Type: `string[]`
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")
+*   defined in: [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")
 
 ### envfile Type
 
-`string` ([envfile](pod-defs-podspec-properties-envfile.md))
+`string[]`

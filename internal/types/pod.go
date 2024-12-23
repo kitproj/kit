@@ -214,27 +214,29 @@ func (v EnvVars) Environ() ([]string, error) {
 	return environ, nil
 }
 
-type Envfile string
+type Envfile Strings
 
 // Environ reads the returns the environ
 func (f Envfile) Environ() ([]string, error) {
-	if f == "" {
-		return nil, nil
-	}
-	file, err := os.Open(string(f))
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
 	var environ []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "#") {
-			environ = append(environ, line)
+	for _, file := range f {
+		file, err := os.Open(string(file))
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "#") {
+				environ = append(environ, line)
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			return nil, err
 		}
 	}
-	return environ, scanner.Err()
+	return environ, nil
 }
 
 func (t *Task) HasMutex() bool {

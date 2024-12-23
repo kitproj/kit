@@ -1,4 +1,4 @@
-# envfile Schema
+# Envfile Schema
 
 ```txt
 https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile
@@ -12,4 +12,4 @@ Environment file (e.g. .env) to use
 
 ## envfile Type
 
-`string` ([envfile](pod-defs-podspec-properties-envfile.md))
+`string[]`
