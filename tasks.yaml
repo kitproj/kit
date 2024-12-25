@@ -37,22 +37,14 @@ spec:
     - mountPath: /work
       name: work
   - name: error
-    command:
-    - sh
-    - -c
-    - |
+    sh: |
       echo "hello" >&2
       echo "I'm an error" >&2
       sleep 3s
       exit 1
   - name: script
-    command:
-      - sh
-      - -c
-      - |
-        echo "hello"
-        sleep 5 & 
-        echo "world"
+    sh: |
+        echo "hello world"
   - name: up
     dependencies: awn foo bar baz script
   terminationGracePeriodSeconds: 3

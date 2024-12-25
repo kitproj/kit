@@ -139,18 +139,18 @@ func main() {
 					continue
 				}
 				status := v.(*taskStatus)
-				if status.reason == "success" && !t.IsRestart() {
-					continue
-				}
 				reason := status.reason
 				switch reason {
+				case "waiting":
+					buf.WriteString("\x1b[2m") // faint
 				case "starting":
-					buf.WriteString("\x1b[1m")
+					buf.WriteString("\x1b[33m") // yellow
 				case "running":
-					buf.WriteString("\x1b[32m")
+					buf.WriteString("\x1b[32m") // green
+				case "success":
+					buf.WriteString("\x1b[34m") // blueF
 				case "error":
-
-					buf.WriteString("\x1b[31m")
+					buf.WriteString("\x1b[31m") // red
 				}
 
 				buf.WriteString(t.Name)
@@ -181,20 +181,20 @@ func main() {
 		}
 
 		// every few milli-seconds print the current status to the terminal
-		go func() {
-			defer handleCrash(stopEverything)
-			for {
-				printTasks()
-				time.Sleep(10 * time.Millisecond)
-			}
-		}()
+		if !isCI {
+			go func() {
+				defer handleCrash(stopEverything)
+				for {
+					printTasks()
+					time.Sleep(10 * time.Millisecond)
+				}
+			}()
+		}
 
 		stopRuns := &sync.Map{}
 		work := make(chan types.Task)
 
 		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
-
-		log.Printf("semaphores=%v\n", semaphores)
 
 		go func() {
 			defer handleCrash(stopEverything)
@@ -251,7 +251,7 @@ func main() {
 				anyError := tasks.Any(func(task types.Task) bool {
 					if v, ok := statuses.Load(task.Name); ok {
 						status := v.(*taskStatus)
-						return task.RestartPolicy == "Never" && status.reason == "error"
+						return task.GetRestartPolicy() == "Never" && status.reason == "error"
 					}
 					return false
 
@@ -439,12 +439,13 @@ func main() {
 
 							return prc.Run(runCtx, out, out)
 						}()
+
 						if err != nil {
 							if errors.Is(err, context.Canceled) {
 								return
 							}
 							status.reason = "error"
-							log.Printf("error %v\n", err)
+							log.Printf("task failed: %v\n", err)
 							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
@@ -469,8 +470,8 @@ func main() {
 		wg.Wait()
 
 		for _, task := range tasks {
-			if v, ok := statuses.Load(task.Name); ok && v.(*taskStatus).reason == "error" {
-				return fmt.Errorf("%s failed", task.Name)
+			if v, ok := statuses.Load(task.Name); ok && v.(*taskStatus).reason == "error" && task.GetRestartPolicy() == "Never" {
+				return fmt.Errorf("%s errored", task.Name)
 			}
 		}
 		return nil
