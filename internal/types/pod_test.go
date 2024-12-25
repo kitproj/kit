@@ -48,6 +48,10 @@ func TestEnvVar_String(t *testing.T) {
 }
 
 func TestTask_AllTargetsExist(t *testing.T) {
+	// touch testdata/younger
+	err := os.Chtimes("testdata/younger", time.Now(), time.Now())
+	assert.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		sources Strings

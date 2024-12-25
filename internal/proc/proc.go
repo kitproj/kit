@@ -15,12 +15,14 @@ type Interface interface {
 }
 
 func New(t types.Task, log *log.Logger, spec types.PodSpec) Interface {
-	if t.Image == "" {
-		if len(t.Command) == 0 {
-			return &noop{}
-		}
-		return &host{log: log, Task: t, spec: spec}
-	} else {
+	if t.Image != "" {
 		return &container{log: log, Task: t, spec: spec}
 	}
+	if len(t.Command) > 0 {
+		return &host{log: log, Task: t, spec: spec}
+	}
+	if t.Sh != "" {
+		return &shell{Task: t, spec: spec}
+	}
+	return &noop{}
 }

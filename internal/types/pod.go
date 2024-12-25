@@ -259,6 +259,8 @@ type Task struct {
 	Command Strings `json:"command,omitempty"`
 	// The arguments to pass to the command
 	Args Strings `json:"args,omitempty"`
+	// The shell script to run, instead of the command
+	Sh string `json:"sh,omitempty"`
 	// The working directory in the container or on the host
 	WorkingDir string `json:"workingDir,omitempty"`
 	// The user to run the task as.
@@ -283,7 +285,7 @@ type Task struct {
 	Dependencies Strings `json:"dependencies,omitempty"`
 	// A list of files this task will create. If these exist, and they're newer than the watched files, the task is skipped.
 	Targets Strings `json:"targets,omitempty"`
-	// The restart policy, e.g. Always, Never, OnFailure
+	// The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type of task.
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 }
 
@@ -327,7 +329,10 @@ func (t *Task) GetRestartPolicy() string {
 	if t.RestartPolicy != "" {
 		return t.RestartPolicy
 	}
-	return "OnFailure"
+	if t.IsBackground() {
+		return "OnFailure"
+	}
+	return "Never"
 }
 
 func (t *Task) String() string {

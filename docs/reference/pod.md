@@ -738,6 +738,7 @@ Reference this group by using
 | [readinessProbe](#readinessprobe)   | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/readinessProbe")                            |
 | [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
+| [sh](#sh)                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")                           |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
 | [env](#env-1)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
@@ -877,6 +878,24 @@ The arguments to pass to the command
 #### args Type
 
 `string[]`
+
+### sh
+
+The shell script to run, instead of the command
+
+`sh`
+
+*   is optional
+
+*   Type: `string` ([sh](pod-defs-task-properties-sh.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")
+
+#### sh Type
+
+`string` ([sh](pod-defs-task-properties-sh.md))
 
 ### workingDir
 
@@ -1096,7 +1115,7 @@ A list of files this task will create. If these exist, and they're newer than th
 
 ### restartPolicy
 
-The restart policy, e.g. Always, Never, OnFailure
+The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type of task.
 
 `restartPolicy`
 

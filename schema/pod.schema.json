@@ -321,6 +321,11 @@
           "title": "args",
           "description": "The arguments to pass to the command"
         },
+        "sh": {
+          "type": "string",
+          "title": "sh",
+          "description": "The shell script to run, instead of the command"
+        },
         "workingDir": {
           "type": "string",
           "title": "workingDir",
@@ -387,7 +392,7 @@
         "restartPolicy": {
           "type": "string",
           "title": "restartPolicy",
-          "description": "The restart policy, e.g. Always, Never, OnFailure"
+          "description": "The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type of task."
         }
       },
       "additionalProperties": false,
