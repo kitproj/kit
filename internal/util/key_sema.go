@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"runtime"
 	"sync"
 
@@ -25,7 +24,6 @@ func (s Semaphores) Get(key string) *semaphore.Weighted {
 	if !ok {
 		seats = runtime.NumCPU()
 	}
-	log.Printf("seat for key %s is %d", key, seats)
 	actual, _ := s.values.LoadOrStore(key, semaphore.NewWeighted(int64(seats)))
 	mutex := actual.(*semaphore.Weighted)
 	return mutex

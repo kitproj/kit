@@ -700,8 +700,6 @@ func (t Tasks) Any(f func(Task) bool) bool {
 
 // Task is a unit of work that should be run.
 type PodSpec struct {
-	// LogLevel the log level to use by default.
-	LogLevel LogLevel `json:"logLevel,omitempty"`
 	// TerminationGracePeriodSeconds is the grace period for terminating the pod.
 	TerminationGracePeriodSeconds *int32 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Tasks is a list of tasks that should be run.

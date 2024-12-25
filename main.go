@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	_ "embed"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -19,14 +17,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fatih/color"
+	"golang.org/x/crypto/ssh/terminal"
+
 	"github.com/fsnotify/fsnotify"
-	kitio "github.com/kitproj/kit/internal/io"
 	"github.com/kitproj/kit/internal/proc"
 	"github.com/kitproj/kit/internal/types"
 	"github.com/kitproj/kit/internal/util"
-	"golang.org/x/crypto/ssh/terminal"
-	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
 
@@ -39,38 +35,23 @@ var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor,
 	os.Getenv("BUILD_ID") != "" || // Jenkins, TeamCity
 	os.Getenv("RUN_ID") != "" || // TaskCluster, Codefresh
 	os.Getenv("GITHUB_ACTIONS") == "true"
-var faint = color.New(color.Faint).Sprint
-
-const escape = "\x1b"
 
 const defaultConfigFile = "tasks.yaml"
 
-type message struct{ text, level string }
-
 type taskStatus struct {
 	reason  string
-	message message
-	stdout  io.Writer
-	stderr  io.Writer
 	backoff backoff
-}
-
-func last(p string) string {
-	parts := strings.Split(strings.TrimSpace(p), "\n")
-	return parts[len(parts)-1]
 }
 
 func main() {
 	help := false
 	printVersion := false
 	configFile := ""
-	logLevel := string(types.LogLevelOff)
 	noWatch := os.Getenv("WATCH") == "0" || os.Getenv("KIT_WATCH") == "0"
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
-	flag.StringVar(&logLevel, "l", os.Getenv("KIT_LOG_LEVEL"), "log level (DEBUG, INFO, WARN, ERROR), defaults to KIT_LOG_LEVEL env var")
 	flag.BoolVar(&noWatch, "W", false, "do not watch for changes, defaults to KIT_WATCH=0 env var")
 	flag.Parse()
 	args := flag.Args()
@@ -84,8 +65,6 @@ func main() {
 		fmt.Println(tag)
 		os.Exit(0)
 	}
-
-	started := time.Now()
 
 	err := func() error {
 
@@ -115,29 +94,10 @@ func main() {
 			return errors.New("metadata.name is required")
 		}
 
-		if logLevel == "" {
-			logLevel = string(pod.Spec.LogLevel)
-		}
+		log.SetFlags(0)
 
-		if logLevel == "" {
-			logLevel = string(types.LogLevelOff)
-		}
-
-		if isCI {
-			logLevel = string(types.LogLevelDebug)
-		}
-
-		// set-up logs
-		stdout := kitio.NewLogLevelWriter(types.LogLevel(logLevel), kitio.NewLogColorizer(os.Stdout))
-
-		logs := "logs"
-
-		_ = os.MkdirAll(logs, 0o777)
-		f, err := os.Create(filepath.Join(logs, "kit.log"))
-		if err != nil {
-			panic(err)
-		}
-		log.SetOutput(io.MultiWriter(f, stdout))
+		// clear the screen
+		fmt.Print("\x1b[2J")
 
 		log.Printf("tag=%v\n", tag)
 		log.Printf("isCI=%v\n", isCI)
@@ -145,41 +105,33 @@ func main() {
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
-		log.Printf("tasks: %v\n", tasks)
-
 		statuses := sync.Map{}
 		for _, task := range tasks {
-			logFile, err := os.Create(filepath.Join(logs, task.Name+".log"))
-			if err != nil {
-				panic(err)
-			}
+
 			x := &taskStatus{
 				reason:  "waiting",
 				backoff: defaultBackoff,
 			}
-			x.stdout = io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
-				x.message = message{last(string(p)), "info"}
-				return len(p), nil
-			}), kitio.NewPrefixWriter(task.Name+": ", stdout))
-			x.stderr = io.MultiWriter(logFile, funcWriter(func(p []byte) (n int, err error) {
-				x.message = message{last(string(p)), "error"}
-				return len(p), nil
-			}), kitio.NewPrefixWriter(task.Name+": ", stdout))
+
 			statuses.Store(task.Name, x)
 		}
 		terminating := false
 		printTasks := func() {
-			width, height, _ := terminal.GetSize(0)
-			if width == 0 {
-				width = 80
-			}
+			defer handleCrash(stopEverything)
+
+			_, height, _ := terminal.GetSize(0)
 			if height == 0 {
 				height = 24
 			}
-			fmt.Printf("%s[2J", escape)   // clear screen
-			fmt.Printf("%s[0;0H", escape) // move to 0,0
 
-			numRunning := 0
+			// create a string builder
+			buf := &strings.Builder{}
+
+			// move home
+			buf.WriteString("\x1b[H")
+
+			// clear current line
+			buf.WriteString("\x1b[2K")
 
 			for _, t := range pod.Spec.Tasks {
 				v, ok := statuses.Load(t.Name)
@@ -191,82 +143,54 @@ func main() {
 					continue
 				}
 				reason := status.reason
-				const blackSquare = "■"
-				icon := blackSquare
 				switch reason {
 				case "starting":
-					icon = color.BlueString(blackSquare)
+					buf.WriteString("\x1b[1m")
 				case "running":
-					icon = color.GreenString(blackSquare)
-					numRunning++
+					buf.WriteString("\x1b[32m")
 				case "error":
-					icon = color.RedString(blackSquare)
+
+					buf.WriteString("\x1b[31m")
 				}
-				prefix := fmt.Sprintf("%s %-10s %-8s", icon, k8sstrings.ShortenString(t.Name, 10), reason)
-				if ports := t.GetHostPorts(); len(ports) > 0 {
-					prefix = prefix + " " + faint(ports)
-				}
-				entry := status.message
-				msgWidth := width - len(prefix) - 1
-				msg := ""
-				if msgWidth > 0 {
-					msg = k8sstrings.ShortenString(entry.text, msgWidth)
-					if entry.level == "error" {
-						msg = color.RedString(msg)
-					}
-				}
-				fmt.Println(prefix + " " + msg)
+
+				buf.WriteString(t.Name)
+				buf.WriteString(" ")
+				buf.WriteString(status.reason)
+				buf.WriteString(" ")
+				// faint
+				buf.WriteString("\x1b[2m")
+				// write the hosts
+				buf.WriteString(fmt.Sprint(t.GetHostPorts()))
+				// three spaces
+				buf.WriteString("   ")
+				// reset
+				buf.WriteString("\x1b[0m")
 			}
-			items := []string{
-				strings.TrimSpace(tag),
-				fmt.Sprint(time.Since(started).Truncate(time.Second)),
-				"logs in " + logs,
-				"[1..4+Enter] enable logging at ERROR..DEBUG",
-				"[0+Enter] disable logging",
-			}
-			if terminating {
-				items = append(items, "terminating...")
-			}
-			fmt.Println(faint(strings.Join(items, "  ")))
+
+			// clear to the end of the line
+			buf.WriteString("\x1b[K")
+
+			// new line
+			buf.WriteString("\n")
+
+			// move to the bottom
+			buf.WriteString(fmt.Sprintf("\x1b[%d;0H", height))
+
+			// print the buffer
+			fmt.Print(buf.String())
 		}
 
-		// every 1/2 second print the current status to the terminal
+		// every few milli-seconds print the current status to the terminal
 		go func() {
 			defer handleCrash(stopEverything)
 			for {
-				if stdout.GetLogLevel() == types.LogLevelOff {
-					printTasks()
-				}
-				time.Sleep(time.Second / 5)
+				printTasks()
+				time.Sleep(10 * time.Millisecond)
 			}
 		}()
 
 		stopRuns := &sync.Map{}
 		work := make(chan types.Task)
-
-		go func() {
-			defer handleCrash(stopEverything)
-			r := bufio.NewScanner(os.Stdin)
-			for r.Scan() {
-				parts := strings.Split(r.Text(), " ")
-				switch parts[0] {
-				case "1", "2", "3", "4", "0":
-					switch parts[0] {
-					case "1":
-						stdout.SetLogLevel(types.LogLevelError)
-					case "2":
-						stdout.SetLogLevel(types.LogLevelWarn)
-					case "3":
-						stdout.SetLogLevel(types.LogLevelInfo)
-					case "4":
-						stdout.SetLogLevel(types.LogLevelDebug)
-					case "0":
-						stdout.SetLogLevel("")
-					}
-					_, _ = stdout.Write([]byte(fmt.Sprintf("logging level %s\n", stdout.GetLogLevel())))
-				}
-			}
-		}()
 
 		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
 
@@ -294,7 +218,6 @@ func main() {
 			select {
 			case <-ctx.Done():
 			default:
-				log.Printf("%s: starting downstream tasks\n", name)
 				for _, downstream := range tasks.GetDownstream(name) {
 					fulfilled := true
 					for _, upstream := range downstream.Dependencies {
@@ -307,7 +230,6 @@ func main() {
 						}
 					}
 					if fulfilled {
-						log.Printf("%s: starting: %s\n", name, downstream.Name)
 						work <- downstream
 					}
 				}
@@ -344,9 +266,19 @@ func main() {
 		for t := range work {
 			name := t.Name
 
-			prc := proc.New(t, pod.Spec)
 			v, _ := statuses.Load(t.Name)
 			status := v.(*taskStatus)
+
+			code := 0
+
+			for _, x := range t.Name {
+				code += int(x)
+			}
+
+			code = 30 + code%7
+
+			log := log.New(os.Stdout, fmt.Sprintf("\033[0;%dm[%s] ", code, t.Name), 0)
+			prc := proc.New(t, log, pod.Spec)
 
 			processCtx, stopProcess := context.WithCancel(ctx)
 			defer stopProcess()
@@ -375,7 +307,6 @@ func main() {
 									return err
 								}
 								if d.IsDir() {
-									log.Printf("%s: watching %q\n", t.Name, path)
 									return watcher.Add(path)
 								}
 								return nil
@@ -397,7 +328,7 @@ func main() {
 						case e := <-watcher.Events:
 							// ignore chmod events, these can be triggered by the editor, but we don't care
 							if e.Op != fsnotify.Chmod {
-								log.Printf("%s: %v changed\n", t.Name, e)
+								log.Printf("%v changed\n", e)
 								timer.Reset(time.Second)
 							}
 						case err := <-watcher.Errors:
@@ -414,7 +345,7 @@ func main() {
 				defer wg.Done()
 
 				if f, ok := stop.Load(name); ok {
-					log.Printf("%s: stopping process\n", t.Name)
+					log.Printf("stopping process\n")
 					f.(context.CancelFunc)()
 				}
 
@@ -422,19 +353,19 @@ func main() {
 
 				if m := t.Mutex; m != "" {
 					mutex := util.GetMutex(m)
-					_, _ = fmt.Fprintf(status.stdout, "waiting for mutex %q\n", m)
+					log.Printf("waiting for mutex %q\n", m)
 					mutex.Lock()
-					_, _ = fmt.Fprintf(status.stdout, "locked mutex %q\n", m)
+					log.Printf("locked mutex %q\n", m)
 					defer mutex.Unlock()
 				}
 
 				if s := t.Semaphore; s != "" {
-					_, _ = fmt.Fprintf(status.stdout, "waiting for semaphore %q\n", s)
+					log.Printf("waiting for semaphore %q\n", s)
 					semaphore := semaphores.Get(s)
 					if err := semaphore.Acquire(ctx, 1); err != nil {
 						return
 					}
-					_, _ = fmt.Fprintf(status.stdout, "acquired semaphore %q\n", s)
+					log.Printf("acquired semaphore %q\n", s)
 					defer semaphore.Release(1)
 				}
 
@@ -452,33 +383,31 @@ func main() {
 
 						// if the task targets exist, we can skip the task
 						if t.Skip() {
-							log.Printf("%s: skipping process\n", t.Name)
+							log.Printf("skipping process\n")
 							status.reason = "success"
 							maybeStartDownstream(name)
 							break
 						}
 
-						log.Printf("%s: starting process\n", t.Name)
 						err := func() error {
 							runCtx, stopRun := context.WithCancel(processCtx)
 							defer stopRun()
 							stopRuns.Store(t.Name, stopRun)
 							status.reason = "starting"
-							log.Printf("%s: resetting process\n", t.Name)
 							if err := prc.Reset(runCtx); err != nil {
 								return err
 							}
 							for _, port := range t.GetHostPorts() {
-								log.Printf("%s: waiting for port %d to be free\n", t.Name, port)
+								log.Printf("waiting for port %d to be free\n", port)
 								if err := isPortFree(port); err != nil {
 									return err
 								}
 							}
 							if probe := t.GetLivenessProbe(); probe != nil {
-								log.Printf("%s: liveness probe=%v\n", t.Name, probe)
+								log.Printf("liveness probe=%v\n", probe)
 								liveFunc := func(live bool, err error) {
 									if !live {
-										log.Printf("%s: is dead, stopping\n", t.Name)
+										log.Printf("is dead, stopping\n")
 										stopRun()
 									}
 								}
@@ -486,14 +415,14 @@ func main() {
 							}
 							if probe := t.GetReadinessProbe(); probe != nil {
 								status.reason = "starting"
-								log.Printf("%s: readiness probe=%v\n", t.Name, probe)
+								log.Printf("readiness probe=%v\n", probe)
 								readyFunc := func(ready bool, err error) {
 									if ready {
-										log.Printf("%s: is ready, starting downstream\n", t.Name)
+										log.Printf("is ready, starting downstream\n")
 										status.reason = "running"
 										maybeStartDownstream(name)
 									} else {
-										log.Printf("%s: is not ready\n", t.Name)
+										log.Printf("is not ready\n")
 										status.reason = "error"
 									}
 								}
@@ -501,15 +430,21 @@ func main() {
 							} else {
 								status.reason = "running"
 							}
-							log.Printf("%s: running process\n", t.Name)
-							return prc.Run(runCtx, status.stdout, status.stderr)
+
+							// the log.Writer does not add the prefix, so we need to add it manually
+							out := funcWriter(func(bytes []byte) (int, error) {
+								log.Print(string(bytes))
+								return len(bytes), nil
+							})
+
+							return prc.Run(runCtx, out, out)
 						}()
 						if err != nil {
 							if errors.Is(err, context.Canceled) {
 								return
 							}
 							status.reason = "error"
-							_, _ = fmt.Fprintf(status.stderr, "%v\n", err)
+							log.Printf("error %v\n", err)
 							status.backoff = status.backoff.next()
 						} else {
 							status.reason = "success"
@@ -524,7 +459,7 @@ func main() {
 						}
 					}
 					if !terminating {
-						log.Printf("%s: backing off %s\n", t.Name, status.backoff.Duration)
+						log.Printf("backing off %s\n", status.backoff.Duration)
 						time.Sleep(status.backoff.Duration)
 					}
 				}

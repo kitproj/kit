@@ -153,11 +153,6 @@
     },
     "PodSpec": {
       "properties": {
-        "logLevel": {
-          "type": "string",
-          "title": "logLevel",
-          "description": "LogLevel the log level to use by default."
-        },
         "terminationGracePeriodSeconds": {
           "type": "integer",
           "title": "terminationGracePeriodSeconds",

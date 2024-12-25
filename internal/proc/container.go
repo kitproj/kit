@@ -13,10 +13,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/registry"
-
 	"github.com/docker/cli/cli/config"
+	"github.com/docker/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -25,6 +23,7 @@ import (
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/nat"
 	"github.com/kitproj/kit/internal/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -32,16 +31,16 @@ import (
 )
 
 type container struct {
+	log  *log.Logger
 	spec types.PodSpec
 	types.Task
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
+	log := c.log
 	data, _ := json.Marshal(c.Task)
 	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))
-
-	log.Printf("%s: expected hash: %s", c.Name, expectedHash)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -52,11 +51,9 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
 	id, existingHash, err := c.getContainer(ctx, cli)
 
-	log.Printf("%s: existing hash: %s", c.Name, existingHash)
-
 	// If the container exists and the hash is different, remove it.
 	if id != "" && existingHash != expectedHash {
-		log.Printf("%s: removing container %s", c.Name, id)
+		log.Printf("removing container %s", id)
 		if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
 			return fmt.Errorf("failed to remove container: %w", err)
 		}
@@ -71,26 +68,26 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to get container ID: %w", err)
 	} else if id != "" {
-		log.Printf("%s: container already exists, skipping build/pull\n", c.Name)
+		log.Printf("container already exists, skipping build/pull\n")
 	} else if _, err := os.Stat(dockerfile); err == nil {
-		log.Printf("%s: creating tar image from %q", c.Name, dockerfile)
+		log.Printf("creating tar image from %q", dockerfile)
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
 			return err
 		}
 		defer r.Close()
-		log.Printf("%s: building image from %q", c.Name, dockerfile)
+		log.Printf("building image from %q", dockerfile)
 		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{c.Name}})
 		if err != nil {
 			return fmt.Errorf("failed to build image: %w", err)
 		}
 		defer resp.Body.Close()
-		log.Printf("%s: building image from %q (logs)", c.Name, dockerfile)
+		log.Printf("building image from %q (logs)", dockerfile)
 		if _, err = io.Copy(stdout, resp.Body); err != nil {
 			return fmt.Errorf("failed to build image (logs): %w", err)
 		}
 	} else if c.ImagePullPolicy != "Never" {
-		log.Printf("%s: pulling image %q", c.Name, c.Image)
+		log.Printf("pulling image %q", c.Image)
 
 		ref, err := reference.ParseNormalizedNamed(c.Image)
 		if err != nil {
@@ -154,7 +151,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		image = c.Name
 	}
 
-	log.Printf("%s: creating container", c.Name)
+	log.Printf("creating container")
 	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
 		Hostname:     c.Name,
 		ExposedPorts: portSet,
@@ -182,26 +179,24 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		log.Printf("%s: context cancelled, stopping container", c.Name)
+		log.Printf("context cancelled, stopping container")
 		if err := c.stop(context.Background()); err != nil {
-			log.Printf("%s: failed to stop: %v", c.Name, err)
+			log.Printf("failed to stop: %v", err)
 		}
 	}()
-	log.Printf("%s: logging container\n", c.Name)
 	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
 		Since:      time.Now().Format(time.RFC3339),
 	})
-	log.Printf("%s: logged container %v", c.Name, err)
 	if err != nil {
 		return fmt.Errorf("failed to log container: %w", err)
 	}
 	defer logs.Close()
 	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
 		// ignore errors, might be content cancelled, we still need to wait for the container to exit
-		log.Printf("%s: failed to log container: %v", c.Name, err)
+		log.Printf("failed to log container: %v", err)
 	}
 	waitC, errC := cli.ContainerWait(context.Background(), id, dockercontainer.WaitConditionNotRunning)
 	select {
@@ -253,7 +248,11 @@ func (c *container) Reset(ctx context.Context) error {
 }
 
 func (c *container) stop(ctx context.Context) error {
-	log.Printf("%s: stopping container\n", c.Name)
+	if c.Name == "" {
+		return nil
+	}
+	log := c.log
+	log.Printf("stopping container\n")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -264,12 +263,10 @@ func (c *container) stop(ctx context.Context) error {
 		return err
 	}
 	grace := c.spec.GetTerminationGracePeriod()
-	log.Printf("%s: stopping container %q\n", c.Name, id)
 	timeout := int(grace.Seconds())
 	err = cli.ContainerStop(ctx, id, dockercontainer.StopOptions{
 		Timeout: &timeout,
 	})
-	log.Printf("%s: stopped container %q: %v\n", c.Name, id, err)
 	if ignoreNotExist(err) != nil {
 		return fmt.Errorf("failed to stop container: %w", err)
 	}
@@ -279,20 +276,16 @@ func (c *container) stop(ctx context.Context) error {
 const hashLabel = "kit.hash"
 
 func (c *container) getContainer(ctx context.Context, cli *client.Client) (string, string, error) {
-	log.Printf("%s: listing containers", c.Name)
 	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
-	log.Printf("%s: listed %d containers: %v", c.Name, len(list), err)
 	if err != nil {
 		return "", "", err
 	}
 	for _, existing := range list {
 		if slices.Contains(existing.Names, "/"+c.Name) {
 			id := existing.ID
-			log.Printf("%s: found container: %s", c.Name, id)
 			return id, existing.Labels[hashLabel], nil
 		}
 	}
-	log.Printf("%s: container not found", c.Name)
 	return "", "", nil
 }
 
