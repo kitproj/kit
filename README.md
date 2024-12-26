@@ -10,7 +10,9 @@ Make the dev loop crazy fast.
 
 ## What
 
-Kit is a software development tool designed to turbo-charge the software development process, with inspiration from several  tools, including Foreman, Docker Compose, Podman, Tilt, Skaffold, and Garden. It combines key features and capabilities of these tools, while also offering additional functionality and flexibility.
+Kit is a software development tool designed to turbo-charge the software development process. 
+
+Kit combines both task execution (like Foreman), container management (like Docker Compose), Kubernetes-like features (like Tilt, Skaffold), and a focus on local development (like Garden) in a single, easy-to-use binary.
 
 It is designed to work seamlessly with both local-dev and cloud-dev environments, such as Codespaces and Gitpod.
 
@@ -20,6 +22,8 @@ It is designed to work seamlessly with both local-dev and cloud-dev environments
 Key features of Kit include:
 
 * **Local testing**: Kit is designed for local testing, allowing developers to test their code on their local machines before pushing it to a test environment or production. This speeds up the testing process and helps developers catch and fix bugs more quickly.
+* **First-class container support**: Kit downloads and runs containers, allowing developers to test their code in a containerized environment without having to set up a separate container management system.
+* **First-class Kubernetes support**: Kit can deploy manifests to a cluster and automatically port-forward to the cluster.
 * **Advanced DAG architecture**: Kit's directed acyclic graph (DAG) structure allows for optimized parallel processing, reducing the time required for testing and speeding up the development process.
 * **Probes**: You can specify liveness probes for your tasks to see if they're working, automatically restarting them when they go wrong. You can also specify readiness probes for your tasks to see if they're ready.
 * **Dependency management**: You can specify dependencies between tasks, so when upstream tasks become successful or ready, downstream tasks are automatically started.
@@ -34,7 +38,7 @@ Kit was written with extensive help from AI.
 
 ## Install
 
-Like `jq`, `kit` is a tiny (8Mb) standalone binary. You can download it from the [releases page](https://github.com/kitproj/kit/releases/latest). 
+Like `jq`, `kit` is a small standalone binary. You can download it from the [releases page](https://github.com/kitproj/kit/releases/latest). 
 
 If you're on MacOS, you can use `brew`:
 

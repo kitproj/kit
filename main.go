@@ -172,6 +172,12 @@ func main() {
 			// new line
 			buf.WriteString("\n")
 
+			// clear to the end of the line
+			buf.WriteString("\x1b[K")
+
+			// new line
+			buf.WriteString("\n")
+
 			// move to the bottom
 			buf.WriteString(fmt.Sprintf("\x1b[%d;0H", height))
 
