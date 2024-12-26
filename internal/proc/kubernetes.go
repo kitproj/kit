@@ -136,7 +136,20 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			// if this is a deployment or a statefulset, then add the label to the pod template
 			if u.GetKind() == "Deployment" || u.GetKind() == "StatefulSet" {
-				labels, _, err := unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
+				// update selector labels
+				labels, _, err := unstructured.NestedMap(u.Object, "spec", "selector", "matchLabels")
+				if err != nil {
+					return err
+				}
+				labels["app.kubernetes.io/managed-by"] = "kit"
+				labels["app.kubernetes.io/name"] = k.Name
+				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
+				if err != nil {
+					return err
+				}
+
+				// update template labels
+				labels, _, err = unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
 				if err != nil {
 					return err
 				}
