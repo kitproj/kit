@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.23"
+  version "0.1.24"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.23/kit_0.1.23_Darwin_arm64.tar.gz"
-      sha256 "5252a20d0812d5b7ebc26b8f8d930964228d78506b62fd243576be32d6aeb75d"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.24/kit_0.1.24_Darwin_x86_64.tar.gz"
+      sha256 "579fbd0c82c5bbc9491a3e519b507810b2bee4e08960013f94a427ca98b14d46"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.23/kit_0.1.23_Darwin_x86_64.tar.gz"
-      sha256 "bebd791bc590585f7bfd048dee2efdacbd7e9623f8a404a70558ad40f27fb060"
+    if Hardware::CPU.arm?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.24/kit_0.1.24_Darwin_arm64.tar.gz"
+      sha256 "d512a36e9b69f2f1a8f681108e85ed63af2eb5634f9b24e4b47681aad93f7c9a"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.23/kit_0.1.23_Linux_arm64.tar.gz"
-      sha256 "1f46991ad2506c95bdb8f927a0d56303295d82dbbcc9fd9174ee6ea5d38b94be"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.24/kit_0.1.24_Linux_arm64.tar.gz"
+      sha256 "13e3547d3a972a554d2810a181ee17e916a577971a84d9473cd5afad5f1ea895"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.23/kit_0.1.23_Linux_x86_64.tar.gz"
-      sha256 "7d6d474207f838ae902e9bec18b52942062d3c6dc6c442dbadf9ce4f11bd0a2f"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.24/kit_0.1.24_Linux_x86_64.tar.gz"
+      sha256 "b97613e6a1e0fa713ff32836d949105e67190b4b88fbab389d8312e4f59fd5c8"
 
       def install
         bin.install "kit"
