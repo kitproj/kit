@@ -390,7 +390,7 @@ func main() {
 							log.Printf("skipping process\n")
 							status.reason = "success"
 							maybeStartDownstream(name)
-							break
+							return
 						}
 
 						err := func() error {
