@@ -115,7 +115,6 @@ func main() {
 
 			statuses.Store(task.Name, x)
 		}
-		terminating := false
 		printTasks := func() {
 			defer handleCrash(stopEverything)
 
@@ -186,7 +185,7 @@ func main() {
 				defer handleCrash(stopEverything)
 				for {
 					printTasks()
-					time.Sleep(10 * time.Millisecond)
+					time.Sleep(20 * time.Millisecond)
 				}
 			}()
 		}
@@ -206,7 +205,6 @@ func main() {
 		go func() {
 			defer handleCrash(stopEverything)
 			<-ctx.Done()
-			terminating = true
 			close(work)
 		}()
 
@@ -433,7 +431,11 @@ func main() {
 
 							// the log.Writer does not add the prefix, so we need to add it manually
 							out := funcWriter(func(bytes []byte) (int, error) {
-								log.Print(string(bytes))
+								// split on newlines
+								lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
+								for _, line := range lines {
+									log.Println(" " + line)
+								}
 								return len(bytes), nil
 							})
 
@@ -459,9 +461,14 @@ func main() {
 							return
 						}
 					}
-					if !terminating {
+					if t.IsBackground() {
 						log.Printf("backing off %s\n", status.backoff.Duration)
-						time.Sleep(status.backoff.Duration)
+
+						// exit if we are terminating
+						select {
+						case <-ctx.Done():
+						case <-time.After(status.backoff.Duration):
+						}
 					}
 				}
 			}(t, status, stopProcess)

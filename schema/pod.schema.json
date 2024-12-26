@@ -326,6 +326,11 @@
           "title": "sh",
           "description": "The shell script to run, instead of the command"
         },
+        "manifests": {
+          "$ref": "#/$defs/Strings",
+          "title": "manifests",
+          "description": "A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready."
+        },
         "workingDir": {
           "type": "string",
           "title": "workingDir",
