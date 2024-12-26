@@ -739,6 +739,7 @@ Reference this group by using
 | [command](#command)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/command")                                 |
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [sh](#sh)                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")                           |
+| [manifests](#manifests)             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/manifests")                               |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
 | [env](#env-1)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
@@ -896,6 +897,24 @@ The shell script to run, instead of the command
 #### sh Type
 
 `string` ([sh](pod-defs-task-properties-sh.md))
+
+### manifests
+
+A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready.
+
+`manifests`
+
+*   is optional
+
+*   Type: `string[]`
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/manifests")
+
+#### manifests Type
+
+`string[]`
 
 ### workingDir
 

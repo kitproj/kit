@@ -30,9 +30,46 @@ If `image` field is omitted, the value of `command` is used to start the process
     - name: foo
       command: go run ./demo/foo 
 ```
+
+### How to run a shell script
+
+You might want to put a multi-line a shell script. You can do this using the YAML `|` character:
+
+```yaml
+    - name: foo
+      sh: |
+        set -eux
+        echo "hello"
+        echo "world"
+```
+
+### How to run Kubernetes resources
+
+You can apply Kubernetes manifests and forward ports:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80
+  ```
+
+```yaml
+    - name: foo
+      manifests: manifests/nginx-pod.yaml
+      ports: 80:8080
+```
+
 ## Noop
 
-If `image` field is omitted and `command` is omitted, the task does nothing. This is used if you want to start several tasks, and conventionally you'd name the task `up`.
+If `image` field is omitted and `command` is omitted, the task does nothing. This is used if you want to start several
+tasks, and conventionally you'd name the task `up`.
 
 ```yaml
     # no image or command? this is a noop
@@ -62,9 +99,9 @@ You can set-up environment variables for all tasks:
 
 ```yaml
 spec:
-    env:
-        - FOO: bar
-    envfile: .env
+  env:
+    - FOO: bar
+  envfile: .env
 ```
 
 Or per task:
@@ -120,7 +157,7 @@ If the process is not alive (i.e. "dead"), then it is killed and restarted. Just
 
 ## How to run a shell script
 
-You might want to put a multi-line a shell script. You can do this using the YAML `|` character: 
+You might want to put a multi-line a shell script. You can do this using the YAML `|` character:
 
 ```yaml
   - name: foo
@@ -134,7 +171,8 @@ You might want to put a multi-line a shell script. You can do this using the YAM
 
 ## How to wait for forked tasks
 
-Kit's job is to manage your tasks for you. As a result, if you fork a task in a script, and the script exists, kit will terminate that forked task.
+Kit's job is to manage your tasks for you. As a result, if you fork a task in a script, and the script exists, kit will
+terminate that forked task.
 
 If you fork tasks, you can add a wait:
 
@@ -151,7 +189,7 @@ If you fork tasks, you can add a wait:
 ## Quitting
 
 Enter Ctrl+C to send a `SIGTERM` to the process. Each sub-process is then gets sent `SIGTERM`. If they do not exit
-_within 3s, then they get a `SIGKILL`. 
+_within 3s, then they get a `SIGKILL`.
 
 You can kill the tool using `kill` for another terminal. If you `kill -9`, then the sub-process will keep
 running and you must manually clean up.
@@ -163,7 +201,13 @@ running and you must manually clean up.
 
 ## How to pre-build for Cloud Development environments
 
-In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds" where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java service that you need to run, it might make sense to have a separate `pre-up` task that is run as part of the prebuild `kit pre-up` separate from your primary `kit up` task
+In most cases you will probably only have 1 top node in your command dependency graph (often named `up`). When
+developing in cloud workspaces (such as Codespaces, GitPod, etc.) it is common for teams to make use of "prebuilds"
+where longer running start-up tasks like dependency fetching are done in advance on every new commit so that when users
+start up a workspace these tasks can be pre-cached. In these cases it is recommended to have a task in your task list
+that can be run on prebuilds even if that task is not in your primary dependency graph. For example, if you have a java
+service that you need to run, it might make sense to have a separate `pre-up` task that is run as part of the prebuild
+`kit pre-up` separate from your primary `kit up` task
 
 ```yaml
   tasks:
@@ -199,10 +243,10 @@ If you want to prevent two tasks from running at the same time, you can use a mu
 
 ```yaml
 tasks:
-- name: foo
-  mutex: my-mutex
-- name: bar
-  mutex: my-mutex
+  - name: foo
+    mutex: my-mutex
+  - name: bar
+    mutex: my-mutex
 ```
 
 ### Semaphores
@@ -214,8 +258,8 @@ If you want to limit the number of tasks that can run at the same time, you can 
 semaphores:
   my-semaphore: 2
 tasks:
-- name: foo
-  semaphore: my-semaphore
-- name: bar
-  semaphore: my-semaphore
+  - name: foo
+    semaphore: my-semaphore
+  - name: bar
+    semaphore: my-semaphore
 ```

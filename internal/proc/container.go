@@ -3,10 +3,10 @@ package proc
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"hash/adler32"
 	"io"
 	"log"
 	"os"
@@ -40,7 +40,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	log := c.log
 	data, _ := json.Marshal(c.Task)
-	expectedHash := base64.StdEncoding.EncodeToString(sha256.New().Sum(data))
+	expectedHash := fmt.Sprintf("%x", adler32.Checksum(data))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {

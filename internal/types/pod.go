@@ -261,6 +261,8 @@ type Task struct {
 	Args Strings `json:"args,omitempty"`
 	// The shell script to run, instead of the command
 	Sh string `json:"sh,omitempty"`
+	// A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready.
+	Manifests Strings `json:"manifests,omitempty"`
 	// The working directory in the container or on the host
 	WorkingDir string `json:"workingDir,omitempty"`
 	// The user to run the task as.

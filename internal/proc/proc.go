@@ -24,5 +24,8 @@ func New(t types.Task, log *log.Logger, spec types.PodSpec) Interface {
 	if t.Sh != "" {
 		return &shell{Task: t, spec: spec}
 	}
+	if len(t.Manifests) > 0 {
+		return &k8s{log: log, Task: t, spec: spec}
+	}
 	return &noop{}
 }

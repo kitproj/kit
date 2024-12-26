@@ -3,51 +3,53 @@ kind: Tasks
 metadata:
   name: kit
 spec:
-  semaphores:
-    two: 2
   tasks:
-  - name: awn
-    command: ./demo/awn/awn.sh
-    ports: 9000
-  - name: foo
-    command: go run ./demo/foo
-    ports: "8080"
-    semaphore: two
-  - name: build-bar
+  - name: build-go-demo
     command: go build -v .
-    watch: demo/bar/main.go
-    workingDir: demo/bar
-    semaphore: two
-  - name: bar
-    command: ./demo/bar/bar
-    dependencies: build-bar
+    watch: demo/go/main.go
+    workingDir: demo/go
+
+  - name: go-demo
+    command: ./demo/go/go
+    dependencies: build-go-demo
     env:
     - PORT=9090
     ports: "9090"
     readinessProbe: http://:9090
-    semaphore: two
+
   - name: baz
     image: httpd
     ports: 80:10080
     readinessProbe: http://:10080?initialDelay=3s
-  - name: init
+
+  - name: docker
     command: ls /work
     image: ubuntu
     volumeMounts:
     - mountPath: /work
       name: work
+
   - name: error
     sh: |
       echo "hello" >&2
       echo "I'm an error" >&2
       sleep 3s
       exit 1
+
   - name: script
     sh: |
-        echo "hello world"
+      echo "hello world"
+      sleep 60
+
+  - name: k8s
+    manifests: testdata
+    ports: "80:8080"
+
   - name: up
-    dependencies: awn foo bar baz script
+    dependencies: go-demo docker script k8s
+
   terminationGracePeriodSeconds: 3
+
   volumes:
   - hostPath:
       path: .
