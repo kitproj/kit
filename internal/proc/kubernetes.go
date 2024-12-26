@@ -127,16 +127,32 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			}
 			labels := u.GetLabels()
 			labels["app.kubernetes.io/managed-by"] = "kit"
+			labels["app.kubernetes.io/name"] = k.Name
 			u.SetLabels(labels)
+
+			if u.GetNamespace() == "" {
+				u.SetNamespace(defaultNamespace)
+			}
+
+			// if this is a deployment or a statefulset, then add the label to the pod template
+			if u.GetKind() == "Deployment" || u.GetKind() == "StatefulSet" {
+				labels, _, err := unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
+				if err != nil {
+					return err
+				}
+				labels["app.kubernetes.io/managed-by"] = "kit"
+				labels["app.kubernetes.io/name"] = k.Name
+				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
+				if err != nil {
+					return err
+				}
+			}
 
 			// add a hash of the manifest to the annotations
 			annotations := u.GetAnnotations()
 			annotations["kit.hash"] = fmt.Sprintf("%x", adler32.Checksum(doc))
 			u.SetAnnotations(annotations)
 
-			if u.GetNamespace() == "" {
-				u.SetNamespace(defaultNamespace)
-			}
 			uns = append(uns, u)
 		}
 
@@ -174,7 +190,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				// has the manifest changed?
 				existingHash := existing.GetAnnotations()["kit.hash"]
 				if existingHash == expectedHash {
-					log.Printf("Skipping  %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+					log.Printf("Skipping %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 					continue
 				}
 
@@ -208,8 +224,12 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	// Add event handlers
 	processPod := func(obj any) {
 		pod := obj.(*corev1.Pod)
+
 		// is the pod labelled with the managed-by label?
 		if pod.GetLabels()["app.kubernetes.io/managed-by"] != "kit" {
+			return
+		}
+		if pod.GetLabels()["app.kubernetes.io/name"] != k.Name {
 			return
 		}
 
