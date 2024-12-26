@@ -150,7 +150,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			// add a hash of the manifest to the annotations
 			annotations := u.GetAnnotations()
-			annotations["kit.hash"] = fmt.Sprintf("%x", adler32.Checksum(doc))
+			annotations["app.kubernetes.io/version"] = fmt.Sprintf("%x", adler32.Checksum(doc))
 			u.SetAnnotations(annotations)
 
 			uns = append(uns, u)
@@ -186,9 +186,9 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					return err
 				}
 			} else {
-				expectedHash := u.GetAnnotations()["kit.hash"]
+				expectedHash := u.GetAnnotations()["app.kubernetes.io/version"]
 				// has the manifest changed?
-				existingHash := existing.GetAnnotations()["kit.hash"]
+				existingHash := existing.GetAnnotations()["app.kubernetes.io/version"]
 				if existingHash == expectedHash {
 					log.Printf("Skipping %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 					continue
