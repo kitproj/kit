@@ -162,14 +162,13 @@ func (p Port) MarshalJSON() ([]byte, error) {
 
 func (p *Port) Unstring(s string) error {
 	parts := strings.Split(s, ":")
+	containerPort, err := strconv.ParseUint(parts[0], 10, 16)
+	p.ContainerPort = uint16(containerPort)
 	switch len(parts) {
 	case 1:
-		containerPort, err := strconv.ParseUint(s, 10, 16)
-		p.ContainerPort = uint16(containerPort)
+		p.HostPort = p.ContainerPort
 		return err
 	case 2:
-		containerPort, err := strconv.ParseUint(parts[0], 10, 16)
-		p.ContainerPort = uint16(containerPort)
 		hostPort, err := strconv.ParseUint(parts[1], 10, 16)
 		p.HostPort = uint16(hostPort)
 		return err
