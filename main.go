@@ -296,8 +296,8 @@ func main() {
 						panic(err)
 					}
 					defer watcher.Close()
-					for _, w := range t.Watch {
-
+					for _, source := range t.Watch {
+						w := filepath.Join(t.WorkingDir, source)
 						stat, err := os.Stat(w)
 						if err != nil {
 							panic(err)

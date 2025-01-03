@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -216,10 +217,10 @@ func (v EnvVars) Environ() ([]string, error) {
 type Envfile Strings
 
 // Environ reads the returns the environ
-func (f Envfile) Environ() ([]string, error) {
+func (f Envfile) Environ(workingDir string) ([]string, error) {
 	var environ []string
-	for _, file := range f {
-		file, err := os.Open(string(file))
+	for _, e := range f {
+		file, err := os.Open(filepath.Join(workingDir, e))
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func (t *Task) IsRestart() bool {
 }
 
 func (t *Task) Environ() ([]string, error) {
-	environ, err := t.Envfile.Environ()
+	environ, err := t.Envfile.Environ(t.WorkingDir)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +372,7 @@ func (t *Task) Skip() bool {
 
 	youngestSource := time.Time{}
 	for _, source := range t.Watch {
-		stat, err := os.Stat(source)
+		stat, err := os.Stat(filepath.Join(t.WorkingDir, source))
 		if err != nil {
 			continue
 		}
@@ -382,7 +383,7 @@ func (t *Task) Skip() bool {
 
 	oldestTarget := time.Now()
 	for _, target := range t.Targets {
-		stat, err := os.Stat(target)
+		stat, err := os.Stat(filepath.Join(t.WorkingDir, target))
 		// if the target does not exist, we must run the task
 		if err != nil {
 			return false
@@ -729,7 +730,7 @@ func (s *PodSpec) GetTerminationGracePeriod() time.Duration {
 
 // Retuns the environment variables for the spec.
 func (s *PodSpec) Environ() ([]string, error) {
-	environ, err := s.Envfile.Environ()
+	environ, err := s.Envfile.Environ("")
 	if err != nil {
 		return nil, err
 	}

@@ -42,7 +42,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	log := k.log
 	// apply the manifests
 	var files []string
-	for _, file := range k.Manifests {
+	for _, manifest := range k.Manifests {
+		file := filepath.Join(k.WorkingDir, manifest)
 		// walk the file tree
 		err := filepath.WalkDir(file, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
