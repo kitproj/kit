@@ -249,40 +249,40 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 		log.Printf("Pod added: %s/%s\n", pod.Namespace, pod.Name)
 
-		// start a log tail
-		key := pod.Namespace + "/" + pod.Name
+		for _, c := range append(pod.Spec.InitContainers, pod.Spec.Containers...) {
+			go func() {
+				// start a log tail
+				key := pod.Namespace + "/" + pod.Name + "/" + c.Name
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("Error while tailing logs: %s: %v\n", key, r)
+					}
+					logging.Delete(key)
+				}()
 
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Printf("Error while tailing logs: %s: %v\n", pod.Name, r)
+				// check if the pod is already being logged
+				if _, ok := logging.Load(key); ok {
+					log.Printf("Skipping log tail for container %s: already tailing\n", key)
+					return
 				}
-				logging.Delete(key)
+				logging.Store(key, true)
+
+				log.Printf("Starting log tail for container %s\n", key)
+
+				req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+					Follow:    true,
+					Container: c.Name,
+				})
+				podLogs, err := req.Stream(ctx)
+				if err != nil {
+					panic(fmt.Errorf("Error opening stream: %s\n", err))
+				}
+				defer podLogs.Close()
+				_, err = io.Copy(stdout, podLogs)
+				if err != nil && !errors.Is(err, context.Canceled) {
+					panic(fmt.Errorf("Error copying stream: %s\n", err))
+				}
 			}()
-
-			// check if the pod is already being logged
-			if _, ok := logging.Load(key); ok {
-				log.Printf("Skipping log tail for pod %s/%s: already tailing\n", pod.Namespace, pod.Name)
-				return
-			}
-			logging.Store(key, true)
-
-			log.Printf("Starting log tail for pod %s/%s\n", pod.Namespace, pod.Name)
-
-			req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Follow: true})
-			podLogs, err := req.Stream(ctx)
-			if err != nil {
-				panic(fmt.Errorf("Error opening stream: %s\n", err))
-			}
-			defer podLogs.Close()
-			_, err = io.Copy(stdout, podLogs)
-			if err != nil && !errors.Is(err, context.Canceled) {
-				panic(fmt.Errorf("Error copying stream: %s\n", err))
-			}
-		}()
-
-		// start port-forwarding
-		for _, c := range pod.Spec.Containers {
 			for _, port := range c.Ports {
 				// only forward host ports
 				containerPort := port.ContainerPort
@@ -302,21 +302,21 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 				// start port-forwarding
 				go func() {
-					portForwardingKey := key + "/" + c.Name + " / " + fmt.Sprintf("%d", containerPort)
+					key := pod.Namespace + "/" + pod.Name + "/" + c.Name + " / " + fmt.Sprintf("%d", containerPort)
 					defer func() {
 						if r := recover(); r != nil {
-							log.Printf("Error while port-forwarding: %s: %v\n", pod.Name, r)
+							log.Printf("Error while port-forwarding: %s: %v\n", key, r)
 						}
-						portForwarding.Delete(portForwardingKey)
+						portForwarding.Delete(key)
 					}()
 
 					// check if the pod is already being port-forwarded
-					if _, ok := portForwarding.Load(portForwardingKey); ok {
+					if _, ok := portForwarding.Load(key); ok {
 						log.Printf("Skipping port-forward for pod %s/%s container %s: already forwarding\n", pod.Namespace, pod.Name, c.Name)
 						return
 					}
 
-					portForwarding.Store(portForwardingKey, true)
+					portForwarding.Store(key, true)
 
 					log.Printf("Starting port-forward for pod %s/%s container %s port %d to host %d\n", pod.Namespace, pod.Name, c.Name, containerPort, hostPort)
 
