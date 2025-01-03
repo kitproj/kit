@@ -19,6 +19,7 @@ A task is a container or a command to run.
 | Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                |
 | :---------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [name](#name)                       | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")                       |
+| [log](#log)                         | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/log")                         |
 | [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")                     |
 | [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
 | [livenessProbe](#livenessprobe)     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-probe.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/livenessProbe")                             |
@@ -58,6 +59,24 @@ The name of the task, must be unique
 ### name Type
 
 `string` ([name](pod-defs-task-properties-name.md))
+
+## log
+
+Where to log the output of the task. E.g. if the task is verbose. Defaults to /dev/stdout. Maybe a file, or /dev/null.
+
+`log`
+
+*   is optional
+
+*   Type: `string` ([log](pod-defs-task-properties-log.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/log")
+
+### log Type
+
+`string` ([log](pod-defs-task-properties-log.md))
 
 ## image
 

@@ -20,6 +20,7 @@ spec:
   - name: baz
     image: httpd
     ports: 80:10080
+    log: baz.log
     readinessProbe: http://:10080?initialDelay=3s
 
   - name: docker

@@ -291,6 +291,11 @@
           "title": "name",
           "description": "The name of the task, must be unique"
         },
+        "log": {
+          "type": "string",
+          "title": "log",
+          "description": "Where to log the output of the task. E.g. if the task is verbose. Defaults to /dev/stdout. Maybe a file, or /dev/null."
+        },
         "image": {
           "type": "string",
           "title": "image",

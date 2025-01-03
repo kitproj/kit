@@ -268,8 +268,6 @@ func main() {
 		}()
 
 		for t := range work {
-			name := t.Name
-
 			v, _ := statuses.Load(t.Name)
 			status := v.(*taskStatus)
 
@@ -282,6 +280,17 @@ func main() {
 			code = 30 + code%7
 
 			log := log.New(os.Stdout, fmt.Sprintf("\033[0;%dm[%s] ", code, t.Name), 0)
+
+			// log to a file
+			if t.Log != "" {
+				logFile, err := os.OpenFile(t.Log, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					log.Fatalf("failed to open log file: %v", err)
+				}
+				defer logFile.Close()
+				log.SetOutput(logFile)
+			}
+
 			prc := proc.New(t, log, pod.Spec)
 
 			processCtx, stopProcess := context.WithCancel(ctx)
@@ -348,12 +357,12 @@ func main() {
 				defer handleCrash(stopEverything)
 				defer wg.Done()
 
-				if f, ok := stop.Load(name); ok {
+				if f, ok := stop.Load(t.Name); ok {
 					log.Printf("stopping process\n")
 					f.(context.CancelFunc)()
 				}
 
-				stop.Store(name, stopProcess)
+				stop.Store(t.Name, stopProcess)
 
 				if m := t.Mutex; m != "" {
 					mutex := util.GetMutex(m)
@@ -389,7 +398,7 @@ func main() {
 						if t.Skip() {
 							log.Printf("skipping process\n")
 							status.reason = "success"
-							maybeStartDownstream(name)
+							maybeStartDownstream(t.Name)
 							return
 						}
 
@@ -422,7 +431,7 @@ func main() {
 									if ready {
 										log.Printf("is ready, starting downstream\n")
 										status.reason = "running"
-										maybeStartDownstream(name)
+										maybeStartDownstream(t.Name)
 									} else {
 										log.Printf("is not ready\n")
 										status.reason = "error"
@@ -456,7 +465,7 @@ func main() {
 						} else {
 							status.reason = "success"
 							status.backoff = defaultBackoff
-							maybeStartDownstream(name)
+							maybeStartDownstream(t.Name)
 							if !t.IsRestart() {
 								return
 							}

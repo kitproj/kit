@@ -247,6 +247,8 @@ func (t *Task) HasMutex() bool {
 type Task struct {
 	// The name of the task, must be unique
 	Name string `json:"name"`
+	// Where to log the output of the task. E.g. if the task is verbose. Defaults to /dev/stdout. Maybe a file, or /dev/null.
+	Log string `json:"log,omitempty"`
 	// Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
 	Image string `json:"image,omitempty"`
 	// Pull policy, e.g. Always, Never, IfNotPresent
