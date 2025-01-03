@@ -70,16 +70,12 @@ func (h *host) stop(pid int) error {
 		return fmt.Errorf("failed to find process: %w", err)
 	}
 	log := h.log
-	log.Printf("terminating process %d\n", pid)
 	if err := target.Signal(syscall.SIGTERM); ignoreProcessFinishedErr(err) != nil {
 		log.Printf("failed to terminate: %v", err)
 	}
 	gracePeriod := h.spec.GetTerminationGracePeriod()
-	log.Printf("waiting %v before killing %d\n", gracePeriod, pid)
 	time.Sleep(gracePeriod)
-	log.Printf("killing process %d\n", pid)
 	err = target.Signal(os.Kill)
-	log.Printf("killed process %d: %v\n", pid, err)
 	if ignoreProcessFinishedErr(err) != nil {
 		return fmt.Errorf("failed to kill: %w", err)
 	}
