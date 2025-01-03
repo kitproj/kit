@@ -408,7 +408,6 @@ func main() {
 								}
 							}
 							if probe := t.GetLivenessProbe(); probe != nil {
-								log.Printf("liveness probe=%v\n", probe)
 								liveFunc := func(live bool, err error) {
 									if !live {
 										log.Printf("is dead, stopping\n")
@@ -419,7 +418,6 @@ func main() {
 							}
 							if probe := t.GetReadinessProbe(); probe != nil {
 								status.reason = "starting"
-								log.Printf("readiness probe=%v\n", probe)
 								readyFunc := func(ready bool, err error) {
 									if ready {
 										log.Printf("is ready, starting downstream\n")

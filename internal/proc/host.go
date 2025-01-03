@@ -39,7 +39,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	cmd.Env = append(environ, os.Environ()...)
 	log := h.log
-	log.Printf("starting process %q\n", h.Command)
+	log.Println("starting process")
 	err = cmd.Start()
 	if err != nil {
 		return err
@@ -53,14 +53,14 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		log.Printf("context cancelled, stopping process")
+		log.Printf("stopping process")
 		if err := h.stop(pgid); err != nil {
 			log.Printf("failed to stop process: %v", err)
 		}
 	}()
-	log.Printf("waiting for process %d pgid %d (%q)", pid, pgid, h.Command)
+	log.Println("waiting for process")
 	err = cmd.Wait()
-	log.Printf("process exited %d: %v", pid, err)
+	log.Printf("process exited: %v", err)
 	return err
 }
 

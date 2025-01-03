@@ -53,7 +53,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	// If the container exists and the hash is different, remove it.
 	if id != "" && existingHash != expectedHash {
-		log.Printf("removing container %s", id)
+		log.Println("removing container")
 		if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
 			return fmt.Errorf("failed to remove container: %w", err)
 		}
@@ -179,7 +179,6 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		log.Printf("context cancelled, stopping container")
 		if err := c.stop(context.Background()); err != nil {
 			log.Printf("failed to stop: %v", err)
 		}
