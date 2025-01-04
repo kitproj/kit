@@ -38,6 +38,10 @@ type k8s struct {
 	types.Task
 }
 
+const ManagedByLabel = "app.kubernetes.io/managed-by"
+const NameLabel = "app.kubernetes.io/name"
+const VersionLabel = "app.kubernetes.io/version"
+
 func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
 
 	log := k.log
@@ -126,8 +130,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				u.SetAnnotations(make(map[string]string))
 			}
 			labels := u.GetLabels()
-			labels["app.kubernetes.io/managed-by"] = "kit"
-			labels["app.kubernetes.io/name"] = k.Name
+			labels[ManagedByLabel] = "kit"
+			labels[NameLabel] = k.Name
 			u.SetLabels(labels)
 
 			if u.GetNamespace() == "" {
@@ -141,8 +145,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels["app.kubernetes.io/managed-by"] = "kit"
-				labels["app.kubernetes.io/name"] = k.Name
+				labels[ManagedByLabel] = "kit"
+				labels[NameLabel] = k.Name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
 				if err != nil {
 					return err
@@ -153,8 +157,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels["app.kubernetes.io/managed-by"] = "kit"
-				labels["app.kubernetes.io/name"] = k.Name
+				labels[ManagedByLabel] = "kit"
+				labels[NameLabel] = k.Name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
 				if err != nil {
 					return err
@@ -199,16 +203,16 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					return err
 				}
 			} else {
-				expectedHash := u.GetAnnotations()["app.kubernetes.io/version"]
+				expectedHash := u.GetAnnotations()[VersionLabel]
 				// has the manifest changed?
 				existingHash := existing.GetAnnotations()["app.kubernetes.io/version"]
 				if existingHash == expectedHash {
-					log.Printf("Skipping %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+					log.Printf("skipping %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 					continue
 				}
 
 				// delete the object
-				log.Printf("Deleting %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+				log.Printf("deleting %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 
 				err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Delete(ctx, u.GetName(), metav1.DeleteOptions{})
 				if err != nil {
@@ -216,7 +220,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				}
 			}
 
-			log.Printf("Creating %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+			log.Printf("creating %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 
 			_, err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
 			if err != nil {
@@ -226,7 +230,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	}
 
 	// Create a shared informer factory
-	factory := informers.NewSharedInformerFactory(clientset, 0)
+	factory := informers.NewSharedInformerFactory(clientset, time.Second*10)
 
 	// Create a pod informer
 	podInformer := factory.Core().V1().Pods().Informer()
@@ -239,10 +243,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		pod := obj.(*corev1.Pod)
 
 		// is the pod labelled with the managed-by label?
-		if pod.GetLabels()["app.kubernetes.io/managed-by"] != "kit" {
+		if pod.GetLabels()[ManagedByLabel] != "github.com/kitproj/kit" {
 			return
 		}
-		if pod.GetLabels()["app.kubernetes.io/name"] != k.Name {
+		if pod.GetLabels()[NameLabel] != k.Name {
 			return
 		}
 
@@ -262,7 +266,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				key := pod.Namespace + "/" + pod.Name + "/" + c.Name
 				defer func() {
 					if r := recover(); r != nil {
-						log.Printf("Error while tailing logs: %s: %v\n", key, r)
+						log.Printf("error while tailing logs: %s: %v\n", key, r)
 					}
 					logging.Delete(key)
 				}()
@@ -309,7 +313,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					key := pod.Namespace + "/" + pod.Name + "/" + c.Name + " / " + fmt.Sprintf("%d", containerPort)
 					defer func() {
 						if r := recover(); r != nil {
-							log.Printf("Error while port-forwarding: %s: %v\n", key, r)
+							log.Printf("error while port-forwarding: %s: %v\n", key, r)
 						}
 						portForwarding.Delete(key)
 					}()

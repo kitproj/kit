@@ -175,17 +175,32 @@ func main() {
 			}
 		}()
 
+		// an array of colors to use for the logs, we use the same color for the same task
+		// we avoid red as this is for errors, and black as it is the default color
+		codes := []int{
+			32, // green
+			33, // yellow
+			34, // blue
+			35, // magenta
+			36, // cyan
+		}
+
 		for t := range work {
 			v, _ := statuses.Load(t.Name)
 			status := v.(*taskStatus)
 
 			code := 0
-
 			for _, x := range t.Name {
 				code += int(x)
 			}
 
-			code = 30 + code%7
+			code = codes[code%len(codes)]
+
+			// if the task is a service, we want to bold it
+			service := t.GetLivenessProbe() != nil || t.GetReadinessProbe() != nil
+			if service {
+				code += 1
+			}
 
 			logWriter := funcWriter(func(bytes []byte) (int, error) {
 				prefix := fmt.Sprintf("\033[0;%dm[%s] (%s) ", code, t.Name, status.reason)
