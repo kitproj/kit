@@ -86,8 +86,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		return err
 	}
 
-	log.Printf("Using namespace %s\n", defaultNamespace)
-
 	// Create a Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -248,8 +246,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			return
 		}
 
-		log.Printf("Pod added: %s/%s\n", pod.Namespace, pod.Name)
-
 		running := make(map[string]bool)
 
 		for _, s := range append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...) {
@@ -273,12 +269,9 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 				// check if the pod is already being logged
 				if _, ok := logging.Load(key); ok {
-					log.Printf("Skipping log tail for container %s: already tailing\n", key)
 					return
 				}
 				logging.Store(key, true)
-
-				log.Printf("Starting log tail for container %s\n", key)
 
 				req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 					Follow:    true,
@@ -308,7 +301,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				}
 
 				if hostPort == 0 {
-					log.Printf("Skipping port-forward for container %s/%s port %d\n", pod.Name, c.Name, containerPort)
 					continue
 				}
 
@@ -324,13 +316,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 					// check if the pod is already being port-forwarded
 					if _, ok := portForwarding.Load(key); ok {
-						log.Printf("Skipping port-forward for pod %s/%s container %s: already forwarding\n", pod.Namespace, pod.Name, c.Name)
 						return
 					}
 
 					portForwarding.Store(key, true)
-
-					log.Printf("Starting port-forward for pod %s/%s container %s port %d to host %d\n", pod.Namespace, pod.Name, c.Name, containerPort, hostPort)
 
 					req := clientset.CoreV1().RESTClient().Post().
 						Resource("pods").
