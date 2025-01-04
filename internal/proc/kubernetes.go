@@ -250,7 +250,17 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 		log.Printf("Pod added: %s/%s\n", pod.Namespace, pod.Name)
 
+		running := make(map[string]bool)
+
+		for _, s := range append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...) {
+			running[s.Name] = s.State.Running != nil
+		}
+
 		for _, c := range append(pod.Spec.InitContainers, pod.Spec.Containers...) {
+			// skip containers that are not running
+			if !running[c.Name] {
+				continue
+			}
 			go func() {
 				// start a log tail
 				key := pod.Namespace + "/" + pod.Name + "/" + c.Name
