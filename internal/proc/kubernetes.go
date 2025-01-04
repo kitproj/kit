@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
@@ -272,6 +273,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 					Follow:    true,
 					Container: c.Name,
+					SinceTime: &metav1.Time{Time: time.Now()},
 				})
 				podLogs, err := req.Stream(ctx)
 				if err != nil {
