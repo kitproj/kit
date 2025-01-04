@@ -36,6 +36,10 @@ type taskStatus struct {
 	backoff backoff
 }
 
+func init() {
+	log.SetFlags(0)
+}
+
 func main() {
 	help := false
 	printVersion := false
@@ -86,14 +90,6 @@ func main() {
 		if pod.Metadata.Name == "" {
 			return errors.New("metadata.name is required")
 		}
-
-		log.SetFlags(0)
-
-		// clear the screen
-		fmt.Print("\x1b[2J")
-
-		log.Printf("tag=%v\n", tag)
-		log.Printf("noWatch=%v\n", noWatch)
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
 
