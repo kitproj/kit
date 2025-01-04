@@ -11,7 +11,6 @@ require (
 	github.com/invopop/jsonschema v0.7.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.24.0
 	golang.org/x/sync v0.8.0
 	k8s.io/api v0.26.2
 	k8s.io/apimachinery v0.26.2

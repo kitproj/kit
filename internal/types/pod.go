@@ -519,7 +519,7 @@ func (p Probe) GetInitialDelay() time.Duration {
 
 func (p Probe) GetPeriod() time.Duration {
 	if p.PeriodSeconds == 0 {
-		return 3 * time.Second
+		return 5 * time.Second
 	}
 	return time.Duration(p.PeriodSeconds) * time.Second
 }

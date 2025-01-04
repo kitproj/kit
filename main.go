@@ -17,8 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/kitproj/kit/internal/proc"
 	"github.com/kitproj/kit/internal/types"
@@ -31,11 +29,6 @@ import (
 var tag string
 
 // GitHub Actions
-var isCI = os.Getenv("CI") != "" || // Travis CI, CircleCI, GitLab CI, AppVeyor, CodeShip, dsari
-	os.Getenv("BUILD_ID") != "" || // Jenkins, TeamCity
-	os.Getenv("RUN_ID") != "" || // TaskCluster, Codefresh
-	os.Getenv("GITHUB_ACTIONS") == "true"
-
 const defaultConfigFile = "tasks.yaml"
 
 type taskStatus struct {
@@ -100,7 +93,6 @@ func main() {
 		fmt.Print("\x1b[2J")
 
 		log.Printf("tag=%v\n", tag)
-		log.Printf("isCI=%v\n", isCI)
 		log.Printf("noWatch=%v\n", noWatch)
 
 		tasks := pod.Spec.Tasks.NeededFor(args)
@@ -114,86 +106,6 @@ func main() {
 			}
 
 			statuses.Store(task.Name, x)
-		}
-		printTasks := func() {
-			defer handleCrash(stopEverything)
-
-			_, height, _ := terminal.GetSize(0)
-			if height == 0 {
-				height = 24
-			}
-
-			// create a string builder
-			buf := &strings.Builder{}
-
-			// move home
-			buf.WriteString("\x1b[H")
-
-			// clear current line
-			buf.WriteString("\x1b[2K")
-
-			for _, t := range pod.Spec.Tasks {
-				v, ok := statuses.Load(t.Name)
-				if !ok {
-					continue
-				}
-				status := v.(*taskStatus)
-				reason := status.reason
-				switch reason {
-				case "waiting":
-					buf.WriteString("\x1b[2m") // faint
-				case "starting":
-					buf.WriteString("\x1b[33m") // yellow
-				case "running":
-					buf.WriteString("\x1b[32m") // green
-				case "success":
-					buf.WriteString("\x1b[34m") // blueF
-				case "error":
-					buf.WriteString("\x1b[31m") // red
-				}
-
-				buf.WriteString(t.Name)
-				buf.WriteString(" ")
-				buf.WriteString(status.reason)
-				buf.WriteString(" ")
-				// faint
-				buf.WriteString("\x1b[2m")
-				// write the hosts
-				buf.WriteString(fmt.Sprint(t.GetHostPorts()))
-				// three spaces
-				buf.WriteString("   ")
-				// reset
-				buf.WriteString("\x1b[0m")
-			}
-
-			// clear to the end of the line
-			buf.WriteString("\x1b[K")
-
-			// new line
-			buf.WriteString("\n")
-
-			// clear to the end of the line
-			buf.WriteString("\x1b[K")
-
-			// new line
-			buf.WriteString("\n")
-
-			// move to the bottom
-			buf.WriteString(fmt.Sprintf("\x1b[%d;0H", height))
-
-			// print the buffer
-			fmt.Print(buf.String())
-		}
-
-		// every few milli-seconds print the current status to the terminal
-		if !isCI {
-			go func() {
-				defer handleCrash(stopEverything)
-				for {
-					printTasks()
-					time.Sleep(20 * time.Millisecond)
-				}
-			}()
 		}
 
 		stopRuns := &sync.Map{}
@@ -279,7 +191,18 @@ func main() {
 
 			code = 30 + code%7
 
-			log := log.New(os.Stdout, fmt.Sprintf("\033[0;%dm[%s] ", code, t.Name), 0)
+			logWriter := funcWriter(func(bytes []byte) (int, error) {
+				prefix := fmt.Sprintf("\033[0;%dm[%s] (%s) ", code, t.Name, status.reason)
+
+				// split on newlines
+				lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
+				for _, line := range lines {
+					log.Println(prefix + line)
+				}
+				return len(bytes), nil
+			})
+
+			log := log.New(logWriter, "", 0)
 
 			// log to a file
 			if t.Log != "" {
