@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.37"
+  version "0.1.38"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.37/kit_0.1.37_Darwin_x86_64.tar.gz"
-      sha256 "bf7f00608408c04b1bfa41eb5b7c680f2d7db0ed2f719f76712037772b3f1b38"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.38/kit_0.1.38_Darwin_x86_64.tar.gz"
+      sha256 "74580701b9f2fe73ad012d3965ab4183be3b8a778dba3de04b0d16b0448fed7b"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.37/kit_0.1.37_Darwin_arm64.tar.gz"
-      sha256 "72fc16c03c6073951b91ba96e4dc1ce2e41d7dcc6601535bd84979c65372cbf5"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.38/kit_0.1.38_Darwin_arm64.tar.gz"
+      sha256 "1a6434146a80557e5e265b41c93000d76806cc05404393d3d5d6ba64b215fe3a"
 
       def install
         bin.install "kit"
@@ -28,16 +28,16 @@ class Kit < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.37/kit_0.1.37_Linux_arm64.tar.gz"
-      sha256 "73bf8c07ae43af6613a3014e9f522edc0e75201f7019462d050c902f2c66a070"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.38/kit_0.1.38_Linux_arm64.tar.gz"
+      sha256 "43d818af388edcd16cbe1e99ac0f012faadd6d1fe02c42152343d4630dd1296e"
 
       def install
         bin.install "kit"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.37/kit_0.1.37_Linux_x86_64.tar.gz"
-      sha256 "ed8181695a3885e308fa27f35708e104e979e8c00e5cda8245d13335ff907a43"
+      url "https://github.com/kitproj/kit/releases/download/v0.1.38/kit_0.1.38_Linux_x86_64.tar.gz"
+      sha256 "651195276dca0a007d56e51d19f8150184e405b67b23ccccd821623397dddb96"
 
       def install
         bin.install "kit"
