@@ -5,20 +5,20 @@
 class Kit < Formula
   desc "Crazy fast local dev loop."
   homepage "https://github.com/kitproj/kit"
-  version "0.1.33"
+  version "0.1.34"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.33/kit_0.1.33_Darwin_arm64.tar.gz"
-      sha256 "c4e334e7383670c4a18daeddcd9939437ab63afb953c38c8a186f189f5bb0bde"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.34/kit_0.1.34_Darwin_x86_64.tar.gz"
+      sha256 "ef3013fc5e66830b228a6e5ae3a2665e9dbd30ec09281c7bf6908bff64caa005"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.33/kit_0.1.33_Darwin_x86_64.tar.gz"
-      sha256 "6e508be7c43647b911f34907e6ec42dce679e8102e7011a1990689b0c59656a3"
+    if Hardware::CPU.arm?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.34/kit_0.1.34_Darwin_arm64.tar.gz"
+      sha256 "a0a1a5308946724637ceef60f4c3a7313f89753d32d6485e1a66a2ef117d6af5"
 
       def install
         bin.install "kit"
@@ -27,17 +27,17 @@ class Kit < Formula
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.33/kit_0.1.33_Linux_x86_64.tar.gz"
-      sha256 "0ddfa1650d1eb31638be8f58ff3553310b45b38c14a4e8df4805a61c21297ed8"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.34/kit_0.1.34_Linux_arm64.tar.gz"
+      sha256 "141d4935aee9ed385c8a314a970569e6b8ac3436b005624d0d97d644e35cf751"
 
       def install
         bin.install "kit"
       end
     end
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitproj/kit/releases/download/v0.1.33/kit_0.1.33_Linux_arm64.tar.gz"
-      sha256 "fc1203d7367b1c36a789c16dd675d5bd7bd8b2e12ccb7e128c0c888eec63b34e"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitproj/kit/releases/download/v0.1.34/kit_0.1.34_Linux_x86_64.tar.gz"
+      sha256 "3c5436484d8b087193f62b0692749a90a867e784802a9838893b7a21ca3fdf03"
 
       def install
         bin.install "kit"
