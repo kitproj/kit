@@ -214,7 +214,7 @@ func main() {
 					defer wg.Done()
 
 					out := funcWriter(func(bytes []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(node.name, t.IsService()), node.name, subgraph.Nodes[node.name].phase)
+						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(node.name, t.IsService()), node.name, node.phase)
 						// reset color and bold
 						suffix := "\033[0m"
 
