@@ -233,6 +233,14 @@ Sometimes a task logs too much, you can send logs to a file:
   log: build.log
 ```
 
+### Skipping Tasks
+
+You can skip tasks by using the `-s` flag. This is useful if you want to run that task elsewhere (e.g. in IDE with debugger connected to it):
+
+```bash
+kit -s foo,bar up
+```
+
 ## Documentation
 
 - [Usage](docs/USAGE.md) - how to use the various features of kit

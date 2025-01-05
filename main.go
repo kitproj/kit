@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"k8s.io/utils/strings/slices"
 	"log"
 	"os"
 	"os/signal"
@@ -37,10 +38,12 @@ func main() {
 	help := false
 	printVersion := false
 	configFile := ""
+	tasksToSkip := ""
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
+	flag.StringVar(&tasksToSkip, "skip", "", "tasks to skip (comma separated)")
 	flag.Parse()
 	args := flag.Args()
 
@@ -227,7 +230,7 @@ func main() {
 					}
 
 					// if the task can be skipped, lets exit early
-					if t.Skip() {
+					if t.Skip() || slices.Contains(strings.Split(tasksToSkip, ","), t.Name) {
 						node.phase = "succeeded"
 						node.message = "skipped"
 						log.Println("skipping")
