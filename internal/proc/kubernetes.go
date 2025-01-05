@@ -3,6 +3,7 @@ package proc
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/adler32"
@@ -13,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -131,59 +131,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			if err != nil {
 				return err
 			}
-			u := &unstructured.Unstructured{Object: manifest}
-			if u.GetLabels() == nil {
-				u.SetLabels(make(map[string]string))
-			}
-			if u.GetAnnotations() == nil {
-				u.SetAnnotations(make(map[string]string))
-			}
-			labels := u.GetLabels()
-			labels[managedByLabel] = managedByValue
-			labels[nameLabel] = k.Name
-			u.SetLabels(labels)
-
-			// not all resources have a namespace, e.g. namespaces, clusterroles, etc
-			clusterResource := u.GetKind() != "Namespace" && strings.HasPrefix(u.GetKind(), "Cluster")
-			needsNamespace := u.GetNamespace() == "" && clusterResource
-
-			if needsNamespace {
-				u.SetNamespace(defaultNamespace)
-			}
-
-			// if this is a deployment or a statefulset, then add the label to the pod template
-			if u.GetKind() == "Deployment" || u.GetKind() == "StatefulSet" {
-				// update selector labels
-				labels, _, err := unstructured.NestedMap(u.Object, "spec", "selector", "matchLabels")
-				if err != nil {
-					return err
-				}
-				labels[managedByLabel] = managedByValue
-				labels[nameLabel] = k.Name
-				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
-				if err != nil {
-					return err
-				}
-
-				// update template labels
-				labels, _, err = unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
-				if err != nil {
-					return err
-				}
-				labels[managedByLabel] = managedByValue
-				labels[nameLabel] = k.Name
-				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
-				if err != nil {
-					return err
-				}
-			}
-
-			// add a hash of the manifest to the annotations
-			annotations := u.GetAnnotations()
-			annotations[versionLabel] = fmt.Sprintf("%x", adler32.Checksum(doc))
-			u.SetAnnotations(annotations)
-
-			uns = append(uns, u)
+			uns = append(uns, &unstructured.Unstructured{Object: manifest})
 		}
 
 		// we need to sort the unstructured outputs by their kind, so that namespaces get applied before deployments, etc
@@ -223,7 +171,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 		// for each YAML document, create the object
 		for _, u := range uns {
-
 			apiResources, err := discoveryClient.ServerResourcesForGroupVersion(u.GetAPIVersion())
 			if err != nil {
 				return err
@@ -231,10 +178,12 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			// Find the resource that matches the kind
 			var resource string
+			var namespaced bool
 			kind := u.GetKind()
 			for _, apiResource := range apiResources.APIResources {
 				if apiResource.Kind == kind {
 					resource = apiResource.Name
+					namespaced = apiResource.Namespaced
 					break
 				}
 			}
@@ -244,6 +193,54 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				Version:  u.GroupVersionKind().Version,
 				Resource: resource,
 			}
+
+			if u.GetLabels() == nil {
+				u.SetLabels(make(map[string]string))
+			}
+			if u.GetAnnotations() == nil {
+				u.SetAnnotations(make(map[string]string))
+			}
+			labels := u.GetLabels()
+			labels[managedByLabel] = managedByValue
+			labels[nameLabel] = k.Name
+			u.SetLabels(labels)
+
+			// if this is a deployment or a statefulset, then add the label to the pod template
+			if u.GetKind() == "Deployment" || u.GetKind() == "StatefulSet" {
+				// update selector labels
+				labels, _, err := unstructured.NestedMap(u.Object, "spec", "selector", "matchLabels")
+				if err != nil {
+					return err
+				}
+				labels[managedByLabel] = managedByValue
+				labels[nameLabel] = k.Name
+				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
+				if err != nil {
+					return err
+				}
+
+				// update template labels
+				labels, _, err = unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
+				if err != nil {
+					return err
+				}
+				labels[managedByLabel] = managedByValue
+				labels[nameLabel] = k.Name
+				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
+				if err != nil {
+					return err
+				}
+			}
+
+			if namespaced && u.GetNamespace() == "" {
+				u.SetNamespace(defaultNamespace)
+			}
+
+			// add a hash of the manifest to the annotations
+			annotations := u.GetAnnotations()
+			data, _ := json.Marshal(u.Object)
+			annotations[versionLabel] = fmt.Sprintf("%x", adler32.Checksum(data))
+			u.SetAnnotations(annotations)
 
 			// has it been created already?
 			existing, err := dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Get(ctx, u.GetName(), metav1.GetOptions{})
@@ -256,7 +253,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				// has the manifest changed?
 				existingHash := existing.GetAnnotations()[versionLabel]
 				if existingHash == expectedHash {
-					log.Printf("%s/%s unchanged\n", resource, u.GetName())
+					log.Printf("%s/%s/%s unchanged\n", resource, u.GetNamespace(), u.GetName())
 					continue
 				}
 
@@ -266,7 +263,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				}
 			}
 
-			log.Printf("creating %s/%s\n", resource, u.GetName())
+			log.Printf("creating %s/%s/%s\n", resource, u.GetNamespace(), u.GetName())
 
 			_, err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
 			if err != nil {
