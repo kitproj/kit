@@ -251,19 +251,16 @@ func main() {
 					log := log.New(out, "", 0)
 
 					queueChildren := func() {
-						if !t.IsService() {
-							for _, child := range subgraph.Children[t.Name] {
-								events <- child
-							}
+						for _, child := range subgraph.Children[t.Name] {
+							events <- child
 						}
 					}
-
-					defer queueChildren()
 
 					// if the task can be skipped, lets exit early
 					if t.Skip() {
 						node.status = "skipped"
 						log.Println("skipping")
+						queueChildren()
 						return
 					}
 
