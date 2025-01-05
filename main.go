@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -215,16 +216,6 @@ func main() {
 
 			log := log.New(logWriter, "", 0)
 
-			// log to a file
-			if t.Log != "" {
-				logFile, err := os.Create(t.Log)
-				if err != nil {
-					log.Fatalf("failed to open log file: %v", err)
-				}
-				defer logFile.Close()
-				log.SetOutput(logFile)
-			}
-
 			prc := proc.New(t, log, pod.Spec)
 
 			processCtx, stopProcess := context.WithCancel(ctx)
@@ -377,7 +368,7 @@ func main() {
 							}
 
 							// the log.Writer does not add the prefix, so we need to add it manually
-							out := funcWriter(func(bytes []byte) (int, error) {
+							var out io.Writer = funcWriter(func(bytes []byte) (int, error) {
 								// split on newlines
 								lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
 								for _, line := range lines {
@@ -385,6 +376,14 @@ func main() {
 								}
 								return len(bytes), nil
 							})
+
+							if t.Log != "" {
+								out, err := os.Create(t.Log)
+								if err != nil {
+									return err
+								}
+								defer out.Close()
+							}
 
 							return prc.Run(runCtx, out, out)
 						}()
