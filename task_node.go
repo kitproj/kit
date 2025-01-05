@@ -3,18 +3,21 @@ package main
 import "github.com/kitproj/kit/internal/types"
 
 type taskNode struct {
-	task   types.Task
-	status string
+	task types.Task
+	// the phase of the task, e.g. "waiting", "running", "succeeded", "failed"
+	phase string
+	// the message for the task phase, e.g. "exit code 1'
+	message string
 }
 
 func (n taskNode) busy() bool {
-	return n.status == "running" || n.status == "starting" || n.status == "waiting"
+	return n.phase == "running" || n.phase == "starting" || n.phase == "waiting"
 }
 
 func (n taskNode) blocked() bool {
 	if n.task.IsService() {
-		return n.status != "running"
+		return n.phase != "running"
 	} else {
-		return n.status != "succeeded" && n.status != "skipped"
+		return n.phase != "succeeded"
 	}
 }

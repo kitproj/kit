@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -68,19 +67,6 @@ func main() {
 		}
 		if err = yaml.UnmarshalStrict(in, pod); err != nil {
 			return err
-		}
-
-		// make sure that the file is valid,
-		// this helps Copilot to auto-complete the file,
-		// no need to have any IDE plugin - welcome to the future
-		if pod.ApiVersion != "kit/v1" {
-			return errors.New("invalid apiVersion, must be 'kit/v1")
-		}
-		if pod.Kind != "Tasks" {
-			return errors.New("invalid kind, must be 'Tasks'")
-		}
-		if pod.Metadata.Name == "" {
-			return errors.New("metadata.name is required")
 		}
 
 		dag := internal.NewDAG[bool]()
@@ -151,20 +137,42 @@ func main() {
 
 				wg.Wait()
 
-				// if any task failed, we will return an error code
+				// if any task failed, we will return an error
+				var failures []string
 				for _, node := range subgraph.Nodes {
-					if node.status == "failed" {
-						return errors.New("one or more tasks failed")
+					if node.phase == "failed" {
+						failures = append(failures, fmt.Sprintf("%s %s", node.task.Name, node.message))
 					}
+				}
+
+				if len(failures) > 0 {
+					return fmt.Errorf("failed tasks: %v", failures)
 				}
 
 				return nil
 			case taskName := <-taskNames:
+
+				// if we get the poison pill, we should see if all tasks are done and exit if so
+				const PoisonPill = ""
+				if taskName == PoisonPill {
+					busy := false
+					for _, node := range subgraph.Nodes {
+						if node.busy() {
+							busy = true
+						}
+					}
+					if !busy {
+						cancel()
+					}
+					continue
+				}
+
 				// we will only execute this task, if its parents are "succeeded" or "skipped" or ("running" and the task is a service)
 				blocked := false
 				for _, parentName := range subgraph.Parents[taskName] {
 					parent := subgraph.Nodes[parentName]
 					if parent.blocked() {
+						log.Printf("task %q is blocked by %q (%s) %s\n", taskName, parentName, parent.phase, parent.message)
 						blocked = true
 					}
 				}
@@ -182,21 +190,25 @@ func main() {
 				// each task is executed in a separate goroutine
 				wg.Add(1)
 
-				subgraph.Nodes[taskName].status = "waiting"
+				node.phase = "waiting"
+				node.message = ""
 
 				go func(t types.Task) {
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
 
+					defer func() { taskNames <- PoisonPill }()
 					defer wg.Done()
 
 					out := funcWriter(func(bytes []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(t.Name, t.IsService()), t.Name, subgraph.Nodes[t.Name].status)
+						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(t.Name, t.IsService()), t.Name, subgraph.Nodes[t.Name].phase)
+						// reset color and bold
+						suffix := "\033[0m"
 
 						// split on newlines
 						lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
 						for _, line := range lines {
-							log.Println(prefix + line)
+							log.Println(prefix + line + suffix)
 						}
 
 						return len(bytes), nil
@@ -206,13 +218,18 @@ func main() {
 
 					queueChildren := func() {
 						for _, child := range subgraph.Children[t.Name] {
-							taskNames <- child
+							// only queue tasks in the subgraph
+							if _, ok := subgraph.Nodes[child]; ok {
+								log.Printf("queuing %q\n", child)
+								taskNames <- child
+							}
 						}
 					}
 
 					// if the task can be skipped, lets exit early
 					if t.Skip() {
-						node.status = "skipped"
+						node.phase = "succeeded"
+						node.message = "skipped"
 						log.Println("skipping")
 						queueChildren()
 						return
@@ -221,8 +238,11 @@ func main() {
 					// if the task needs a mutex, lets wait for it
 					if t.Mutex != "" {
 						mu := util.GetMutex(t.Mutex)
+						node.phase = "waiting"
+						node.message = "waiting for mutex"
 						log.Println("waiting for mutex")
 						mu.Lock()
+						node.message = "acquired mutex"
 						log.Println("acquired mutex")
 						defer mu.Unlock()
 					}
@@ -230,11 +250,16 @@ func main() {
 					// if the task needs a semaphore, lets wait for it
 					if t.Semaphore != "" {
 						sema := semaphores.Get(t.Semaphore)
+						node.phase = "waiting"
+						node.message = "waiting for semaphore"
 						log.Println("waiting for semaphore")
 						if err := sema.Acquire(ctx, 1); err != nil {
-							log.Println("failed to acquire semaphore")
+							node.phase = "failed"
+							node.message = fmt.Sprintf("failed to acquire semaphore: %v", err)
+							log.Printf("failed to acquire semaphore: %v", err)
 							return
 						}
+						node.message = "acquired semaphore"
 						defer sema.Release(1)
 					}
 
@@ -243,7 +268,9 @@ func main() {
 					if probe := t.GetLivenessProbe(); probe != nil {
 						liveFunc := func(live bool, err error) {
 							if !live {
-								node.status = "failed"
+								node.phase = "failed"
+								node.message = fmt.Sprintf("liveness probe failed: %v", err)
+								log.Printf("liveness probe failed: %v", err)
 								cancel()
 							}
 						}
@@ -252,10 +279,14 @@ func main() {
 					if probe := t.GetReadinessProbe(); probe != nil {
 						readyFunc := func(ready bool, err error) {
 							if ready {
-								node.status = "running"
+								node.phase = "running"
+								node.message = fmt.Sprintf("readiness probe succeeded")
+								log.Println("readiness probe succeeded")
 								queueChildren()
 							} else {
-								node.status = "failed"
+								node.phase = "failed"
+								node.message = fmt.Sprintf("readiness probe failed: %v", err)
+								log.Println("readiness probe failed")
 								cancel()
 							}
 						}
@@ -263,9 +294,9 @@ func main() {
 					}
 
 					if t.IsService() {
-						node.status = "starting"
+						node.phase = "starting"
 					} else {
-						node.status = "running"
+						node.phase = "running"
 					}
 
 					restart := func() {
@@ -280,6 +311,8 @@ func main() {
 					if t.Log != "" {
 						out, err := os.Create(t.Log)
 						if err != nil {
+							node.phase = "failed"
+							node.message = fmt.Sprintf("failed to create log file: %v", err)
 							log.Printf("failed to create log file: %v", err)
 							return
 						}
@@ -288,7 +321,8 @@ func main() {
 
 					err = p.Run(ctx, out, out)
 					if err != nil {
-						node.status = "failed"
+						node.phase = "failed"
+						node.message = fmt.Sprint(err)
 						log.Println(err)
 						if t.GetRestartPolicy() != "Never" {
 							restart()
@@ -296,7 +330,7 @@ func main() {
 						return
 					}
 
-					node.status = "succeeded"
+					node.phase = "succeeded"
 					log.Println("succeeded")
 					if t.GetRestartPolicy() == "Always" {
 						restart()

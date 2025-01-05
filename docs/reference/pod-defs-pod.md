@@ -21,7 +21,7 @@ https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod
 | [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
 | [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
 | [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
-| [metadata](#metadata)     | `object` | Required | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
+| [metadata](#metadata)     | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
 
 ## spec
 
@@ -83,7 +83,7 @@ Metadata is the metadata for the pod.
 
 `metadata`
 
-*   is required
+*   is optional
 
 *   Type: `object` ([Metadata](pod-defs-metadata.md))
 

@@ -414,7 +414,7 @@ type Pod struct {
 	// Kind must be `Tasks`.
 	Kind string `json:"kind,omitempty"`
 	// Metadata is the metadata for the pod.
-	Metadata Metadata `json:"metadata"`
+	Metadata Metadata `json:"metadata,omitempty"`
 }
 
 // A probe to check if the task is alive, it will be restarted if not.
