@@ -13,7 +13,7 @@ fi
 
 version=$(echo $tag | cut -c 2-)
 
-url="https://github.com/kitproj/kit/releases/download/${tag}/kit_${os}_${arch}"
+url="https://github.com/kitproj/kit/releases/download/${tag}/kit_${version}_${os}_${arch}"
 
 sudo curl --fail --retry 5 --silent --location $url --output /usr/local/bin/kit
 sudo chmod +x /usr/local/bin/kit
