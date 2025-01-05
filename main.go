@@ -39,11 +39,13 @@ func main() {
 	printVersion := false
 	configFile := ""
 	tasksToSkip := ""
+	rewrite := false
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
-	flag.StringVar(&tasksToSkip, "skip", "", "tasks to skip (comma separated)")
+	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
+	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
 	flag.Parse()
 	args := flag.Args()
 
@@ -72,16 +74,24 @@ func main() {
 			return err
 		}
 
+		if rewrite {
+			out, err := yaml.Marshal(pod)
+			if err != nil {
+				return err
+			}
+			return os.WriteFile(configFile, out, 0644)
+		}
+
 		dag := internal.NewDAG[bool]()
-		for _, t := range pod.Spec.Tasks {
-			dag.AddNode(t.Name, true)
+		for name, t := range pod.Tasks {
+			dag.AddNode(name, true)
 			for _, dependency := range t.Dependencies {
-				dag.AddEdge(dependency, t.Name)
+				dag.AddEdge(dependency, name)
 			}
 		}
 		visited := dag.Subgraph(args)
 
-		taskByName := pod.Spec.Tasks.Map()
+		taskByName := pod.Tasks
 		subgraph := internal.NewDAG[*taskNode]()
 		for name := range visited {
 			task := taskByName[name]
@@ -122,15 +132,15 @@ func main() {
 						return
 					case event := <-watcher.Events:
 						if event.Op&fsnotify.Write == fsnotify.Write {
-							log.Printf("file changed, re-running %s\n", t.task.Name)
-							taskNames <- t.task.Name
+							log.Printf("file changed, re-running %s\n", t.name)
+							taskNames <- t.name
 						}
 					}
 				}
 			}()
 		}
 
-		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
+		semaphores := util.NewSemaphores(pod.Semaphores)
 
 		wg := sync.WaitGroup{}
 
@@ -144,7 +154,7 @@ func main() {
 				var failures []string
 				for _, node := range subgraph.Nodes {
 					if node.phase == "failed" {
-						failures = append(failures, fmt.Sprintf("%s %s", node.task.Name, node.message))
+						failures = append(failures, fmt.Sprintf("%s %s", node.name, node.message))
 					}
 				}
 
@@ -204,7 +214,7 @@ func main() {
 					defer wg.Done()
 
 					out := funcWriter(func(bytes []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(t.Name, t.IsService()), t.Name, subgraph.Nodes[t.Name].phase)
+						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(node.name, t.IsService()), node.name, subgraph.Nodes[node.name].phase)
 						// reset color and bold
 						suffix := "\033[0m"
 
@@ -220,7 +230,7 @@ func main() {
 					log := log.New(out, "", 0)
 
 					queueChildren := func() {
-						for _, child := range subgraph.Children[t.Name] {
+						for _, child := range subgraph.Children[node.name] {
 							// only queue tasks in the subgraph
 							if _, ok := subgraph.Nodes[child]; ok {
 								log.Printf("queuing %q\n", child)
@@ -230,7 +240,7 @@ func main() {
 					}
 
 					// if the task can be skipped, lets exit early
-					if t.Skip() || slices.Contains(strings.Split(tasksToSkip, ","), t.Name) {
+					if t.Skip() || slices.Contains(strings.Split(tasksToSkip, ","), node.name) {
 						node.phase = "succeeded"
 						node.message = "skipped"
 						log.Println("skipping")
@@ -266,7 +276,7 @@ func main() {
 						defer sema.Release(1)
 					}
 
-					p := proc.New(t, log, pod.Spec)
+					p := proc.New(t, log, types.PodSpec(*pod))
 
 					if probe := t.GetLivenessProbe(); probe != nil {
 						liveFunc := func(live bool, err error) {
@@ -307,7 +317,7 @@ func main() {
 						case <-ctx.Done():
 						case <-time.After(3 * time.Second):
 							log.Println("restarting")
-							taskNames <- t.Name
+							taskNames <- node.name
 						}
 					}
 

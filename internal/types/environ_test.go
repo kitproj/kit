@@ -15,10 +15,6 @@ func TestEnviron(t *testing.T) {
 				Name:  "BAR",
 				Value: "2",
 			},
-			{
-				Name:      "GAK",
-				ValueFrom: &EnvVarSource{File: "testdata/six"},
-			},
 		},
 	}, Task{
 		Envfile: Envfile{"testdata/task.env"},

@@ -8,7 +8,6 @@ import (
 	url "net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -86,7 +85,11 @@ func updateExample(ctx context.Context, example *Example) error {
 		return err
 	}
 	defer cli.Close()
-	image := example.Pod.Spec.Tasks[0].Image
+
+	image := ""
+	for _, task := range example.Pod.Tasks {
+		image = task.Image
+	}
 	if err := pullImage(ctx, cli, image); err != nil {
 		return err
 	}
@@ -97,10 +100,6 @@ func updateExample(ctx context.Context, example *Example) error {
 	}
 
 	example.Title = strings.Title(example.Name)
-	example.Pod.Metadata.Name = "example"
-	example.Pod.ApiVersion = "kit/v1"
-	example.Pod.Kind = "Tasks"
-	example.Pod.Spec.Tasks[0].Name = example.Name
 
 	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
 	for k, v := range inspection.Config.Labels {
@@ -129,17 +128,19 @@ func updateExample(ctx context.Context, example *Example) error {
 		if port < 1024 {
 			hostPort = 8000 + port
 		}
-		example.Pod.Spec.Tasks[0].Ports = append(example.Pod.Spec.Tasks[0].Ports, types.Port{ContainerPort: uint16(port), HostPort: uint16(hostPort)})
+
+		for _, task := range example.Pod.Tasks {
+			task.Ports = append(task.Ports, types.Port{ContainerPort: uint16(port), HostPort: uint16(hostPort)})
+		}
 	}
 
-	sort.Sort(example.Pod.Spec.Tasks[0].Ports)
 	for volume := range inspection.Config.Volumes {
 		n := example.Name + "." + filepath.Base(volume)
-		example.Pod.Spec.Tasks[0].VolumeMounts = append(example.Pod.Spec.Tasks[0].VolumeMounts, types.VolumeMount{
-			Name:      n,
-			MountPath: volume,
-		})
-		example.Pod.Spec.Volumes = append(example.Pod.Spec.Volumes, types.Volume{
+
+		for _, task := range example.Pod.Tasks {
+			task.VolumeMounts = append(task.VolumeMounts, types.VolumeMount{Name: n, MountPath: volume})
+		}
+		example.Pod.Volumes = append(example.Pod.Volumes, types.Volume{
 			Name:     n,
 			HostPath: types.HostPath{Path: filepath.Join("volumes", example.Name, filepath.Base(volume))}})
 	}

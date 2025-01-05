@@ -1,56 +1,43 @@
-apiVersion: kit/v1
-kind: Tasks
-metadata:
-  name: kit
-spec:
-  tasks:
-  - name: build-go-demo
+tasks:
+  baz:
+    image: httpd
+    log: baz.log
+    ports: 80:10080
+    readinessProbe: http://:10080?failureThreshold=20&initialDelay=3s&period=5s&successThreshold=1
+  build-go-demo:
     command: go build -v .
     watch: main.go
     workingDir: demo/go
-
-  - name: go-demo
+  docker:
+    command: ls /work
+    env:
+    - NAME=kit
+    image: ubuntu
+    volumeMounts:
+    - mountPath: /work
+      name: work
+  error:
+    sh: |
+      set -ex
+      nopes
+  go-demo:
     command: ./demo/go/go
     dependencies: build-go-demo
     env:
     - PORT=9090
     ports: "9090"
-    readinessProbe: http://:9090
-
-  - name: baz
-    image: httpd
-    ports: 80:10080
-    log: baz.log
-    readinessProbe: http://:10080?initialDelay=3s
-
-  - name: docker
-    command: ls /work
-    image: ubuntu
-    volumeMounts:
-    - mountPath: /work
-      name: work
-
-  - name: error
-    sh: |
-      set -ex
-      nopes
-
-  - name: script
+  k8s:
+    manifests: testdata
+    ports: 80:8080
+  script:
     sh: |
       set -eux
       echo "hello world"
       sleep 5
-
-  - name: k8s
-    manifests: testdata
-    ports: "80:8080"
-
-  - name: up
+  up:
     dependencies: go-demo docker script k8s
-
-  terminationGracePeriodSeconds: 3
-
-  volumes:
-  - hostPath:
-      path: .
-    name: work
+terminationGracePeriodSeconds: 3
+volumes:
+- hostPath:
+    path: .
+  name: work

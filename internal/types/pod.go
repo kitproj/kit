@@ -12,26 +12,13 @@ import (
 	"time"
 )
 
-type EnvVarSource struct {
-	// From a file
-	File string `json:"file"`
-}
-
 // A environment variable.
 type EnvVar struct {
-	Name      string        `json:"name"`
-	Value     string        `json:"value"`
-	ValueFrom *EnvVarSource `json:"valueFrom,omitempty"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 func (v EnvVar) String() (string, error) {
-	if v.ValueFrom != nil {
-		value, err := os.ReadFile(v.ValueFrom.File)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s=%s", v.Name, string(value)), nil
-	}
 	return fmt.Sprintf("%s=%s", v.Name, v.Value), nil
 }
 
@@ -245,10 +232,15 @@ func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
 }
 
-// A task is a container or a command to run.
-type Task struct {
+// Deprecated: only used for legacy unmarshalling.
+type NamedTask struct {
 	// The name of the task, must be unique
 	Name string `json:"name"`
+	Task
+}
+
+// A task is a container or a command to run.
+type Task struct {
 	// Where to log the output of the task. E.g. if the task is verbose. Defaults to /dev/stdout. Maybe a file, or /dev/null.
 	Log string `json:"log,omitempty"`
 	// Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
@@ -268,7 +260,7 @@ type Task struct {
 	// A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready.
 	Manifests Strings `json:"manifests,omitempty"`
 	// The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
-	Namespace string
+	Namespace string `json:"namespace,omitempty"`
 	// The working directory in the container or on the host
 	WorkingDir string `json:"workingDir,omitempty"`
 	// The user to run the task as.
@@ -406,14 +398,35 @@ func (t *Task) IsService() bool {
 	return len(t.Ports) > 0
 }
 
-type Pod struct {
+type Pod PodSpec
+
+// when unmarshalling legacy format, we need to convert it to the new format
+func (p *Pod) UnmarshalJSON(data []byte) error {
+	// legacy format has a field named "spec"
+	var x PodV1
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	if len(x.Spec.Tasks) > 0 {
+		*p = Pod(x.Spec)
+		return nil
+	}
+	// otherwise, normal unmarshall
+	return json.Unmarshal(data, (*PodSpec)(p))
+}
+
+// Deprecated: use PodSpec instead.
+type PodV1 struct {
 	// The specification of tasks to run.
 	Spec PodSpec `json:"spec"`
 	// APIVersion must be `kit/v1`.
+	// Deprecated: ignored.
 	ApiVersion string `json:"apiVersion,omitempty"`
 	// Kind must be `Tasks`.
+	// Deprecated: ignored.
 	Kind string `json:"kind,omitempty"`
 	// Metadata is the metadata for the pod.
+	// Deprecated: ignored.
 	Metadata Metadata `json:"metadata,omitempty"`
 }
 
@@ -623,14 +636,29 @@ type Volume struct {
 	HostPath HostPath `json:"hostPath"`
 }
 
-type Tasks []Task
+type Tasks map[string]Task
 
-func (t Tasks) Map() map[string]Task {
-	m := map[string]Task{}
-	for _, task := range t {
-		m[task.Name] = task
+// the legacy format for tasks was an array of named tasks
+func (t *Tasks) UnmarshalJSON(data []byte) error {
+	*t = map[string]Task{}
+	if data[0] == '[' {
+		var x []NamedTask
+		if err := json.Unmarshal(data, &x); err != nil {
+			return err
+		}
+		for _, task := range x {
+			(*t)[task.Name] = task.Task
+		}
+		return nil
 	}
-	return m
+	var x = map[string]Task{}
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	for name, task := range x {
+		(*t)[name] = task
+	}
+	return nil
 }
 
 // Task is a unit of work that should be run.

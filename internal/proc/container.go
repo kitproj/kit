@@ -33,6 +33,7 @@ import (
 type container struct {
 	log  *log.Logger
 	spec types.PodSpec
+	name string
 	types.Task
 }
 
@@ -77,7 +78,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 		defer r.Close()
 		log.Printf("building image from %q", dockerfile)
-		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{c.Name}})
+		resp, err := cli.ImageBuild(ctx, r, dockertypes.ImageBuildOptions{Dockerfile: filepath.Base(dockerfile), Tags: []string{c.name}})
 		if err != nil {
 			return fmt.Errorf("failed to build image: %w", err)
 		}
@@ -148,12 +149,12 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	image := c.Image
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
-		image = c.Name
+		image = c.name
 	}
 
 	log.Printf("creating container")
 	_, err = cli.ContainerCreate(ctx, &dockercontainer.Config{
-		Hostname:     c.Name,
+		Hostname:     c.name,
 		ExposedPorts: portSet,
 		Tty:          c.TTY,
 		Env:          environ,
@@ -166,7 +167,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,
 		Binds:        binds,
-	}, &network.NetworkingConfig{}, &v1.Platform{}, c.Name)
+	}, &network.NetworkingConfig{}, &v1.Platform{}, c.name)
 	if ignoreConflict(err) != nil {
 		return fmt.Errorf("failed to create container: %w", err)
 	}
@@ -183,7 +184,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 			log.Printf("failed to stop: %v", err)
 		}
 	}()
-	logs, err := cli.ContainerLogs(ctx, c.Name, dockertypes.ContainerLogsOptions{
+	logs, err := cli.ContainerLogs(ctx, c.name, dockertypes.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -243,7 +244,7 @@ func (c *container) createBinds() ([]string, error) {
 }
 
 func (c *container) stop(ctx context.Context) error {
-	if c.Name == "" {
+	if c.name == "" {
 		return nil
 	}
 	log := c.log
@@ -279,7 +280,7 @@ func (c *container) getContainer(ctx context.Context, cli *client.Client) (strin
 		return "", "", err
 	}
 	for _, existing := range list {
-		if slices.Contains(existing.Names, "/"+c.Name) {
+		if slices.Contains(existing.Names, "/"+c.name) {
 			id := existing.ID
 			return id, existing.Labels[hashLabel], nil
 		}

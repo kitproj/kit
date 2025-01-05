@@ -2,33 +2,23 @@
 
 [![CodeQL](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml)
 [![Go](https://github.com/kitproj/kit/actions/workflows/go.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/go.yml)
-[![goreleaser](https://github.com/kitproj/kit/actions/workflows/goreleaser.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/goreleaser.yml)
 
 Kit is a workflow engine for software development.
 
-Kit combines both task execution (like Foreman), container management (like Docker Compose), Kubernetes resource
-management (
-like Tilt, Skaffold), and a focus on local development (like Garden) in a single, easy-to-use binary.
+Kit combines task execution (like Makefile or Taskfile), service orchestration (like Foreman), container management (
+like Docker Compose), Kubernetes resource
+management (like Tilt, Skaffold), and a focus on local development (like Garden) in one binary.
 
-It works seamlessly with both local-dev and cloud-dev environments, such as Codespaces and Gitpod.
+For example, a `tasks.yaml` file can describe a Go project. It could start out by downloading a Helm chart, applying
+that to a cluster and at the same time starting a local MySQL database, automatically starting port-forwards for both. It could then generate some souce code, build the Go service, and
+start the service. If a file changes, it could rebuild the project and restart the service. Meanwhile, it is downloading, building and serving a Yarn project, configuring a Kubernetes app and 
+
+It's aimed at supporting more complex development use cases, where you need to run several software components at the same time.
 
 ## Install
 
 Like `jq`, `kit` is a small standalone binary. You can download it from
 the [releases page](https://github.com/kitproj/kit/releases/latest).
-
-If you're on MacOS, you can use `brew`:
-
-```bash
-brew tap kitproj/kit --custom-remote https://github.com/kitproj/kit
-brew install kit
-```
-
-Otherwise, you can use `curl`:
-
-```bash
-curl -q https://raw.githubusercontent.com/kitproj/kit/main/install.sh | sh
-```
 
 ## Usage
 
@@ -37,11 +27,9 @@ Workflows are described by a directed acyclic graph (DAG) of tasks.
 Create a [`tasks.yaml`](tasks.yaml) file, e.g.:
 
 ```yaml
-apiVersion: kit/v1
-spec:
-  tasks:
-    - name: build
-      command: go build .
+tasks:
+  build:
+    command: go build .
 ```
 
 Start:
@@ -55,26 +43,28 @@ kit build
 A task can be a **service** by specifying its ports:
 
 ```yaml
-- name: service
+service:
   command: go run .
   ports: [ 8080 ]
 ```
 
-The ports will be forwarded from the host to the service. A service will be restarted if it does not start-up (i.e. it is listening on the port).
+The ports will be forwarded from the host to the service. A service will be restarted if it does not start-up (i.e. it
+is listening on the port).
 
 ### Dependencies
 
 Tasks can depend on other tasks:
 
 ```yaml
-- name: build
+build:
   command: go build .
-- name: test
+test:
   command: go test .
   dependencies: [ build ]
 ```
 
-Tasks will only be started if the dependencies have completed successfully, or if the task is a service, it is running and listening on its port.
+Tasks will only be started if the dependencies have completed successfully, or if the task is a service, it is running
+and listening on its port.
 
 ### Tasks
 
@@ -83,17 +73,17 @@ Tasks will only be started if the dependencies have completed successfully, or i
 A **host task** runs on the host machine. It is defined by a `command`:
 
 ```yaml
-- name: build
+build:
   command: go build .
 ```
 
 Once a task completes successfully, any downstream tasks are started. If it is unsuccessful, Kit will exit
 
 Unlike a plain task, if a service does not start-up (i.e. it is listening on the port), it will be restarted. You can
-specify a probe to determine if the  service is running correctly:
+specify a probe to determine if the service is running correctly:
 
 ```yaml
-- name: service
+service:
   command: go run .
   ports: [ 8080 ]
   readinessProbe:
@@ -101,23 +91,23 @@ specify a probe to determine if the  service is running correctly:
       path: /healthz 
 ```
 
-### Shell Task
+#### Shell Task
 
 A **shell task** is just a host task that runs in a shell:
 
 ```yaml
-- name: shell
+shell:
   sh: |
     set -eux
     echo "Hello, world!"
 ```
 
-### Container Task
+#### Container Task
 
 A **container task** runs in a container. It is defined by an `image`:
 
 ```yaml
-- name: mysql
+mysql:
   image: mysql
   ports: [ 3306:3306 ]
 ```
@@ -127,16 +117,16 @@ The ports will be forwarded from the host to the container.
 If the image is a path to a directory containing Dockerfile, it will be built and run automatically:
 
 ```yaml
-- name: kafka
+kafka:
   image: ./src/images/kafka
 ```
 
-### Kubernetes Task
+#### Kubernetes Task
 
 A **Kubernetes task** deploys manifests to a Kubernetes cluster, it is defined by `manifests`:
 
 ```yaml
-- name: deploy
+deploy:
   namespace: default
   manifests:
     - manifests/
@@ -146,40 +136,35 @@ A **Kubernetes task** deploys manifests to a Kubernetes cluster, it is defined b
 
 The ports will be forwarded from the Kubernetes cluster to the host.
 
-### No-op Task
+#### No-op Task
 
 A **no-op task** is a task that does nothing, commonly a task named `up` is provided and that depends on all other
 tasks:
 
 ```yaml
-- name: up
+up:
   dependencies: [ deploy ]
 ```
 
 ### Environment Variables
 
-Task can have **environment variables**:
+A task can have **environment variables**:
 
 ```yaml
-- name: foo
+foo:
   command: go run .
   env:
-    # simple key-value pair
     - FOO=1
-    # value from a file
-    - name: BAR
-      valueFrom:
-        file: bar.txt
   # environment variables from a file
   envfile: .env
 ```
 
 ### Watches
 
-Task can be **automatically re-run** when a file changes:
+A task can be **automatically re-run** when a file changes:
 
 ```yaml
-- name: build
+build:
   command: go build .
   watch: src/
 ```
@@ -189,7 +174,7 @@ Task can be **automatically re-run** when a file changes:
 If a task produces an output, you can avoid repeating work by specifying the **task target**:
 
 ```yaml
-- name: build
+build:
   command: go build .
   target: bin/app
 ```
@@ -204,9 +189,9 @@ If you want to prevent two tasks from running at the same time, you can use a mu
 
 ```yaml
 tasks:
-  - name: foo
+  foo:
     mutex: my-mutex
-  - name: bar
+  bar:
     mutex: my-mutex
 ```
 
@@ -217,9 +202,9 @@ If you want to limit the number of tasks that can run at the same time, you can 
 semaphores:
   my-semaphore: 2
 tasks:
-  - name: foo
+  foo:
     semaphore: my-semaphore
-  - name: bar
+  bar:
     semaphore: my-semaphore
 ```
 
@@ -228,14 +213,15 @@ tasks:
 Sometimes a task logs too much, you can send logs to a file:
 
 ```yaml 
-- name: build
+build:
   command: go build .
   log: build.log
 ```
 
 ### Skipping Tasks
 
-You can skip tasks by using the `-s` flag. This is useful if you want to run that task elsewhere (e.g. in IDE with debugger connected to it):
+You can skip tasks by using the `-s` flag. This is useful if you want to run that task elsewhere (e.g. in IDE with
+debugger connected to it):
 
 ```bash
 kit -s foo,bar up
@@ -243,7 +229,6 @@ kit -s foo,bar up
 
 ## Documentation
 
-- [Usage](docs/USAGE.md) - how to use the various features of kit
 - [Examples](docs/examples) - examples of how to use kit, e.g. with MySQL, or Kafka
 - [Reference](docs/reference) - reference documentation for the various types in kit
 

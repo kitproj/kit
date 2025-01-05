@@ -39,6 +39,7 @@ import (
 type k8s struct {
 	log  *log.Logger
 	spec types.PodSpec
+	name string
 	types.Task
 }
 
@@ -202,7 +203,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			}
 			labels := u.GetLabels()
 			labels[managedByLabel] = managedByValue
-			labels[nameLabel] = k.Name
+			labels[nameLabel] = k.name
 			u.SetLabels(labels)
 
 			// if this is a deployment or a statefulset, then add the label to the pod template
@@ -213,7 +214,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					return err
 				}
 				labels[managedByLabel] = managedByValue
-				labels[nameLabel] = k.Name
+				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
 				if err != nil {
 					return err
@@ -225,7 +226,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					return err
 				}
 				labels[managedByLabel] = managedByValue
-				labels[nameLabel] = k.Name
+				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
 				if err != nil {
 					return err
@@ -291,7 +292,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 	// Create a shared informer factory for only the labelled resource managed-by kit and named after the task
 	factory := informers.NewSharedInformerFactoryWithOptions(clientset, 10*time.Second, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-		options.LabelSelector = fmt.Sprintf("%s=%s,%s=%s", managedByLabel, managedByValue, nameLabel, k.Name)
+		options.LabelSelector = fmt.Sprintf("%s=%s,%s=%s", managedByLabel, managedByValue, nameLabel, k.name)
 	}))
 
 	// Create a pod informer
