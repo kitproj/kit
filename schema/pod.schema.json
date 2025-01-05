@@ -115,9 +115,6 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "name"
-      ],
       "title": "Metadata"
     },
     "Pod": {
@@ -146,8 +143,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "spec",
-        "metadata"
+        "spec"
       ],
       "title": "Pod"
     },

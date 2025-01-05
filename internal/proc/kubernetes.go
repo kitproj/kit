@@ -420,7 +420,3 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	return nil
 
 }
-
-func (k *k8s) Reset(ctx context.Context) error {
-	return nil
-}

@@ -1,6 +1,6 @@
 module github.com/kitproj/kit
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/docker/cli v24.0.5+incompatible

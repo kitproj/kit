@@ -3,25 +3,23 @@ package main
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"flag"
 	"fmt"
-	"io"
-	"io/fs"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/kitproj/kit/internal"
 	"github.com/kitproj/kit/internal/proc"
 	"github.com/kitproj/kit/internal/types"
 	"github.com/kitproj/kit/internal/util"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/yaml"
 )
 
@@ -32,11 +30,6 @@ var tag string
 // GitHub Actions
 const defaultConfigFile = "tasks.yaml"
 
-type taskStatus struct {
-	reason  string
-	backoff backoff
-}
-
 func init() {
 	log.SetFlags(0)
 }
@@ -45,12 +38,12 @@ func main() {
 	help := false
 	printVersion := false
 	configFile := ""
-	noWatch := os.Getenv("WATCH") == "0" || os.Getenv("KIT_WATCH") == "0"
+	tasksToSkip := ""
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
-	flag.BoolVar(&noWatch, "W", false, "do not watch for changes, defaults to KIT_WATCH=0 env var")
+	flag.StringVar(&tasksToSkip, "skip", "", "tasks to skip (comma separated)")
 	flag.Parse()
 	args := flag.Args()
 
@@ -66,8 +59,8 @@ func main() {
 
 	err := func() error {
 
-		ctx, stopEverything := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-		defer stopEverything()
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+		defer cancel()
 
 		pod := &types.Pod{}
 
@@ -79,367 +72,281 @@ func main() {
 			return err
 		}
 
-		// make sure that the file is valid,
-		// this helps Copilot to auto-complete the file,
-		// no need to have any IDE plugin - welcome to the future
-		if pod.ApiVersion != "kit/v1" {
-			return errors.New("invalid apiVersion, must be 'kit/v1")
-		}
-		if pod.Kind != "Tasks" {
-			return errors.New("invalid kind, must be 'Tasks'")
-		}
-		if pod.Metadata.Name == "" {
-			return errors.New("metadata.name is required")
-		}
-
-		tasks := pod.Spec.Tasks.NeededFor(args)
-
-		statuses := sync.Map{}
-		for _, task := range tasks {
-
-			x := &taskStatus{
-				reason:  "waiting",
-				backoff: defaultBackoff,
+		dag := internal.NewDAG[bool]()
+		for _, t := range pod.Spec.Tasks {
+			dag.AddNode(t.Name, true)
+			for _, dependency := range t.Dependencies {
+				dag.AddEdge(dependency, t.Name)
 			}
+		}
+		visited := dag.Subgraph(args)
 
-			statuses.Store(task.Name, x)
+		taskByName := pod.Spec.Tasks.Map()
+		subgraph := internal.NewDAG[*taskNode]()
+		for name := range visited {
+			task := taskByName[name]
+			subgraph.AddNode(name, &taskNode{task: task})
+			for _, parent := range dag.Parents[name] {
+				subgraph.AddEdge(parent, name)
+			}
 		}
 
-		stopRuns := &sync.Map{}
-		work := make(chan types.Task)
+		taskNames := make(chan string, len(subgraph.Nodes))
+
+		// schedule the tasks in the subgraph that are ready to run , this is done by sending the task name to the events channel of any task that does not have any parents
+		for taskName := range subgraph.Nodes {
+			if len(subgraph.Parents[taskName]) == 0 {
+				taskNames <- taskName
+			}
+		}
+
+		// start a file watcher for each task
+		for _, t := range subgraph.Nodes {
+
+			// start watching files for changes
+			watcher, err := fsnotify.NewWatcher()
+			if err != nil {
+				return err
+			}
+			for _, source := range t.task.Watch {
+				if err := watcher.Add(filepath.Join(t.task.WorkingDir, source)); err != nil {
+					return err
+				}
+			}
+			defer watcher.Close()
+
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case event := <-watcher.Events:
+						if event.Op&fsnotify.Write == fsnotify.Write {
+							log.Printf("file changed, re-running %s\n", t.task.Name)
+							taskNames <- t.task.Name
+						}
+					}
+				}
+			}()
+		}
 
 		semaphores := util.NewSemaphores(pod.Spec.Semaphores)
 
-		go func() {
-			defer handleCrash(stopEverything)
-			for _, t := range tasks.GetLeaves() {
-				work <- t
-			}
-		}()
-
-		go func() {
-			defer handleCrash(stopEverything)
-			<-ctx.Done()
-			close(work)
-		}()
-
 		wg := sync.WaitGroup{}
 
-		stop := &sync.Map{}
-
-		maybeStartDownstream := func(name string) {
+		for {
 			select {
 			case <-ctx.Done():
-			default:
-				for _, downstream := range tasks.GetDownstream(name) {
-					fulfilled := true
-					for _, upstream := range downstream.Dependencies {
-						v, ok := statuses.Load(upstream)
-						if ok {
-							status := v.(*taskStatus)
-							fulfilled = fulfilled && (status.reason == "success" || status.reason == "running" && tasks.Get(upstream).IsBackground())
-						} else {
-							fulfilled = false
-						}
-					}
-					if fulfilled {
-						work <- downstream
+
+				wg.Wait()
+
+				// if any task failed, we will return an error
+				var failures []string
+				for _, node := range subgraph.Nodes {
+					if node.phase == "failed" {
+						failures = append(failures, fmt.Sprintf("%s %s", node.task.Name, node.message))
 					}
 				}
-			}
-		}
 
-		go func() {
-			defer handleCrash(stopEverything)
-			for {
-				// stop everything if all tasks are complete/in error
-				allComplete := tasks.All(func(task types.Task) bool {
-					if v, ok := statuses.Load(task.Name); ok {
-						status := v.(*taskStatus)
-						return !task.IsBackground() && (status.reason == "success" || status.reason == "error")
-					}
-					return false
-				})
-				// non-restarting tasks in error
-				anyError := tasks.Any(func(task types.Task) bool {
-					if v, ok := statuses.Load(task.Name); ok {
-						status := v.(*taskStatus)
-						return task.GetRestartPolicy() == "Never" && status.reason == "error"
-					}
-					return false
-
-				})
-				if allComplete || anyError {
-					stopEverything()
+				if len(failures) > 0 {
+					return fmt.Errorf("failed tasks: %v", failures)
 				}
-				time.Sleep(time.Second)
-			}
-		}()
 
-		// an array of colors to use for the logs, we use the same color for the same task
-		// we avoid red as this is for errors, and black as it is the default color
-		codes := []int{
-			32, // green
-			33, // yellow
-			34, // blue
-			35, // magenta
-			36, // cyan
-		}
+				return nil
+			case taskName := <-taskNames:
 
-		for t := range work {
-			v, _ := statuses.Load(t.Name)
-			status := v.(*taskStatus)
-
-			code := 0
-			for _, x := range t.Name {
-				code += int(x)
-			}
-
-			code = codes[code%len(codes)]
-
-			// if the task is a service, we want to bold it
-			service := t.GetLivenessProbe() != nil || t.GetReadinessProbe() != nil
-			if service {
-				code += 1
-			}
-
-			logWriter := funcWriter(func(bytes []byte) (int, error) {
-				prefix := fmt.Sprintf("\033[0;%dm[%s] (%s) ", code, t.Name, status.reason)
-
-				// split on newlines
-				lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
-				for _, line := range lines {
-					log.Println(prefix + line)
+				// if we get the poison pill, we should see if all tasks are done and exit if so
+				const PoisonPill = ""
+				if taskName == PoisonPill {
+					busy := false
+					for _, node := range subgraph.Nodes {
+						if node.busy() {
+							busy = true
+						}
+					}
+					if !busy {
+						cancel()
+					}
+					continue
 				}
-				return len(bytes), nil
-			})
 
-			log := log.New(logWriter, "", 0)
-
-			prc := proc.New(t, log, pod.Spec)
-
-			processCtx, stopProcess := context.WithCancel(ctx)
-			defer stopProcess()
-
-			// watch files for changes
-			if !noWatch {
-				go func(t types.Task, stopProcess context.CancelFunc) {
-					defer handleCrash(stopEverything)
-					watcher, err := fsnotify.NewWatcher()
-					if err != nil {
-						panic(err)
+				// we will only execute this task, if its parents are "succeeded" or "skipped" or ("running" and the task is a service)
+				blocked := false
+				for _, parentName := range subgraph.Parents[taskName] {
+					parent := subgraph.Nodes[parentName]
+					if parent.blocked() {
+						log.Printf("task %q is blocked by %q (%s) %s\n", taskName, parentName, parent.phase, parent.message)
+						blocked = true
 					}
-					defer watcher.Close()
-					for _, source := range t.Watch {
-						w := filepath.Join(t.WorkingDir, source)
-						stat, err := os.Stat(w)
-						if err != nil {
-							panic(err)
-						}
-						if err := watcher.Add(w); err != nil {
-							panic(err)
-						}
-						if stat.IsDir() {
-							if err := filepath.WalkDir(w, func(path string, d fs.DirEntry, err error) error {
-								if err != nil {
-									return err
-								}
-								if d.IsDir() {
-									return watcher.Add(path)
-								}
-								return nil
-							}); err != nil {
-								panic(err)
-							}
-						}
-					}
+				}
 
-					timer := time.AfterFunc(100*365*24*time.Hour, func() {
-						work <- t
+				if blocked {
+					continue
+				}
+
+				// we might already be waiting, starting or running this task, so we don't want to start it again
+				node := subgraph.Nodes[taskName]
+				if node.busy() {
+					continue
+				}
+
+				// each task is executed in a separate goroutine
+				wg.Add(1)
+
+				node.phase = "waiting"
+				node.message = ""
+
+				go func(t types.Task) {
+					ctx, cancel := context.WithCancel(ctx)
+					defer cancel()
+
+					defer func() { taskNames <- PoisonPill }()
+					defer wg.Done()
+
+					out := funcWriter(func(bytes []byte) (int, error) {
+						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(t.Name, t.IsService()), t.Name, subgraph.Nodes[t.Name].phase)
+						// reset color and bold
+						suffix := "\033[0m"
+
+						// split on newlines
+						lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
+						for _, line := range lines {
+							log.Println(prefix + line + suffix)
+						}
+
+						return len(bytes), nil
 					})
-					defer timer.Stop()
 
-					for {
-						select {
-						case <-processCtx.Done():
-							return
-						case e := <-watcher.Events:
-							// ignore chmod events, these can be triggered by the editor, but we don't care
-							if e.Op != fsnotify.Chmod {
-								log.Printf("%v changed\n", e)
-								timer.Reset(time.Second)
+					log := log.New(out, "", 0)
+
+					queueChildren := func() {
+						for _, child := range subgraph.Children[t.Name] {
+							// only queue tasks in the subgraph
+							if _, ok := subgraph.Nodes[child]; ok {
+								log.Printf("queuing %q\n", child)
+								taskNames <- child
 							}
-						case err := <-watcher.Errors:
-							panic(err)
 						}
 					}
-				}(t, stopProcess)
-			}
 
-			// run the process
-			wg.Add(1)
-			go func(t types.Task, status *taskStatus, stopProcess context.CancelFunc) {
-				defer handleCrash(stopEverything)
-				defer wg.Done()
-
-				if f, ok := stop.Load(t.Name); ok {
-					log.Printf("stopping process\n")
-					f.(context.CancelFunc)()
-				}
-
-				stop.Store(t.Name, stopProcess)
-
-				if m := t.Mutex; m != "" {
-					mutex := util.GetMutex(m)
-					log.Printf("waiting for mutex %q\n", m)
-					mutex.Lock()
-					log.Printf("locked mutex %q\n", m)
-					defer mutex.Unlock()
-				}
-
-				if s := t.Semaphore; s != "" {
-					log.Printf("waiting for semaphore %q\n", s)
-					semaphore := semaphores.Get(s)
-					if err := semaphore.Acquire(ctx, 1); err != nil {
+					// if the task can be skipped, lets exit early
+					if t.Skip() || slices.Contains(strings.Split(tasksToSkip, ","), t.Name) {
+						node.phase = "succeeded"
+						node.message = "skipped"
+						log.Println("skipping")
+						queueChildren()
 						return
 					}
-					log.Printf("acquired semaphore %q\n", s)
-					defer semaphore.Release(1)
-				}
 
-				go func() {
-					defer handleCrash(stopEverything)
-					<-ctx.Done()
-					stopProcess()
-				}()
+					// if the task needs a mutex, lets wait for it
+					if t.Mutex != "" {
+						mu := util.GetMutex(t.Mutex)
+						node.phase = "waiting"
+						node.message = "waiting for mutex"
+						log.Println("waiting for mutex")
+						mu.Lock()
+						node.message = "acquired mutex"
+						log.Println("acquired mutex")
+						defer mu.Unlock()
+					}
 
-				for {
-					select {
-					case <-processCtx.Done():
-						return
-					default:
-
-						// if the task targets exist, we can skip the task
-						if t.Skip() {
-							log.Printf("skipping process\n")
-							status.reason = "success"
-							maybeStartDownstream(t.Name)
+					// if the task needs a semaphore, lets wait for it
+					if t.Semaphore != "" {
+						sema := semaphores.Get(t.Semaphore)
+						node.phase = "waiting"
+						node.message = "waiting for semaphore"
+						log.Println("waiting for semaphore")
+						if err := sema.Acquire(ctx, 1); err != nil {
+							node.phase = "failed"
+							node.message = fmt.Sprintf("failed to acquire semaphore: %v", err)
+							log.Printf("failed to acquire semaphore: %v", err)
 							return
 						}
+						node.message = "acquired semaphore"
+						defer sema.Release(1)
+					}
 
-						err := func() error {
-							runCtx, stopRun := context.WithCancel(processCtx)
-							defer stopRun()
-							stopRuns.Store(t.Name, stopRun)
-							status.reason = "starting"
-							if err := prc.Reset(runCtx); err != nil {
-								return err
+					p := proc.New(t, log, pod.Spec)
+
+					if probe := t.GetLivenessProbe(); probe != nil {
+						liveFunc := func(live bool, err error) {
+							if !live {
+								node.phase = "failed"
+								node.message = fmt.Sprintf("liveness probe failed: %v", err)
+								log.Printf("liveness probe failed: %v", err)
+								cancel()
 							}
-							for _, port := range t.GetHostPorts() {
-								log.Printf("waiting for port %d to be free\n", port)
-								if err := isPortFree(port); err != nil {
-									return err
-								}
-							}
-							if probe := t.GetLivenessProbe(); probe != nil {
-								liveFunc := func(live bool, err error) {
-									if !live {
-										log.Printf("is dead, stopping\n")
-										stopRun()
-									}
-								}
-								go probeLoop(runCtx, stopEverything, *probe, liveFunc)
-							}
-							if probe := t.GetReadinessProbe(); probe != nil {
-								status.reason = "starting"
-								readyFunc := func(ready bool, err error) {
-									if ready {
-										log.Printf("is ready, starting downstream\n")
-										status.reason = "running"
-										maybeStartDownstream(t.Name)
-									} else {
-										log.Printf("is not ready\n")
-										status.reason = "error"
-									}
-								}
-								go probeLoop(runCtx, stopEverything, *probe, readyFunc)
+						}
+						go probeLoop(ctx, *probe, liveFunc)
+					}
+					if probe := t.GetReadinessProbe(); probe != nil {
+						readyFunc := func(ready bool, err error) {
+							if ready {
+								node.phase = "running"
+								node.message = fmt.Sprintf("readiness probe succeeded")
+								log.Println("readiness probe succeeded")
+								queueChildren()
 							} else {
-								status.reason = "running"
-							}
-
-							// the log.Writer does not add the prefix, so we need to add it manually
-							var out io.Writer = funcWriter(func(bytes []byte) (int, error) {
-								// split on newlines
-								lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
-								for _, line := range lines {
-									log.Println(" " + line)
-								}
-								return len(bytes), nil
-							})
-
-							if t.Log != "" {
-								out, err := os.Create(t.Log)
-								if err != nil {
-									return err
-								}
-								defer out.Close()
-							}
-
-							return prc.Run(runCtx, out, out)
-						}()
-
-						if err != nil {
-							if errors.Is(err, context.Canceled) {
-								return
-							}
-							status.reason = "error"
-							log.Printf("task failed: %v\n", err)
-							status.backoff = status.backoff.next()
-						} else {
-							status.reason = "success"
-							status.backoff = defaultBackoff
-							maybeStartDownstream(t.Name)
-							if !t.IsRestart() {
-								return
+								node.phase = "failed"
+								node.message = fmt.Sprintf("readiness probe failed: %v", err)
+								log.Println("readiness probe failed")
+								cancel()
 							}
 						}
-						if t.GetRestartPolicy() == "Never" {
-							return
-						}
+						go probeLoop(ctx, *probe, readyFunc)
 					}
-					if t.IsBackground() {
-						log.Printf("backing off %s\n", status.backoff.Duration)
 
-						// exit if we are terminating
+					if t.IsService() {
+						node.phase = "starting"
+					} else {
+						node.phase = "running"
+					}
+
+					restart := func() {
 						select {
 						case <-ctx.Done():
-						case <-time.After(status.backoff.Duration):
+						case <-time.After(3 * time.Second):
+							log.Println("restarting")
+							taskNames <- t.Name
 						}
 					}
-				}
-			}(t, status, stopProcess)
-		}
 
-		wg.Wait()
+					if t.Log != "" {
+						out, err := os.Create(t.Log)
+						if err != nil {
+							node.phase = "failed"
+							node.message = fmt.Sprintf("failed to create log file: %v", err)
+							log.Printf("failed to create log file: %v", err)
+							return
+						}
+						defer out.Close()
+					}
 
-		for _, task := range tasks {
-			if v, ok := statuses.Load(task.Name); ok && v.(*taskStatus).reason == "error" && task.GetRestartPolicy() == "Never" {
-				return fmt.Errorf("%s errored", task.Name)
+					err = p.Run(ctx, out, out)
+					if err != nil {
+						node.phase = "failed"
+						node.message = fmt.Sprint(err)
+						log.Println(err)
+						if t.GetRestartPolicy() != "Never" {
+							restart()
+						}
+						return
+					}
+
+					node.phase = "succeeded"
+					log.Println("succeeded")
+					if t.GetRestartPolicy() == "Always" {
+						restart()
+					}
+					queueChildren()
+
+				}(taskByName[taskName])
 			}
 		}
-		return nil
 	}()
 
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
-	}
-}
-
-func handleCrash(stop context.CancelFunc) {
-	if r := recover(); r != nil {
-		fmt.Println(r)
-		debug.PrintStack()
-		stop()
 	}
 }

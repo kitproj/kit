@@ -18,7 +18,7 @@ Metadata is the metadata for the pod.
 
 | Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                                |
 | :-------------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)               | `string` | Required | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
+| [name](#name)               | `string` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
 | [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
 
 ## name
@@ -27,7 +27,7 @@ Name is the name of the resource.
 
 `name`
 
-*   is required
+*   is optional
 
 *   Type: `string` ([name](pod-defs-metadata-properties-name.md))
 

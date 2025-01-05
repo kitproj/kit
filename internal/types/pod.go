@@ -402,6 +402,10 @@ func (t *Task) Skip() bool {
 	return oldestTarget.After(youngestSource)
 }
 
+func (t *Task) IsService() bool {
+	return len(t.Ports) > 0
+}
+
 type Pod struct {
 	// The specification of tasks to run.
 	Spec PodSpec `json:"spec"`
@@ -410,7 +414,7 @@ type Pod struct {
 	// Kind must be `Tasks`.
 	Kind string `json:"kind,omitempty"`
 	// Metadata is the metadata for the pod.
-	Metadata Metadata `json:"metadata"`
+	Metadata Metadata `json:"metadata,omitempty"`
 }
 
 // A probe to check if the task is alive, it will be restarted if not.
@@ -621,94 +625,12 @@ type Volume struct {
 
 type Tasks []Task
 
-func (t Tasks) GetLeaves() Tasks {
-	var out Tasks
-	for _, t := range t {
-		if len(t.Dependencies) == 0 {
-			out = append(out, t)
-		}
-	}
-	return out
-}
-
-func (t Tasks) GetDownstream(name string) Tasks {
-	var out Tasks
-	for _, downstream := range t {
-		for _, upstream := range downstream.Dependencies {
-			if upstream == name {
-				out = append(out, downstream)
-			}
-		}
-	}
-	return out
-}
-
-func (t Tasks) NeededFor(names []string) Tasks {
-	var todo []string
-	for _, name := range names {
-		todo = append(todo, name)
-	}
-	done := map[string]bool{}
-	for len(todo) > 0 {
-		name := todo[0]
-		todo = todo[1:]
-		done[name] = true
-		for _, d := range t.Get(name).Dependencies {
-			if !done[d] {
-				todo = append(todo, d)
-			}
-		}
-	}
-	var out Tasks
-	// ensures tasks are queued in order
+func (t Tasks) Map() map[string]Task {
+	m := map[string]Task{}
 	for _, task := range t {
-		if done[task.Name] {
-			out = append(out, task)
-		}
+		m[task.Name] = task
 	}
-	return out
-}
-func (t Tasks) Has(name string) bool {
-	for _, task := range t {
-		if task.Name == name {
-			return true
-		}
-	}
-	return false
-}
-func (t Tasks) Get(name string) Task {
-	for _, task := range t {
-		if task.Name == name {
-			return task
-		}
-
-	}
-	panic(fmt.Errorf("no task named %q", name))
-}
-
-func (t Tasks) Names() []string {
-	var out []string
-	for _, task := range t {
-		out = append(out, task.Name)
-	}
-	return out
-}
-
-func (t Tasks) All(f func(Task) bool) bool {
-	for _, task := range t {
-		if !f(task) {
-			return false
-		}
-	}
-	return true
-}
-func (t Tasks) Any(f func(Task) bool) bool {
-	for _, task := range t {
-		if f(task) {
-			return true
-		}
-	}
-	return false
+	return m
 }
 
 // Task is a unit of work that should be run.

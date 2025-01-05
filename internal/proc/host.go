@@ -53,15 +53,11 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	go func() {
 		<-ctx.Done()
-		log.Printf("stopping process")
 		if err := h.stop(pgid); err != nil {
 			log.Printf("failed to stop process: %v", err)
 		}
 	}()
-	log.Println("waiting for process")
-	err = cmd.Wait()
-	log.Printf("process exited: %v", err)
-	return err
+	return cmd.Wait()
 }
 
 func (h *host) stop(pid int) error {
@@ -79,10 +75,6 @@ func (h *host) stop(pid int) error {
 	if ignoreProcessFinishedErr(err) != nil {
 		return fmt.Errorf("failed to kill: %w", err)
 	}
-	return nil
-}
-
-func (h *host) Reset(ctx context.Context) error {
 	return nil
 }
 

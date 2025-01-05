@@ -6,7 +6,7 @@ spec:
   tasks:
   - name: build-go-demo
     command: go build -v .
-    watch: demo/go/main.go
+    watch: main.go
     workingDir: demo/go
 
   - name: go-demo
@@ -32,15 +32,14 @@ spec:
 
   - name: error
     sh: |
-      echo "hello" >&2
-      echo "I'm an error" >&2
-      sleep 3s
-      exit 1
+      set -ex
+      nopes
 
   - name: script
     sh: |
+      set -eux
       echo "hello world"
-      sleep 60
+      sleep 5
 
   - name: k8s
     manifests: testdata
