@@ -29,3 +29,21 @@ func (d *DAG[Node]) AddEdge(from, to string) {
 	d.Children[from] = append(d.Children[from], to)
 	d.Parents[to] = append(d.Parents[to], from)
 }
+
+func (d *DAG[Node]) Subgraph(nodeNames []string) map[string]bool {
+	visited := make(map[string]bool)
+	var visit func(string)
+	visit = func(name string) {
+		if visited[name] {
+			return
+		}
+		visited[name] = true
+		for _, parent := range d.Parents[name] {
+			visit(parent)
+		}
+	}
+	for _, name := range nodeNames {
+		visit(name)
+	}
+	return visited
+}

@@ -30,15 +30,6 @@ var tag string
 // GitHub Actions
 const defaultConfigFile = "tasks.yaml"
 
-type taskNode struct {
-	task   types.Task
-	status string
-}
-
-func (n taskNode) busy() bool {
-	return n.status == "running" || n.status == "starting" || n.status == "waiting"
-}
-
 func init() {
 	log.SetFlags(0)
 }
@@ -99,25 +90,7 @@ func main() {
 				dag.AddEdge(dependency, t.Name)
 			}
 		}
-
-		// the dag contains every task in the pod, but we only want to run the tasks that were passed as arguments, or that are needed by those tasks
-		// so we need to find the subgraph of the dag that contains only the tasks we care about
-		// we do this by starting at the tasks we care about, and doing a depth-first search to find all the tasks that are reachable from them
-		// we use a map to keep track of which tasks we've already visited, so we don't visit them more than once
-		visited := make(map[string]bool)
-		var visit func(string)
-		visit = func(name string) {
-			if visited[name] {
-				return
-			}
-			visited[name] = true
-			for _, parent := range dag.Parents[name] {
-				visit(parent)
-			}
-		}
-		for _, name := range args {
-			visit(name)
-		}
+		visited := dag.Subgraph(args)
 
 		taskByName := pod.Spec.Tasks.Map()
 		subgraph := internal.NewDAG[*taskNode]()
@@ -129,24 +102,12 @@ func main() {
 			}
 		}
 
-		// print the graph
-		log.Println("digraph {")
-		for nodeName := range subgraph.Nodes {
-			log.Printf("  %q\n", nodeName)
-		}
-		for from, to := range subgraph.Children {
-			for _, to := range to {
-				log.Printf("  %q -> %q\n", from, to)
-			}
-		}
-		log.Println("}")
-
-		events := make(chan string, len(subgraph.Nodes))
+		taskNames := make(chan string, len(subgraph.Nodes))
 
 		// schedule the tasks in the subgraph that are ready to run , this is done by sending the task name to the events channel of any task that does not have any parents
 		for taskName := range subgraph.Nodes {
 			if len(subgraph.Parents[taskName]) == 0 {
-				events <- taskName
+				taskNames <- taskName
 			}
 		}
 
@@ -173,7 +134,7 @@ func main() {
 					case event := <-watcher.Events:
 						if event.Op&fsnotify.Write == fsnotify.Write {
 							log.Printf("file changed, re-running %s\n", t.task.Name)
-							events <- t.task.Name
+							taskNames <- t.task.Name
 						}
 					}
 				}
@@ -198,21 +159,13 @@ func main() {
 				}
 
 				return nil
-			case taskName := <-events:
-
+			case taskName := <-taskNames:
 				// we will only execute this task, if its parents are "succeeded" or "skipped" or ("running" and the task is a service)
 				blocked := false
 				for _, parentName := range subgraph.Parents[taskName] {
 					parent := subgraph.Nodes[parentName]
-					status := parent.status
-					if parent.task.IsService() {
-						if status != "running" {
-							blocked = true
-						}
-					} else {
-						if status != "succeeded" && status != "skipped" {
-							blocked = true
-						}
+					if parent.blocked() {
+						blocked = true
 					}
 				}
 
@@ -227,7 +180,6 @@ func main() {
 				}
 
 				// each task is executed in a separate goroutine
-
 				wg.Add(1)
 
 				subgraph.Nodes[taskName].status = "waiting"
@@ -254,7 +206,7 @@ func main() {
 
 					queueChildren := func() {
 						for _, child := range subgraph.Children[t.Name] {
-							events <- child
+							taskNames <- child
 						}
 					}
 
@@ -321,7 +273,7 @@ func main() {
 						case <-ctx.Done():
 						case <-time.After(3 * time.Second):
 							log.Println("restarting")
-							events <- t.Name
+							taskNames <- t.Name
 						}
 					}
 
@@ -341,7 +293,6 @@ func main() {
 						if t.GetRestartPolicy() != "Never" {
 							restart()
 						}
-
 						return
 					}
 
@@ -355,7 +306,6 @@ func main() {
 				}(taskByName[taskName])
 			}
 		}
-
 	}()
 
 	if err != nil {
