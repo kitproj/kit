@@ -12,8 +12,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
+
+	"k8s.io/utils/strings/slices"
 
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
@@ -38,9 +42,10 @@ type k8s struct {
 	types.Task
 }
 
-const ManagedByLabel = "app.kubernetes.io/managed-by"
-const NameLabel = "app.kubernetes.io/name"
-const VersionLabel = "app.kubernetes.io/version"
+const managedByLabel = "app.kubernetes.io/managed-by"
+const managedByValue = "kit"
+const nameLabel = "app.kubernetes.io/name"
+const versionLabel = "app.kubernetes.io/version"
 
 func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
 
@@ -90,6 +95,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		return err
 	}
 
+	if k.Namespace != "" {
+		defaultNamespace = k.Namespace
+	}
+
 	// Create a Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -130,11 +139,15 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				u.SetAnnotations(make(map[string]string))
 			}
 			labels := u.GetLabels()
-			labels[ManagedByLabel] = "kit"
-			labels[NameLabel] = k.Name
+			labels[managedByLabel] = managedByValue
+			labels[nameLabel] = k.Name
 			u.SetLabels(labels)
 
-			if u.GetNamespace() == "" {
+			// not all resources have a namespace, e.g. namespaces, clusterroles, etc
+			clusterResource := u.GetKind() != "Namespace" && strings.HasPrefix(u.GetKind(), "Cluster")
+			needsNamespace := u.GetNamespace() == "" && clusterResource
+
+			if needsNamespace {
 				u.SetNamespace(defaultNamespace)
 			}
 
@@ -145,8 +158,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels[ManagedByLabel] = "kit"
-				labels[NameLabel] = k.Name
+				labels[managedByLabel] = managedByValue
+				labels[nameLabel] = k.Name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
 				if err != nil {
 					return err
@@ -157,8 +170,8 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels[ManagedByLabel] = "kit"
-				labels[NameLabel] = k.Name
+				labels[managedByLabel] = managedByValue
+				labels[nameLabel] = k.Name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
 				if err != nil {
 					return err
@@ -167,11 +180,46 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			// add a hash of the manifest to the annotations
 			annotations := u.GetAnnotations()
-			annotations["app.kubernetes.io/version"] = fmt.Sprintf("%x", adler32.Checksum(doc))
+			annotations[versionLabel] = fmt.Sprintf("%x", adler32.Checksum(doc))
 			u.SetAnnotations(annotations)
 
 			uns = append(uns, u)
 		}
+
+		// we need to sort the unstructured outputs by their kind, so that namespaces get applied before deployments, etc
+		// much like Helm/Argo CD does
+		// this is because some resources depend on others, e.g. a deployment depends on a namespace
+		order := []string{
+			"Namespace",
+			"ResourceQuota",
+			"LimitRange",
+			"PodSecurityPolicy",
+			"Secret",
+			"ConfigMap",
+			"StorageClass",
+			"PersistentVolume",
+			"PersistentVolumeClaim",
+			"ServiceAccount",
+			"CustomResourceDefinition",
+			"ClusterRole",
+			"ClusterRoleBinding",
+			"Role",
+			"RoleBinding",
+			"Service",
+			"DaemonSet",
+			"Pod",
+			"ReplicationController",
+			"ReplicaSet",
+			"Deployment",
+			"StatefulSet",
+			"Job",
+			"CronJob",
+			"Ingress",
+			"APIService",
+		}
+		sort.Slice(uns, func(i, j int) bool {
+			return slices.Index(order, uns[i].GetKind()) < slices.Index(order, uns[j].GetKind())
+		})
 
 		// for each YAML document, create the object
 		for _, u := range uns {
@@ -183,8 +231,9 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			// Find the resource that matches the kind
 			var resource string
+			kind := u.GetKind()
 			for _, apiResource := range apiResources.APIResources {
-				if apiResource.Kind == u.GetKind() {
+				if apiResource.Kind == kind {
 					resource = apiResource.Name
 					break
 				}
@@ -203,16 +252,13 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					return err
 				}
 			} else {
-				expectedHash := u.GetAnnotations()[VersionLabel]
+				expectedHash := u.GetAnnotations()[versionLabel]
 				// has the manifest changed?
-				existingHash := existing.GetAnnotations()["app.kubernetes.io/version"]
+				existingHash := existing.GetAnnotations()[versionLabel]
 				if existingHash == expectedHash {
-					log.Printf("skipping %s/%s/%s: unchanged\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+					log.Printf("%s/%s unchanged\n", resource, u.GetName())
 					continue
 				}
-
-				// delete the object
-				log.Printf("deleting %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
 
 				err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Delete(ctx, u.GetName(), metav1.DeleteOptions{})
 				if err != nil {
@@ -220,7 +266,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				}
 			}
 
-			log.Printf("creating %s/%s/%s\n", u.GetAPIVersion(), u.GetKind(), u.GetName())
+			log.Printf("creating %s/%s\n", resource, u.GetName())
 
 			_, err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
 			if err != nil {
@@ -229,26 +275,27 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		}
 	}
 
-	// Create a shared informer factory
-	factory := informers.NewSharedInformerFactory(clientset, time.Second*10)
+	ports := k.Ports.Map()
+
+	// we can exit if we are not expecting to forward any ports
+	if len(ports) == 0 {
+		return nil
+	}
+
+	// Create a shared informer factory for only the labelled resource managed-by kit and named after the task
+	factory := informers.NewSharedInformerFactoryWithOptions(clientset, 10*time.Second, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+		options.LabelSelector = fmt.Sprintf("%s=%s,%s=%s", managedByLabel, managedByValue, nameLabel, k.Name)
+	}))
 
 	// Create a pod informer
 	podInformer := factory.Core().V1().Pods().Informer()
 
-	logging := sync.Map{}
-	portForwarding := sync.Map{}
+	logging := sync.Map{}        // namespace/name/container -> true
+	portForwarding := sync.Map{} // port -> true
 
 	// Add event handlers
 	processPod := func(obj any) {
 		pod := obj.(*corev1.Pod)
-
-		// is the pod labelled with the managed-by label?
-		if pod.GetLabels()[ManagedByLabel] != "github.com/kitproj/kit" {
-			return
-		}
-		if pod.GetLabels()[NameLabel] != k.Name {
-			return
-		}
 
 		running := make(map[string]bool)
 
@@ -264,18 +311,20 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			go func() {
 				// start a log tail
 				key := pod.Namespace + "/" + pod.Name + "/" + c.Name
-				defer func() {
-					if r := recover(); r != nil {
-						log.Printf("error while tailing logs: %s: %v\n", key, r)
-					}
-					logging.Delete(key)
-				}()
 
 				// check if the pod is already being logged
 				if _, ok := logging.Load(key); ok {
 					return
 				}
+
 				logging.Store(key, true)
+				defer logging.Delete(key)
+
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("error while tailing logs: %s: %v\n", key, r)
+					}
+				}()
 
 				req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 					Follow:    true,
@@ -295,14 +344,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			for _, port := range c.Ports {
 				// only forward host ports
 				containerPort := port.ContainerPort
-				hostPort := 0
-
-				for _, p := range k.Ports {
-					if p.ContainerPort == uint16(containerPort) {
-						hostPort = int(p.HostPort)
-						break
-					}
-				}
+				hostPort := ports[uint16(containerPort)]
 
 				if hostPort == 0 {
 					continue
@@ -310,20 +352,19 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 				// start port-forwarding
 				go func() {
-					key := pod.Namespace + "/" + pod.Name + "/" + c.Name + " / " + fmt.Sprintf("%d", containerPort)
-					defer func() {
-						if r := recover(); r != nil {
-							log.Printf("error while port-forwarding: %s: %v\n", key, r)
-						}
-						portForwarding.Delete(key)
-					}()
-
 					// check if the pod is already being port-forwarded
-					if _, ok := portForwarding.Load(key); ok {
+					if _, ok := portForwarding.Load(hostPort); ok {
 						return
 					}
 
-					portForwarding.Store(key, true)
+					portForwarding.Store(hostPort, true)
+					defer portForwarding.Delete(hostPort)
+
+					defer func() {
+						if r := recover(); r != nil {
+							log.Printf("error while port-forwarding: %d: %v\n", hostPort, r)
+						}
+					}()
 
 					req := clientset.CoreV1().RESTClient().Post().
 						Resource("pods").

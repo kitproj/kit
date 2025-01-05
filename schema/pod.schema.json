@@ -336,6 +336,11 @@
           "title": "manifests",
           "description": "A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready."
         },
+        "Namespace": {
+          "type": "string",
+          "title": "Namespace",
+          "description": "The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context."
+        },
         "workingDir": {
           "type": "string",
           "title": "workingDir",
@@ -408,7 +413,8 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "name"
+        "name",
+        "Namespace"
       ],
       "title": "Task",
       "description": "A task is a container or a command to run."

@@ -129,6 +129,14 @@ func (p Ports) MarshalJSON() ([]byte, error) {
 	return json.Marshal(x)
 }
 
+func (p Ports) Map() map[uint16]uint16 {
+	m := map[uint16]uint16{}
+	for _, port := range p {
+		m[port.ContainerPort] = port.GetHostPort()
+	}
+	return m
+}
+
 // A port to expose.
 type Port struct {
 	// The container port to expose
@@ -179,16 +187,10 @@ func (p *Port) Unstring(s string) error {
 }
 
 func (p Port) String() string {
-	if p.HostPort == 0 {
+	if p.GetHostPort() == p.ContainerPort {
 		return fmt.Sprint(p.ContainerPort)
 	}
-	if p.ContainerPort == 0 {
-		return fmt.Sprint(p.HostPort)
-	}
-	if p.HostPort == p.ContainerPort {
-		return fmt.Sprint(p.ContainerPort)
-	}
-	return fmt.Sprintf("%d:%d", p.ContainerPort, p.HostPort)
+	return fmt.Sprintf("%d:%d", p.ContainerPort, p.GetHostPort())
 }
 
 func (p Port) GetHostPort() uint16 {
@@ -265,6 +267,8 @@ type Task struct {
 	Sh string `json:"sh,omitempty"`
 	// A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready.
 	Manifests Strings `json:"manifests,omitempty"`
+	// The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
+	Namespace string
 	// The working directory in the container or on the host
 	WorkingDir string `json:"workingDir,omitempty"`
 	// The user to run the task as.

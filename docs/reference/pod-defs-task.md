@@ -28,6 +28,7 @@ A task is a container or a command to run.
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [sh](#sh)                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")                           |
 | [manifests](#manifests)             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/manifests")                               |
+| [Namespace](#namespace)             | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")             |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
 | [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
@@ -221,6 +222,24 @@ A directories or files of Kubernetes manifests to apply. Once running the task w
 ### manifests Type
 
 `string[]`
+
+## Namespace
+
+The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
+
+`Namespace`
+
+*   is required
+
+*   Type: `string` ([Namespace](pod-defs-task-properties-namespace.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")
+
+### Namespace Type
+
+`string` ([Namespace](pod-defs-task-properties-namespace.md))
 
 ## workingDir
 

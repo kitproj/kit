@@ -217,7 +217,7 @@ func main() {
 
 			// log to a file
 			if t.Log != "" {
-				logFile, err := os.OpenFile(t.Log, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				logFile, err := os.Create(t.Log)
 				if err != nil {
 					log.Fatalf("failed to open log file: %v", err)
 				}

@@ -1,9 +1,11 @@
+---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: test
+  namespace: test
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: test
@@ -13,7 +15,12 @@ spec:
         app: test
     spec:
       containers:
-        - name: container
+        - name: main
           image: nginx
           ports:
             - containerPort: 80
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: test

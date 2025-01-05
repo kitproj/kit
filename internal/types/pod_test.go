@@ -99,3 +99,23 @@ func TestPort_Unstring(t *testing.T) {
 		assert.Equal(t, uint16(8080), p.HostPort)
 	})
 }
+
+func TestPort_String(t *testing.T) {
+	t.Run("NoHostPort", func(t *testing.T) {
+		p := &Port{ContainerPort: 8080}
+		assert.Equal(t, "8080", p.String())
+	})
+
+	t.Run("WithHostPort", func(t *testing.T) {
+		p := &Port{ContainerPort: 8080, HostPort: 80}
+		assert.Equal(t, "8080:80", p.String())
+	})
+}
+
+func TestPorts_Map(t *testing.T) {
+	ports := Ports{
+		{ContainerPort: 8080},
+		{ContainerPort: 8081, HostPort: 80},
+	}
+	assert.Equal(t, map[uint16]uint16{8080: 8080, 8081: 80}, ports.Map())
+}
