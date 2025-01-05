@@ -40,10 +40,8 @@ jobs:
       - run: shasum -a 256 kit_* > checksums.txt
 
       - name: Create a Release in a GitHub Action
-        uses: comnoco/create-release-action@v2.0.5
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
           files: |
             kit_${{ github.ref_name }}_darwin_amd64
             kit_${{ github.ref_name }}_darwin_arm64
