@@ -2,7 +2,7 @@
 set -eu
 
 os=$(uname | tr '[A-Z]' '[a-z]')
-arch=$(uname -m | sed 's/aarch64/arm64/')
+arch=$(uname -m | sed 's/aarch64/arm64/' | sed 's/x86_64/amd64')
 tag=${tag:-}
 
 if [ "$tag" = "" ]; then
