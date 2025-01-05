@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"k8s.io/utils/strings/slices"
 	"log"
 	"os"
@@ -14,7 +16,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/kitproj/kit/internal"
 	"github.com/kitproj/kit/internal/proc"
