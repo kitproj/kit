@@ -257,9 +257,19 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 					continue
 				}
 
+				log.Printf("deleting %s/%s/%s\n", resource, u.GetNamespace(), u.GetName())
+
 				err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Delete(ctx, u.GetName(), metav1.DeleteOptions{})
 				if err != nil {
 					return err
+				}
+				// wait for the resource to be deleted
+				for {
+					_, err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Get(ctx, u.GetName(), metav1.GetOptions{})
+					if apierrors.IsNotFound(err) {
+						break
+					}
+					time.Sleep(1 * time.Second)
 				}
 			}
 
