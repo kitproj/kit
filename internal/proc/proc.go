@@ -11,7 +11,6 @@ import (
 type Interface interface {
 	// Run runs the process.
 	Run(ctx context.Context, stdout, stderr io.Writer) error
-	Reset(ctx context.Context) error
 }
 
 func New(t types.Task, log *log.Logger, spec types.PodSpec) Interface {

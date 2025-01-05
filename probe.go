@@ -11,8 +11,8 @@ import (
 	"github.com/kitproj/kit/internal/types"
 )
 
-func probeLoop(ctx context.Context, stopEverything func(), probe types.Probe, callback func(ok bool, err error)) {
-	defer handleCrash(stopEverything)
+func probeLoop(ctx context.Context, probe types.Probe, callback func(ok bool, err error)) {
+
 	initialDelay := probe.GetInitialDelay()
 	period := probe.GetPeriod()
 	time.Sleep(initialDelay)

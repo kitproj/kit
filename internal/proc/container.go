@@ -242,16 +242,11 @@ func (c *container) createBinds() ([]string, error) {
 	return binds, nil
 }
 
-func (c *container) Reset(ctx context.Context) error {
-	return c.stop(ctx)
-}
-
 func (c *container) stop(ctx context.Context) error {
 	if c.Name == "" {
 		return nil
 	}
 	log := c.log
-	log.Printf("stopping container\n")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -261,6 +256,10 @@ func (c *container) stop(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if id == "" {
+		return nil
+	}
+	log.Printf("stopping container\n")
 	grace := c.spec.GetTerminationGracePeriod()
 	timeout := int(grace.Seconds())
 	err = cli.ContainerStop(ctx, id, dockercontainer.StopOptions{

@@ -45,7 +45,3 @@ func (s shell) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	return nil
 }
-
-func (s shell) Reset(ctx context.Context) error {
-	return nil
-}

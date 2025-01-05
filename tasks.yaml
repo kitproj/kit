@@ -6,7 +6,7 @@ spec:
   tasks:
   - name: build-go-demo
     command: go build -v .
-    watch: demo/go/main.go
+    watch: main.go
     workingDir: demo/go
 
   - name: go-demo
