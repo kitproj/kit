@@ -132,10 +132,12 @@ func main() {
 		// print the graph
 		log.Println("digraph {")
 		for nodeName := range subgraph.Nodes {
-			log.Printf("  %s\n", nodeName)
+			log.Printf("  %q\n", nodeName)
 		}
 		for from, to := range subgraph.Children {
-			log.Printf("  %s -> %s\n", from, to)
+			for _, to := range to {
+				log.Printf("  %q -> %q\n", from, to)
+			}
 		}
 		log.Println("}")
 
@@ -348,6 +350,7 @@ func main() {
 					if t.GetRestartPolicy() == "Always" {
 						restart()
 					}
+					queueChildren()
 
 				}(taskByName[taskName])
 			}
