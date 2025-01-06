@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -185,7 +186,7 @@ func main() {
 				for _, parentName := range subgraph.Parents[taskName] {
 					parent := subgraph.Nodes[parentName]
 					if parent.blocked() {
-						log.Printf("task %q is blocked by %q (%s) %s\n", taskName, parentName, parent.phase, parent.message)
+						log.Printf("task %q is blocked by %q (%s): %s\n", taskName, parentName, parent.phase, parent.message)
 						blocked = true
 					}
 				}
@@ -203,13 +204,11 @@ func main() {
 				// each task is executed in a separate goroutine
 				wg.Add(1)
 
-				node.phase = "waiting"
-				node.message = ""
-
 				go func(node *taskNode) {
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
 
+					// send a poison pill to indicate that we've finish and the main loop must check to see if we need to exit
 					defer func() { taskNames <- PoisonPill }()
 					defer wg.Done()
 
@@ -231,6 +230,14 @@ func main() {
 
 					log := log.New(out, "", 0)
 
+					setNodeStatus := func(node *taskNode, phase string, message string) {
+						node.phase = phase
+						node.message = message
+						log.Println(message)
+					}
+
+					setNodeStatus(node, "waiting", "")
+
 					queueChildren := func() {
 						for _, child := range subgraph.Children[node.name] {
 							// only queue tasks in the subgraph
@@ -243,9 +250,7 @@ func main() {
 
 					// if the task can be skipped, lets exit early
 					if t.Skip() || slices.Contains(strings.Split(tasksToSkip, ","), node.name) {
-						node.phase = "succeeded"
-						node.message = "skipped"
-						log.Println("skipping")
+						setNodeStatus(node, "succeeded", "skipped")
 						queueChildren()
 						return
 					}
@@ -253,28 +258,21 @@ func main() {
 					// if the task needs a mutex, lets wait for it
 					if t.Mutex != "" {
 						mu := util.GetMutex(t.Mutex)
-						node.phase = "waiting"
-						node.message = "waiting for mutex"
-						log.Println("waiting for mutex")
+						setNodeStatus(node, "waiting", "waiting for mutex")
 						mu.Lock()
-						node.message = "acquired mutex"
-						log.Println("acquired mutex")
+						setNodeStatus(node, "waiting", "acquired mutex")
 						defer mu.Unlock()
 					}
 
 					// if the task needs a semaphore, lets wait for it
 					if t.Semaphore != "" {
 						sema := semaphores.Get(t.Semaphore)
-						node.phase = "waiting"
-						node.message = "waiting for semaphore"
-						log.Println("waiting for semaphore")
+						setNodeStatus(node, "waiting", "waiting for semaphore")
 						if err := sema.Acquire(ctx, 1); err != nil {
-							node.phase = "failed"
-							node.message = fmt.Sprintf("failed to acquire semaphore: %v", err)
-							log.Printf("failed to acquire semaphore: %v", err)
+							setNodeStatus(node, "failed", fmt.Sprintf("failed to acquire semaphore: %v", err))
 							return
 						}
-						node.message = "acquired semaphore"
+						setNodeStatus(node, "waiting", "acquired semaphore")
 						defer sema.Release(1)
 					}
 
@@ -283,9 +281,7 @@ func main() {
 					if probe := t.GetLivenessProbe(); probe != nil {
 						liveFunc := func(live bool, err error) {
 							if !live {
-								node.phase = "failed"
-								node.message = fmt.Sprintf("liveness probe failed: %v", err)
-								log.Printf("liveness probe failed: %v", err)
+								setNodeStatus(node, "failed", fmt.Sprintf("liveness probe failed: %v", err))
 								cancel()
 							}
 						}
@@ -294,14 +290,10 @@ func main() {
 					if probe := t.GetReadinessProbe(); probe != nil {
 						readyFunc := func(ready bool, err error) {
 							if ready {
-								node.phase = "running"
-								node.message = fmt.Sprintf("readiness probe succeeded")
-								log.Println("readiness probe succeeded")
+								setNodeStatus(node, "running", "readiness probe succeeded")
 								queueChildren()
 							} else {
-								node.phase = "failed"
-								node.message = fmt.Sprintf("readiness probe failed: %v", err)
-								log.Println("readiness probe failed")
+								setNodeStatus(node, "failed", fmt.Sprintf("readiness probe failed: %v", err))
 								cancel()
 							}
 						}
@@ -309,9 +301,9 @@ func main() {
 					}
 
 					if t.IsService() {
-						node.phase = "starting"
+						setNodeStatus(node, "starting", "")
 					} else {
-						node.phase = "running"
+						setNodeStatus(node, "running", "")
 					}
 
 					restart := func() {
@@ -326,27 +318,27 @@ func main() {
 					if t.Log != "" {
 						out, err := os.Create(t.Log)
 						if err != nil {
-							node.phase = "failed"
-							node.message = fmt.Sprintf("failed to create log file: %v", err)
-							log.Printf("failed to create log file: %v", err)
+							setNodeStatus(node, "failed", fmt.Sprintf("failed to create log file: %v", err))
 							return
 						}
 						defer out.Close()
 					}
 
 					err = p.Run(ctx, out, out)
+					// if the task was cancelled, we don't want to restart it, this is normal exit
+					if errors.Is(ctx.Err(), context.Canceled) {
+						return
+					}
+
 					if err != nil {
-						node.phase = "failed"
-						node.message = fmt.Sprint(err)
-						log.Println(err)
+						setNodeStatus(node, "failed", fmt.Sprint(err))
 						if t.GetRestartPolicy() != "Never" {
 							restart()
 						}
 						return
 					}
 
-					node.phase = "succeeded"
-					log.Println("succeeded")
+					setNodeStatus(node, "succeeded", "")
 					if t.GetRestartPolicy() == "Always" {
 						restart()
 					}
