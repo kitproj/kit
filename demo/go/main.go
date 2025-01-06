@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-// main is the entry point for the application.
+// main is the entry point for the application
 func main() {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	log.Printf("port=%d\n", port)

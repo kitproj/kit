@@ -96,7 +96,7 @@ func main() {
 		subgraph := internal.NewDAG[*taskNode]()
 		for name := range visited {
 			task := taskByName[name]
-			subgraph.AddNode(name, &taskNode{name: name, task: task})
+			subgraph.AddNode(name, &taskNode{name: name, task: task, phase: "pending", cancel: func() {}})
 			for _, parent := range dag.Parents[name] {
 				subgraph.AddEdge(parent, name)
 			}
@@ -112,15 +112,15 @@ func main() {
 		}
 
 		// start a file watcher for each task
-		for _, t := range subgraph.Nodes {
+		for _, node := range subgraph.Nodes {
 
 			// start watching files for changes
 			watcher, err := fsnotify.NewWatcher()
 			if err != nil {
 				return err
 			}
-			for _, source := range t.task.Watch {
-				if err := watcher.Add(filepath.Join(t.task.WorkingDir, source)); err != nil {
+			for _, source := range node.task.Watch {
+				if err := watcher.Add(filepath.Join(node.task.WorkingDir, source)); err != nil {
 					return err
 				}
 			}
@@ -133,8 +133,9 @@ func main() {
 						return
 					case event := <-watcher.Events:
 						if event.Op&fsnotify.Write == fsnotify.Write {
-							log.Printf("file changed, re-running %s\n", t.name)
-							taskNames <- t.name
+							log.Printf("file changed, re-running %s\n", node.name)
+							taskNames <- node.name
+							node.cancel()
 						}
 					}
 				}
@@ -197,9 +198,7 @@ func main() {
 
 				// we might already be waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
-				if node.busy() {
-					continue
-				}
+				node.cancel()
 
 				// each task is executed in a separate goroutine
 				wg.Add(1)
@@ -207,6 +206,8 @@ func main() {
 				go func(node *taskNode) {
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
+
+					node.cancel = cancel
 
 					// send a poison pill to indicate that we've finish and the main loop must check to see if we need to exit
 					defer func() { taskNames <- PoisonPill }()
@@ -222,7 +223,7 @@ func main() {
 						// split on newlines
 						lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
 						for _, line := range lines {
-							log.Println(prefix + line + suffix)
+							fmt.Println(prefix + line + suffix)
 						}
 
 						return len(bytes), nil

@@ -9,6 +9,8 @@ type taskNode struct {
 	phase string
 	// the message for the task phase, e.g. "exit code 1'
 	message string
+	// cancel function
+	cancel func()
 }
 
 func (n taskNode) busy() bool {
