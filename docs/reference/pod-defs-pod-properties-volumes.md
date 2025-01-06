@@ -1,7 +1,7 @@
-# name Schema
+# volumes Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes
 ```
 
 
@@ -10,6 +10,6 @@ https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## name Type
+## volumes Type
 
-`string` ([name](pod-defs-envvar-properties-name.md))
+`object[]` ([Volume](pod-defs-volume.md))

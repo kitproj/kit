@@ -1,7 +1,7 @@
-# Namespace Schema
+# namespace Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/namespace
 ```
 
 The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
@@ -10,6 +10,6 @@ The namespace to run the Kubernetes resource in. Defaults to the namespace of th
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## Namespace Type
+## namespace Type
 
-`string` ([Namespace](pod-defs-task-properties-namespace.md))
+`string` ([namespace](pod-defs-task-properties-namespace.md))

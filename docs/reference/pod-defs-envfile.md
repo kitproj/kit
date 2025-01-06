@@ -1,10 +1,10 @@
 # Envfile Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/envfile
 ```
 
-Environment file (e.g. .env) to use
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |

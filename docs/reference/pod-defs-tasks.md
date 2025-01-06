@@ -12,4 +12,28 @@ https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks
 
 ## Tasks Type
 
-`object[]` ([Task](pod-defs-task.md))
+`object` ([Tasks](pod-defs-tasks.md))
+
+# Tasks Properties
+
+| Property | Type     | Required | Nullable       | Defined by                                                                                                                |
+| :------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `.*`     | `object` | Optional | cannot be null | [Untitled schema](pod-defs-task.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/patternProperties/.*") |
+
+## Pattern: `.*`
+
+A task is a container or a command to run.
+
+`.*`
+
+*   is optional
+
+*   Type: `object` ([Task](pod-defs-task.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/patternProperties/.*")
+
+### .\* Type
+
+`object` ([Task](pod-defs-task.md))

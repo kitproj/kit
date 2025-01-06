@@ -1,15 +1,15 @@
-# apiVersion Schema
+# Untitled string in undefined Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion
+https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars/patternProperties/.*
 ```
 
-APIVersion must be `kit/v1`.
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## apiVersion Type
+## .\* Type
 
-`string` ([apiVersion](pod-defs-pod-properties-apiversion.md))
+`string`

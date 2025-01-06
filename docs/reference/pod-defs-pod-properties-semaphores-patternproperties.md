@@ -1,15 +1,15 @@
-# name Schema
+# Untitled schema Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores/patternProperties
 ```
 
-Name is the name of the resource.
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## name Type
+## patternProperties Type
 
-`string` ([name](pod-defs-metadata-properties-name.md))
+unknown

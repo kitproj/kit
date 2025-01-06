@@ -1,7 +1,7 @@
 # Task Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/items
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Task
 ```
 
 A task is a container or a command to run.
@@ -10,15 +10,14 @@ A task is a container or a command to run.
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | No           | Forbidden         | Forbidden             | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## items Type
+## Task Type
 
 `object` ([Task](pod-defs-task.md))
 
-# items Properties
+# Task Properties
 
 | Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                |
 | :---------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)                       | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")                       |
 | [log](#log)                         | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/log")                         |
 | [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")                     |
 | [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
@@ -28,10 +27,10 @@ A task is a container or a command to run.
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [sh](#sh)                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")                           |
 | [manifests](#manifests)             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/manifests")                               |
-| [Namespace](#namespace)             | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")             |
+| [namespace](#namespace)             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/namespace")             |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
-| [env](#env)                         | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [env](#env)                         | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
 | [envfile](#envfile)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")                                 |
 | [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
 | [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
@@ -42,24 +41,6 @@ A task is a container or a command to run.
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
 | [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
-
-## name
-
-The name of the task, must be unique
-
-`name`
-
-*   is required
-
-*   Type: `string` ([name](pod-defs-task-properties-name.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")
-
-### name Type
-
-`string` ([name](pod-defs-task-properties-name.md))
 
 ## log
 
@@ -223,23 +204,23 @@ A directories or files of Kubernetes manifests to apply. Once running the task w
 
 `string[]`
 
-## Namespace
+## namespace
 
 The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
 
-`Namespace`
+`namespace`
 
-*   is required
+*   is optional
 
-*   Type: `string` ([Namespace](pod-defs-task-properties-namespace.md))
+*   Type: `string` ([namespace](pod-defs-task-properties-namespace.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")
+*   defined in: [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/namespace")
 
-### Namespace Type
+### namespace Type
 
-`string` ([Namespace](pod-defs-task-properties-namespace.md))
+`string` ([namespace](pod-defs-task-properties-namespace.md))
 
 ## workingDir
 
@@ -285,7 +266,7 @@ A list of environment variables.
 
 *   is optional
 
-*   Type: `object[]` ([EnvVar](pod-defs-envvar.md))
+*   Type: `object` ([EnvVars](pod-defs-envvars.md))
 
 *   cannot be null
 
@@ -293,7 +274,7 @@ A list of environment variables.
 
 ### env Type
 
-`object[]` ([EnvVar](pod-defs-envvar.md))
+`object` ([EnvVars](pod-defs-envvars.md))
 
 ## envfile
 

@@ -1,7 +1,7 @@
-# Untitled schema Schema
+# Untitled integer in undefined Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores/patternProperties
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores/patternProperties/.*
 ```
 
 
@@ -10,6 +10,6 @@ https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/sema
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## patternProperties Type
+## .\* Type
 
-unknown
+`integer`

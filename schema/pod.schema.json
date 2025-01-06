@@ -3,50 +3,13 @@
   "$id": "https://github.com/kitproj/kit/internal/types/pod",
   "$ref": "#/$defs/Pod",
   "$defs": {
-    "EnvVar": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "name"
-        },
-        "value": {
-          "type": "string",
-          "title": "value"
-        },
-        "valueFrom": {
-          "$ref": "#/$defs/EnvVarSource",
-          "title": "valueFrom"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "name",
-        "value"
-      ],
-      "title": "EnvVar",
-      "description": "A environment variable."
-    },
-    "EnvVarSource": {
-      "properties": {
-        "file": {
-          "type": "string",
-          "title": "file",
-          "description": "From a file"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "file"
-      ],
-      "title": "EnvVarSource"
-    },
     "EnvVars": {
-      "items": {
-        "$ref": "#/$defs/EnvVar"
+      "patternProperties": {
+        ".*": {
+          "type": "string"
+        }
       },
-      "type": "array",
+      "type": "object",
       "title": "EnvVars",
       "description": "A list of environment variables."
     },
@@ -95,77 +58,22 @@
       ],
       "title": "HostPath"
     },
-    "Metadata": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "Name is the name of the resource."
-        },
-        "annotations": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "annotations",
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata."
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "title": "Metadata"
-    },
     "Pod": {
-      "properties": {
-        "spec": {
-          "$ref": "#/$defs/PodSpec",
-          "title": "spec",
-          "description": "The specification of tasks to run."
-        },
-        "apiVersion": {
-          "type": "string",
-          "title": "apiVersion",
-          "description": "APIVersion must be `kit/v1`."
-        },
-        "kind": {
-          "type": "string",
-          "title": "kind",
-          "description": "Kind must be `Tasks`."
-        },
-        "metadata": {
-          "$ref": "#/$defs/Metadata",
-          "title": "metadata",
-          "description": "Metadata is the metadata for the pod."
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "spec"
-      ],
-      "title": "Pod"
-    },
-    "PodSpec": {
       "properties": {
         "terminationGracePeriodSeconds": {
           "type": "integer",
-          "title": "terminationGracePeriodSeconds",
-          "description": "TerminationGracePeriodSeconds is the grace period for terminating the pod."
+          "title": "terminationGracePeriodSeconds"
         },
         "tasks": {
           "$ref": "#/$defs/Tasks",
-          "title": "tasks",
-          "description": "Tasks is a list of tasks that should be run."
+          "title": "tasks"
         },
         "volumes": {
           "items": {
             "$ref": "#/$defs/Volume"
           },
           "type": "array",
-          "title": "volumes",
-          "description": "Volumes is a list of volumes that can be mounted by containers belonging to the pod."
+          "title": "volumes"
         },
         "semaphores": {
           "patternProperties": {
@@ -174,24 +82,20 @@
             }
           },
           "type": "object",
-          "title": "semaphores",
-          "description": "Semaphores is a list of semaphores that can be acquired by tasks."
+          "title": "semaphores"
         },
         "env": {
           "$ref": "#/$defs/EnvVars",
-          "title": "env",
-          "description": "Environment variables to set in the container or on the host"
+          "title": "env"
         },
         "envfile": {
           "$ref": "#/$defs/Envfile",
-          "title": "envfile",
-          "description": "Environment file (e.g. .env) to use"
+          "title": "envfile"
         }
       },
       "additionalProperties": false,
       "type": "object",
-      "title": "PodSpec",
-      "description": "Task is a unit of work that should be run."
+      "title": "Pod"
     },
     "Port": {
       "properties": {
@@ -282,11 +186,6 @@
     },
     "Task": {
       "properties": {
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "The name of the task, must be unique"
-        },
         "log": {
           "type": "string",
           "title": "log",
@@ -332,9 +231,9 @@
           "title": "manifests",
           "description": "A directories or files of Kubernetes manifests to apply. Once running the task will wait for the resources to be ready."
         },
-        "Namespace": {
+        "namespace": {
           "type": "string",
-          "title": "Namespace",
+          "title": "namespace",
           "description": "The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context."
         },
         "workingDir": {
@@ -408,18 +307,16 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "name",
-        "Namespace"
-      ],
       "title": "Task",
       "description": "A task is a container or a command to run."
     },
     "Tasks": {
-      "items": {
-        "$ref": "#/$defs/Task"
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/$defs/Task"
+        }
       },
-      "type": "array",
+      "type": "object",
       "title": "Tasks"
     },
     "Volume": {

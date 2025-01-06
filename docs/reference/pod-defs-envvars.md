@@ -1,7 +1,7 @@
 # EnvVars Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/env
 ```
 
 A list of environment variables.
@@ -12,4 +12,28 @@ A list of environment variables.
 
 ## env Type
 
-`object[]` ([EnvVar](pod-defs-envvar.md))
+`object` ([EnvVars](pod-defs-envvars.md))
+
+# env Properties
+
+| Property | Type     | Required | Nullable       | Defined by                                                                                                                                        |
+| :------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `.*`     | `string` | Optional | cannot be null | [Untitled schema](pod-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars/patternProperties/.*") |
+
+## Pattern: `.*`
+
+
+
+`.*`
+
+*   is optional
+
+*   Type: `string`
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars/patternProperties/.*")
+
+### .\* Type
+
+`string`

@@ -16,104 +16,6 @@ unknown
 
 # Untitled schema Definitions
 
-## Definitions group EnvVar
-
-Reference this group by using
-
-```json
-{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar"}
-```
-
-| Property                | Type     | Required | Nullable       | Defined by                                                                                                                                |
-| :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name)           | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")   |
-| [value](#value)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value") |
-| [valueFrom](#valuefrom) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")        |
-
-### name
-
-
-
-`name`
-
-*   is required
-
-*   Type: `string` ([name](pod-defs-envvar-properties-name.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-envvar-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/name")
-
-#### name Type
-
-`string` ([name](pod-defs-envvar-properties-name.md))
-
-### value
-
-
-
-`value`
-
-*   is required
-
-*   Type: `string` ([value](pod-defs-envvar-properties-value.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-envvar-properties-value.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/value")
-
-#### value Type
-
-`string` ([value](pod-defs-envvar-properties-value.md))
-
-### valueFrom
-
-
-
-`valueFrom`
-
-*   is optional
-
-*   Type: `object` ([EnvVarSource](pod-defs-envvarsource.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-envvarsource.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVar/properties/valueFrom")
-
-#### valueFrom Type
-
-`object` ([EnvVarSource](pod-defs-envvarsource.md))
-
-## Definitions group EnvVarSource
-
-Reference this group by using
-
-```json
-{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource"}
-```
-
-| Property      | Type     | Required | Nullable       | Defined by                                                                                                                                          |
-| :------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [file](#file) | `string` | Required | cannot be null | [Untitled schema](pod-defs-envvarsource-properties-file.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource/properties/file") |
-
-### file
-
-From a file
-
-`file`
-
-*   is required
-
-*   Type: `string` ([file](pod-defs-envvarsource-properties-file.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-envvarsource-properties-file.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVarSource/properties/file")
-
-#### file Type
-
-`string` ([file](pod-defs-envvarsource-properties-file.md))
-
 ## Definitions group EnvVars
 
 Reference this group by using
@@ -122,8 +24,27 @@ Reference this group by using
 {"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars"}
 ```
 
-| Property | Type | Required | Nullable | Defined by |
-| :------- | :--- | :------- | :------- | :--------- |
+| Property | Type     | Required | Nullable       | Defined by                                                                                                                                        |
+| :------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `.*`     | `string` | Optional | cannot be null | [Untitled schema](pod-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars/patternProperties/.*") |
+
+### Pattern: `.*`
+
+
+
+`.*`
+
+*   is optional
+
+*   Type: `string`
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars/patternProperties/.*")
+
+#### .\* Type
+
+`string`
 
 ## Definitions group Envfile
 
@@ -234,55 +155,6 @@ Path of the directory on the host.
 
 `string` ([path](pod-defs-hostpath-properties-path.md))
 
-## Definitions group Metadata
-
-Reference this group by using
-
-```json
-{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata"}
-```
-
-| Property                    | Type     | Required | Nullable       | Defined by                                                                                                                                                |
-| :-------------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-1)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")               |
-| [annotations](#annotations) | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations") |
-
-### name
-
-Name is the name of the resource.
-
-`name`
-
-*   is optional
-
-*   Type: `string` ([name](pod-defs-metadata-properties-name.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-metadata-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/name")
-
-#### name Type
-
-`string` ([name](pod-defs-metadata-properties-name.md))
-
-### annotations
-
-Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata.
-
-`annotations`
-
-*   is optional
-
-*   Type: `object` ([annotations](pod-defs-metadata-properties-annotations.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-metadata-properties-annotations.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Metadata/properties/annotations")
-
-#### annotations Type
-
-`object` ([annotations](pod-defs-metadata-properties-annotations.md))
-
 ## Definitions group Pod
 
 Reference this group by using
@@ -291,141 +163,54 @@ Reference this group by using
 {"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod"}
 ```
 
-| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                    |
-| :------------------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
-| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
-| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
-| [metadata](#metadata)     | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
-
-### spec
-
-Task is a unit of work that should be run.
-
-`spec`
-
-*   is required
-
-*   Type: `object` ([PodSpec](pod-defs-podspec.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")
-
-#### spec Type
-
-`object` ([PodSpec](pod-defs-podspec.md))
-
-### apiVersion
-
-APIVersion must be `kit/v1`.
-
-`apiVersion`
-
-*   is optional
-
-*   Type: `string` ([apiVersion](pod-defs-pod-properties-apiversion.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
-
-#### apiVersion Type
-
-`string` ([apiVersion](pod-defs-pod-properties-apiversion.md))
-
-### kind
-
-Kind must be `Tasks`.
-
-`kind`
-
-*   is optional
-
-*   Type: `string` ([kind](pod-defs-pod-properties-kind.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")
-
-#### kind Type
-
-`string` ([kind](pod-defs-pod-properties-kind.md))
-
-### metadata
-
-Metadata is the metadata for the pod.
-
-`metadata`
-
-*   is optional
-
-*   Type: `object` ([Metadata](pod-defs-metadata.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")
-
-#### metadata Type
-
-`object` ([Metadata](pod-defs-metadata.md))
-
-## Definitions group PodSpec
-
-Reference this group by using
-
-```json
-{"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec"}
-```
-
-| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                                  |
-| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds") |
-| [tasks](#tasks)                                                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")                                                                    |
-| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")                                             |
-| [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")                                       |
-| [env](#env)                                                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")                                                                    |
-| [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")                                                                |
+| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                          |
+| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/terminationGracePeriodSeconds") |
+| [tasks](#tasks)                                                 | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/tasks")                                                                |
+| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes")                                             |
+| [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores")                                       |
+| [env](#env)                                                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/env")                                                                |
+| [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/envfile")                                                            |
 
 ### terminationGracePeriodSeconds
 
-TerminationGracePeriodSeconds is the grace period for terminating the pod.
+
 
 `terminationGracePeriodSeconds`
 
 *   is optional
 
-*   Type: `integer` ([terminationGracePeriodSeconds](pod-defs-podspec-properties-terminationgraceperiodseconds.md))
+*   Type: `integer` ([terminationGracePeriodSeconds](pod-defs-pod-properties-terminationgraceperiodseconds.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/terminationGracePeriodSeconds")
+*   defined in: [Untitled schema](pod-defs-pod-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/terminationGracePeriodSeconds")
 
 #### terminationGracePeriodSeconds Type
 
-`integer` ([terminationGracePeriodSeconds](pod-defs-podspec-properties-terminationgraceperiodseconds.md))
+`integer` ([terminationGracePeriodSeconds](pod-defs-pod-properties-terminationgraceperiodseconds.md))
 
 ### tasks
 
-Tasks is a list of tasks that should be run.
+
 
 `tasks`
 
 *   is optional
 
-*   Type: `object[]` ([Task](pod-defs-task.md))
+*   Type: `object` ([Tasks](pod-defs-tasks.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/tasks")
+*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/tasks")
 
 #### tasks Type
 
-`object[]` ([Task](pod-defs-task.md))
+`object` ([Tasks](pod-defs-tasks.md))
 
 ### volumes
 
-Volumes is a list of volumes that can be mounted by containers belonging to the pod.
+
 
 `volumes`
 
@@ -435,7 +220,7 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/volumes")
+*   defined in: [Untitled schema](pod-defs-pod-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes")
 
 #### volumes Type
 
@@ -443,21 +228,21 @@ Volumes is a list of volumes that can be mounted by containers belonging to the 
 
 ### semaphores
 
-Semaphores is a list of semaphores that can be acquired by tasks.
+
 
 `semaphores`
 
 *   is optional
 
-*   Type: `object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
+*   Type: `object` ([semaphores](pod-defs-pod-properties-semaphores.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-podspec-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/semaphores")
+*   defined in: [Untitled schema](pod-defs-pod-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores")
 
 #### semaphores Type
 
-`object` ([semaphores](pod-defs-podspec-properties-semaphores.md))
+`object` ([semaphores](pod-defs-pod-properties-semaphores.md))
 
 ### env
 
@@ -467,19 +252,19 @@ A list of environment variables.
 
 *   is optional
 
-*   Type: `object[]` ([EnvVar](pod-defs-envvar.md))
+*   Type: `object` ([EnvVars](pod-defs-envvars.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/env")
+*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/env")
 
 #### env Type
 
-`object[]` ([EnvVar](pod-defs-envvar.md))
+`object` ([EnvVars](pod-defs-envvars.md))
 
 ### envfile
 
-Environment file (e.g. .env) to use
+
 
 `envfile`
 
@@ -489,7 +274,7 @@ Environment file (e.g. .env) to use
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/PodSpec/properties/envfile")
+*   defined in: [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/envfile")
 
 #### envfile Type
 
@@ -731,7 +516,6 @@ Reference this group by using
 
 | Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                |
 | :---------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-2)                     | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")                       |
 | [log](#log)                         | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/log")                         |
 | [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/image")                     |
 | [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/imagePullPolicy") |
@@ -741,10 +525,10 @@ Reference this group by using
 | [args](#args)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/args")                                    |
 | [sh](#sh)                           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/sh")                           |
 | [manifests](#manifests)             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/manifests")                               |
-| [Namespace](#namespace)             | `string`  | Required | cannot be null | [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")             |
+| [namespace](#namespace)             | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/namespace")             |
 | [workingDir](#workingdir)           | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/workingDir")           |
 | [user](#user)                       | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/user")                       |
-| [env](#env-1)                       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
+| [env](#env-1)                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/env")                                     |
 | [envfile](#envfile-1)               | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/envfile")                                 |
 | [ports](#ports)                     | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-ports.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/ports")                                     |
 | [volumeMounts](#volumemounts)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts")       |
@@ -755,24 +539,6 @@ Reference this group by using
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/dependencies")                            |
 | [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-strings.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](pod-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/restartPolicy")     |
-
-### name
-
-The name of the task, must be unique
-
-`name`
-
-*   is required
-
-*   Type: `string` ([name](pod-defs-task-properties-name.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-task-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/name")
-
-#### name Type
-
-`string` ([name](pod-defs-task-properties-name.md))
 
 ### log
 
@@ -936,23 +702,23 @@ A directories or files of Kubernetes manifests to apply. Once running the task w
 
 `string[]`
 
-### Namespace
+### namespace
 
 The namespace to run the Kubernetes resource in. Defaults to the namespace of the current Kubernetes context.
 
-`Namespace`
+`namespace`
 
-*   is required
+*   is optional
 
-*   Type: `string` ([Namespace](pod-defs-task-properties-namespace.md))
+*   Type: `string` ([namespace](pod-defs-task-properties-namespace.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/Namespace")
+*   defined in: [Untitled schema](pod-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/namespace")
 
-#### Namespace Type
+#### namespace Type
 
-`string` ([Namespace](pod-defs-task-properties-namespace.md))
+`string` ([namespace](pod-defs-task-properties-namespace.md))
 
 ### workingDir
 
@@ -998,7 +764,7 @@ A list of environment variables.
 
 *   is optional
 
-*   Type: `object[]` ([EnvVar](pod-defs-envvar.md))
+*   Type: `object` ([EnvVars](pod-defs-envvars.md))
 
 *   cannot be null
 
@@ -1006,7 +772,7 @@ A list of environment variables.
 
 #### env Type
 
-`object[]` ([EnvVar](pod-defs-envvar.md))
+`object` ([EnvVars](pod-defs-envvars.md))
 
 ### envfile
 
@@ -1196,8 +962,27 @@ Reference this group by using
 {"$ref":"https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks"}
 ```
 
-| Property | Type | Required | Nullable | Defined by |
-| :------- | :--- | :------- | :------- | :--------- |
+| Property | Type     | Required | Nullable       | Defined by                                                                                                                |
+| :------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `.*`     | `object` | Optional | cannot be null | [Untitled schema](pod-defs-task.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/patternProperties/.*") |
+
+### Pattern: `.*`
+
+A task is a container or a command to run.
+
+`.*`
+
+*   is optional
+
+*   Type: `object` ([Task](pod-defs-task.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-task.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks/patternProperties/.*")
+
+#### .\* Type
+
+`object` ([Task](pod-defs-task.md))
 
 ## Definitions group Volume
 
@@ -1209,7 +994,7 @@ Reference this group by using
 
 | Property              | Type     | Required | Nullable       | Defined by                                                                                                                              |
 | :-------------------- | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-3)       | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name") |
+| [name](#name)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/name") |
 | [hostPath](#hostpath) | `object` | Required | cannot be null | [Untitled schema](pod-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume/properties/hostPath")           |
 
 ### name
@@ -1258,7 +1043,7 @@ Reference this group by using
 
 | Property                | Type     | Required | Nullable       | Defined by                                                                                                                                                  |
 | :---------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [name](#name-4)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
+| [name](#name-1)         | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/name")           |
 | [mountPath](#mountpath) | `string` | Required | cannot be null | [Untitled schema](pod-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount/properties/mountPath") |
 
 ### name

@@ -16,81 +16,119 @@ https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod
 
 # Pod Properties
 
-| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                    |
-| :------------------------ | :------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| [spec](#spec)             | `object` | Required | cannot be null | [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")                         |
-| [apiVersion](#apiversion) | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion") |
-| [kind](#kind)             | `string` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")             |
-| [metadata](#metadata)     | `object` | Optional | cannot be null | [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")                    |
+| Property                                                        | Type      | Required | Nullable       | Defined by                                                                                                                                                                          |
+| :-------------------------------------------------------------- | :-------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [terminationGracePeriodSeconds](#terminationgraceperiodseconds) | `integer` | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/terminationGracePeriodSeconds") |
+| [tasks](#tasks)                                                 | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/tasks")                                                                |
+| [volumes](#volumes)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes")                                             |
+| [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-pod-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores")                                       |
+| [env](#env)                                                     | `object`  | Optional | cannot be null | [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/env")                                                                |
+| [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/envfile")                                                            |
 
-## spec
+## terminationGracePeriodSeconds
 
-Task is a unit of work that should be run.
 
-`spec`
 
-*   is required
-
-*   Type: `object` ([PodSpec](pod-defs-podspec.md))
-
-*   cannot be null
-
-*   defined in: [Untitled schema](pod-defs-podspec.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/spec")
-
-### spec Type
-
-`object` ([PodSpec](pod-defs-podspec.md))
-
-## apiVersion
-
-APIVersion must be `kit/v1`.
-
-`apiVersion`
+`terminationGracePeriodSeconds`
 
 *   is optional
 
-*   Type: `string` ([apiVersion](pod-defs-pod-properties-apiversion.md))
+*   Type: `integer` ([terminationGracePeriodSeconds](pod-defs-pod-properties-terminationgraceperiodseconds.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-apiversion.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/apiVersion")
+*   defined in: [Untitled schema](pod-defs-pod-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/terminationGracePeriodSeconds")
 
-### apiVersion Type
+### terminationGracePeriodSeconds Type
 
-`string` ([apiVersion](pod-defs-pod-properties-apiversion.md))
+`integer` ([terminationGracePeriodSeconds](pod-defs-pod-properties-terminationgraceperiodseconds.md))
 
-## kind
+## tasks
 
-Kind must be `Tasks`.
 
-`kind`
+
+`tasks`
 
 *   is optional
 
-*   Type: `string` ([kind](pod-defs-pod-properties-kind.md))
+*   Type: `object` ([Tasks](pod-defs-tasks.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-pod-properties-kind.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind")
+*   defined in: [Untitled schema](pod-defs-tasks.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/tasks")
 
-### kind Type
+### tasks Type
 
-`string` ([kind](pod-defs-pod-properties-kind.md))
+`object` ([Tasks](pod-defs-tasks.md))
 
-## metadata
+## volumes
 
-Metadata is the metadata for the pod.
 
-`metadata`
+
+`volumes`
 
 *   is optional
 
-*   Type: `object` ([Metadata](pod-defs-metadata.md))
+*   Type: `object[]` ([Volume](pod-defs-volume.md))
 
 *   cannot be null
 
-*   defined in: [Untitled schema](pod-defs-metadata.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/metadata")
+*   defined in: [Untitled schema](pod-defs-pod-properties-volumes.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes")
 
-### metadata Type
+### volumes Type
 
-`object` ([Metadata](pod-defs-metadata.md))
+`object[]` ([Volume](pod-defs-volume.md))
+
+## semaphores
+
+
+
+`semaphores`
+
+*   is optional
+
+*   Type: `object` ([semaphores](pod-defs-pod-properties-semaphores.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-pod-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores")
+
+### semaphores Type
+
+`object` ([semaphores](pod-defs-pod-properties-semaphores.md))
+
+## env
+
+A list of environment variables.
+
+`env`
+
+*   is optional
+
+*   Type: `object` ([EnvVars](pod-defs-envvars.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envvars.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/env")
+
+### env Type
+
+`object` ([EnvVars](pod-defs-envvars.md))
+
+## envfile
+
+
+
+`envfile`
+
+*   is optional
+
+*   Type: `string[]`
+
+*   cannot be null
+
+*   defined in: [Untitled schema](pod-defs-envfile.md "https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/envfile")
+
+### envfile Type
+
+`string[]`

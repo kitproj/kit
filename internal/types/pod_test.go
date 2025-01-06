@@ -15,11 +15,8 @@ func TestPod(t *testing.T) {
 	pod := &Pod{}
 	err = yaml.Unmarshal(data, pod)
 	assert.NoError(t, err)
-	assert.Equal(t, "kit", pod.Metadata.Name)
-	assert.Equal(t, map[string]string{"help": "https://github.com/kitproj/kit"}, pod.Metadata.Annotations)
-	assert.Equal(t, 3*time.Second, pod.Spec.GetTerminationGracePeriod())
-	assert.Len(t, pod.Spec.Tasks, 2)
-	task := pod.Spec.Tasks[0]
+	assert.Len(t, pod.Tasks, 2)
+	task := pod.Tasks["foo"]
 	assert.Equal(t, []uint16{8080}, task.GetHostPorts())
 	assert.Equal(t, "OnFailure", task.GetRestartPolicy())
 	probe := task.GetReadinessProbe()
@@ -30,8 +27,8 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, 20, probe.GetFailureThreshold())
 	assert.Nil(t, task.GetLivenessProbe())
 	//
-	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, pod.Spec.Tasks[1].Command)
-	assert.Equal(t, Strings{"baz", "qux"}, pod.Spec.Tasks[1].Dependencies)
+	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, pod.Tasks["bar"].Command)
+	assert.Equal(t, Strings{"baz", "qux"}, pod.Tasks["bar"].Dependencies)
 }
 
 func TestEnvVar_String(t *testing.T) {
@@ -39,11 +36,6 @@ func TestEnvVar_String(t *testing.T) {
 		s, err := EnvVar{Name: "FOO", Value: "1"}.String()
 		assert.NoError(t, err)
 		assert.Equal(t, "FOO=1", s)
-	})
-	t.Run("ValueFrom", func(t *testing.T) {
-		s, err := EnvVar{Name: "FOO", ValueFrom: &EnvVarSource{File: "testdata/six"}}.String()
-		assert.NoError(t, err)
-		assert.Equal(t, "FOO=6", s)
 	})
 }
 

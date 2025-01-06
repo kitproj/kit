@@ -1,15 +1,15 @@
-# kind Schema
+# terminationGracePeriodSeconds Schema
 
 ```txt
-https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/kind
+https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/terminationGracePeriodSeconds
 ```
 
-Kind must be `Tasks`.
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                            |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :-------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [pod.schema.json\*](../../out/pod.schema.json "open original schema") |
 
-## kind Type
+## terminationGracePeriodSeconds Type
 
-`string` ([kind](pod-defs-pod-properties-kind.md))
+`integer` ([terminationGracePeriodSeconds](pod-defs-pod-properties-terminationgraceperiodseconds.md))
