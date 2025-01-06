@@ -206,12 +206,14 @@ func main() {
 				node.phase = "waiting"
 				node.message = ""
 
-				go func(t types.Task) {
+				go func(node *taskNode) {
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
 
 					defer func() { taskNames <- PoisonPill }()
 					defer wg.Done()
+
+					t := node.task
 
 					out := funcWriter(func(bytes []byte) (int, error) {
 						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(node.name, t.IsService()), node.name, node.phase)
@@ -350,7 +352,7 @@ func main() {
 					}
 					queueChildren()
 
-				}(taskByName[taskName])
+				}(node)
 			}
 		}
 	}()
