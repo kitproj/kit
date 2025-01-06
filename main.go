@@ -95,7 +95,7 @@ func main() {
 		subgraph := internal.NewDAG[*taskNode]()
 		for name := range visited {
 			task := taskByName[name]
-			subgraph.AddNode(name, &taskNode{task: task})
+			subgraph.AddNode(name, &taskNode{name: name, task: task})
 			for _, parent := range dag.Parents[name] {
 				subgraph.AddEdge(parent, name)
 			}
