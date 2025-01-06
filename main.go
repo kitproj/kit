@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -224,7 +225,7 @@ func main() {
 
 					t := node.task
 
-					out := funcWriter(func(bytes []byte) (int, error) {
+					var out io.Writer = funcWriter(func(bytes []byte) (int, error) {
 						prefix := fmt.Sprintf("%s[%s] (%s) ", internal.Color(node.name, t.IsService()), node.name, node.phase)
 						// reset color and bold
 						suffix := "\033[0m"
@@ -327,12 +328,13 @@ func main() {
 					}
 
 					if t.Log != "" {
-						out, err := os.Create(t.Log)
+						file, err := os.Create(t.Log)
 						if err != nil {
 							setNodeStatus(node, "failed", fmt.Sprintf("failed to create log file: %v", err))
 							return
 						}
-						defer out.Close()
+						out = file
+						defer file.Close()
 					}
 
 					err = p.Run(ctx, out, out)
