@@ -167,16 +167,25 @@ func main() {
 				return nil
 			case taskName := <-taskNames:
 
-				// if we get the poison pill, we should see if all tasks are done and exit if so
+				// if we get the poison pill, we should see if any job tasks are failed, if so we must exist
+				// if all jobs are either succeeded or skipped, we can exit
 				const PoisonPill = ""
 				if taskName == PoisonPill {
-					busy := false
+					anyJobFailed := false
+					numJobsSucceeded := 0
 					for _, node := range subgraph.Nodes {
-						if node.busy() {
-							busy = true
+						if node.task.IsService() {
+							continue
+						}
+						if node.phase == "failed" {
+							anyJobFailed = true
+						}
+						if node.phase == "succeeded" {
+							numJobsSucceeded++
 						}
 					}
-					if !busy {
+					everyJobSucceeded := numJobsSucceeded == len(subgraph.Nodes)
+					if everyJobSucceeded || anyJobFailed {
 						cancel()
 					}
 					continue
@@ -304,6 +313,7 @@ func main() {
 					if t.IsService() {
 						setNodeStatus(node, "starting", "")
 					} else {
+						// non a service, must be a job
 						setNodeStatus(node, "running", "")
 					}
 

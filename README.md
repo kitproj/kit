@@ -38,9 +38,11 @@ Start:
 kit build
 ```
 
-### Services
+### Jobs vs Service
 
-A task can be a **service** by specifying its ports:
+Every task is either a **job** or a **service**. A job is a task that runs once and exits, a service is a task that runs indefinitely and listens on a port.
+
+By default, a task is a job. To make a task a service, add a `ports` field:
 
 ```yaml
 service:
@@ -50,6 +52,12 @@ service:
 
 The ports will be forwarded from the host to the service. A service will be restarted if it does not start-up (i.e. it
 is listening on the port).
+
+Kit will exit if:
+
+- Any job fails.
+- If the workflow only has jobs and they all complete successfully.
+- You press `Ctrl+C`.
 
 ### Dependencies
 

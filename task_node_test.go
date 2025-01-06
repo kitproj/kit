@@ -7,25 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_taskNode_busy(t *testing.T) {
-	t.Run("waiting", func(t *testing.T) {
-		n := taskNode{phase: "waiting"}
-		assert.True(t, n.busy())
-	})
-	t.Run("running", func(t *testing.T) {
-		n := taskNode{phase: "running"}
-		assert.True(t, n.busy())
-	})
-	t.Run("starting", func(t *testing.T) {
-		n := taskNode{phase: "starting"}
-		assert.True(t, n.busy())
-	})
-	t.Run("succeeded", func(t *testing.T) {
-		n := taskNode{phase: "succeeded"}
-		assert.False(t, n.busy())
-	})
-}
-
 func Test_taskNode_blocked(t *testing.T) {
 	service := types.Task{Ports: []types.Port{{}}}
 	t.Run("service running", func(t *testing.T) {

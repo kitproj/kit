@@ -13,10 +13,6 @@ type taskNode struct {
 	cancel func()
 }
 
-func (n taskNode) busy() bool {
-	return n.phase == "running" || n.phase == "starting" || n.phase == "waiting"
-}
-
 func (n taskNode) blocked() bool {
 	if n.task.IsService() {
 		return n.phase != "running"
