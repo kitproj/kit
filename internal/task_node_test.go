@@ -10,44 +10,44 @@ import (
 func Test_taskNode_blocked(t *testing.T) {
 	service := types.Task{Ports: []types.Port{{}}}
 	t.Run("service running", func(t *testing.T) {
-		n := TaskNode{Phase: "running", Task: service}
+		n := TaskNode{phase: "running", task: service}
 		assert.False(t, n.blocked())
 	})
 	t.Run("service waiting", func(t *testing.T) {
-		n := TaskNode{Phase: "waiting", Task: service}
+		n := TaskNode{phase: "waiting", task: service}
 		assert.True(t, n.blocked())
 	})
 	t.Run("service starting", func(t *testing.T) {
-		n := TaskNode{Phase: "starting", Task: service}
+		n := TaskNode{phase: "starting", task: service}
 		assert.True(t, n.blocked())
 	})
 	t.Run("service succeeded", func(t *testing.T) {
-		n := TaskNode{Phase: "succeeded", Task: service}
+		n := TaskNode{phase: "succeeded", task: service}
 		assert.True(t, n.blocked())
 	})
 	t.Run("service failed", func(t *testing.T) {
-		n := TaskNode{Phase: "failed", Task: service}
+		n := TaskNode{phase: "failed", task: service}
 		assert.True(t, n.blocked())
 	})
 	task := types.Task{}
 	t.Run("task running", func(t *testing.T) {
-		n := TaskNode{Phase: "running", Task: task}
+		n := TaskNode{phase: "running", task: task}
 		assert.True(t, n.blocked())
 	})
 	t.Run("task waiting", func(t *testing.T) {
-		n := TaskNode{Phase: "waiting", Task: task}
+		n := TaskNode{phase: "waiting", task: task}
 		assert.True(t, n.blocked())
 	})
 	t.Run("task starting", func(t *testing.T) {
-		n := TaskNode{Phase: "starting", Task: task}
+		n := TaskNode{phase: "starting", task: task}
 		assert.True(t, n.blocked())
 	})
 	t.Run("task succeeded", func(t *testing.T) {
-		n := TaskNode{Phase: "succeeded", Task: task}
+		n := TaskNode{phase: "succeeded", task: task}
 		assert.False(t, n.blocked())
 	})
 	t.Run("task failed", func(t *testing.T) {
-		n := TaskNode{Phase: "failed", Task: task}
+		n := TaskNode{phase: "failed", task: task}
 		assert.True(t, n.blocked())
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/kitproj/kit/internal"
@@ -19,10 +20,8 @@ import (
 //go:embed tag
 var tag string
 
-// GitHub Actions
-const defaultConfigFile = "tasks.yaml"
-
 func init() {
+	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 }
 
@@ -35,11 +34,11 @@ func main() {
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
-	flag.StringVar(&configFile, "f", defaultConfigFile, "config file")
+	flag.StringVar(&configFile, "f", "tasks.yaml", "config file")
 	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
 	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
 	flag.Parse()
-	args := flag.Args()
+	taskNames := flag.Args()
 
 	if help {
 		flag.Usage()
@@ -74,26 +73,13 @@ func main() {
 			return os.WriteFile(configFile, out, 0644)
 		}
 
-		dag := internal.NewDAG[bool]()
-		for name, t := range wf.Tasks {
-			dag.AddNode(name, true)
-			for _, dependency := range t.Dependencies {
-				dag.AddEdge(dependency, name)
-			}
-		}
-		visited := dag.Subgraph(args)
-
-		taskByName := wf.Tasks
-		subgraph := internal.NewDAG[*internal.TaskNode]()
-		for name := range visited {
-			task := taskByName[name]
-			subgraph.AddNode(name, &internal.TaskNode{Name: name, Task: task, Phase: "pending", Cancel: func() {}})
-			for _, parent := range dag.Parents[name] {
-				subgraph.AddEdge(parent, name)
-			}
-		}
-
-		return internal.RunSubgraph(ctx, cancel, wf, subgraph, tasksToSkip)
+		return internal.RunSubgraph(
+			ctx,
+			cancel,
+			log.Default(),
+			wf,
+			taskNames,
+			strings.Split(tasksToSkip, ","))
 	}()
 
 	if err != nil {
