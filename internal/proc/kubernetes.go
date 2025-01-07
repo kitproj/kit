@@ -135,40 +135,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			uns = append(uns, &unstructured.Unstructured{Object: manifest})
 		}
 
-		// we need to sort the unstructured outputs by their kind, so that namespaces get applied before deployments, etc
-		// much like Helm/Argo CD does
-		// this is because some resources depend on others, e.g. a deployment depends on a namespace
-		order := []string{
-			"Namespace",
-			"ResourceQuota",
-			"LimitRange",
-			"PodSecurityPolicy",
-			"Secret",
-			"ConfigMap",
-			"StorageClass",
-			"PersistentVolume",
-			"PersistentVolumeClaim",
-			"ServiceAccount",
-			"CustomResourceDefinition",
-			"ClusterRole",
-			"ClusterRoleBinding",
-			"Role",
-			"RoleBinding",
-			"Service",
-			"DaemonSet",
-			"Pod",
-			"ReplicationController",
-			"ReplicaSet",
-			"Deployment",
-			"StatefulSet",
-			"Job",
-			"CronJob",
-			"Ingress",
-			"APIService",
-		}
-		sort.Slice(uns, func(i, j int) bool {
-			return slices.Index(order, uns[i].GetKind()) < slices.Index(order, uns[j].GetKind())
-		})
+		sortUnstructureds(uns)
 
 		// for each YAML document, create the object
 		for _, u := range uns {
@@ -420,4 +387,42 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 	return nil
 
+}
+
+func sortUnstructureds(uns []*unstructured.Unstructured) {
+	// we need to sort the unstructured outputs by their kind, so that namespaces get applied before deployments, etc
+	// much like Helm/Argo CD does
+	// this is because some resources depend on others, e.g. a deployment depends on a namespace
+	order := []string{
+		"APIService",
+		"Ingress",
+		"Service",
+		"CronJob",
+		"Job",
+		"StatefulSet",
+		"Deployment",
+		"ReplicaSet",
+		"ReplicationController",
+		"Pod",
+		"DaemonSet",
+		"RoleBinding",
+		"Role",
+		"ClusterRoleBinding",
+		"ClusterRole",
+		"CustomResourceDefinition",
+		"ServiceAccount",
+		"PersistentVolumeClaim",
+		"PersistentVolume",
+		"StorageClass",
+		"ConfigMap",
+		"Secret",
+		"PodSecurityPolicy",
+		"LimitRange",
+		"ResourceQuota",
+		"Namespace",
+	}
+	sort.Slice(uns, func(i, j int) bool {
+		// slices.Index will return -1 if the element is not found
+		return slices.Index(order, uns[i].GetKind()) > slices.Index(order, uns[j].GetKind())
+	})
 }
