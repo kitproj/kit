@@ -111,16 +111,16 @@ func RunSubgraph(
 		select {
 		case <-ctx.Done():
 
-			logger.Println("waiting for all tasks to finish")
+			logger.Println("waiting for all tasks to complete")
 
 			wg.Wait()
 
 			// if any task failed, we will return an error
 			var failures []string
 			for _, node := range subgraph.Nodes {
-				logger.Printf("%s %s\n", node.name, node.phase)
+				logger.Printf("[%s] (%s) %s\n", node.name, node.phase, node.message)
 				if node.phase == "failed" {
-					failures = append(failures, fmt.Sprintf("%s: %s", node.name, node.message))
+					failures = append(failures, node.name)
 				}
 			}
 

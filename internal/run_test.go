@@ -122,7 +122,6 @@ func TestRunSubgraph(t *testing.T) {
 
 		wg.Wait()
 
-		// we should have logged "[service] (succeeded)"
 		assert.Contains(t, buffer.String(), "[service] (succeeded)")
 	})
 	t.Run("Single failing service", func(t *testing.T) {
@@ -155,7 +154,6 @@ func TestRunSubgraph(t *testing.T) {
 
 		wg.Wait()
 
-		// we should have logged "[service] (failed) exit status 1'
 		assert.Contains(t, buffer.String(), "[service] (failed) exit status 1")
 	})
 }
