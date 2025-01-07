@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-func Environ(spec PodSpec, task Task) ([]string, error) {
-	podEnviron, err := spec.Environ()
+func Environ(spec Spec, task Task) ([]string, error) {
+	specEnviron, err := spec.Environ()
 	if err != nil {
 		return nil, fmt.Errorf("error getting spec environ: %w", err)
 	}
@@ -14,5 +14,5 @@ func Environ(spec PodSpec, task Task) ([]string, error) {
 		return nil, fmt.Errorf("error getting spec environ: %w", err)
 	}
 
-	return append(podEnviron, taskEnviron...), nil
+	return append(specEnviron, taskEnviron...), nil
 }

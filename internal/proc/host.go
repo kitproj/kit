@@ -16,7 +16,7 @@ import (
 
 type host struct {
 	log  *log.Logger
-	spec types.PodSpec
+	spec types.Spec
 	types.Task
 }
 

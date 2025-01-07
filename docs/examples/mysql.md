@@ -6,7 +6,7 @@ The MySQL container image provides a pre-configured and optimized environment fo
 tasks:
   "":
     env:
-    - MYSQL_ROOT_PASSWORD=password
+      MYSQL_ROOT_PASSWORD: password
     image: mysql
 volumes:
 - hostPath:

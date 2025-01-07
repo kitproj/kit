@@ -38,7 +38,7 @@ import (
 
 type k8s struct {
 	log  *log.Logger
-	spec types.PodSpec
+	spec types.Spec
 	name string
 	types.Task
 }

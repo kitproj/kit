@@ -12,7 +12,7 @@ https://hub.docker.com/_/mariadb/
 tasks:
   "":
     env:
-    - MARIADB_ROOT_PASSWORD=password
+      MARIADB_ROOT_PASSWORD: password
     image: mariadb
 volumes:
 - hostPath:

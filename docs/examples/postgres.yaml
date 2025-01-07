@@ -1,7 +1,7 @@
 tasks:
   "":
     env:
-    - POSTGRES_PASSWORD=password
+      POSTGRES_PASSWORD: password
     image: postgres
 volumes:
 - hostPath:

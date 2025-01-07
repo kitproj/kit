@@ -17,14 +17,14 @@ import (
 )
 
 type Example struct {
-	Name          string    `json:"name"`
-	Title         string    `json:"title,omitempty"`
-	Uri           string    `json:"uri,omitempty"`
-	Description   string    `json:"description,omitempty"`
-	Documentation string    `json:"documentation,omitempty"`
-	Maintainer    string    `json:"maintainer,omitempty"`
-	Pod           types.Pod `json:"pod"`
-	Licences      string    `json:"licences,omitempty"`
+	Name          string         `json:"name"`
+	Title         string         `json:"title,omitempty"`
+	Uri           string         `json:"uri,omitempty"`
+	Description   string         `json:"description,omitempty"`
+	Documentation string         `json:"documentation,omitempty"`
+	Maintainer    string         `json:"maintainer,omitempty"`
+	Pod           types.Workflow `json:"workflow"`
+	Licences      string         `json:"licences,omitempty"`
 }
 
 func updateExamples(ctx context.Context) error {

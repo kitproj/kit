@@ -13,7 +13,7 @@ import (
 )
 
 type shell struct {
-	spec types.PodSpec
+	spec types.Spec
 	types.Task
 }
 

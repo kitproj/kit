@@ -2,47 +2,47 @@
 
 ## Top-level Schemas
 
-*   [Untitled schema](./pod.md) – `https://github.com/kitproj/kit/internal/types/pod`
+*   [Untitled schema](./workflow.md) – `https://github.com/kitproj/kit/internal/types/workflow`
 
 ## Other Schemas
 
 ### Objects
 
-*   [EnvVars](./pod-defs-envvars.md "A list of environment variables") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/EnvVars`
+*   [EnvVars](./workflow-defs-envvars.md "A list of environment variables") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars`
 
-*   [HTTPGetAction](./pod-defs-httpgetaction.md "HTTPGetAction describes an action based on HTTP Locks requests") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/HTTPGetAction`
+*   [HTTPGetAction](./workflow-defs-httpgetaction.md "HTTPGetAction describes an action based on HTTP Locks requests") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction`
 
-*   [HostPath](./pod-defs-hostpath.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/HostPath`
+*   [HostPath](./workflow-defs-hostpath.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/HostPath`
 
-*   [Pod](./pod-defs-pod.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod`
+*   [Port](./workflow-defs-port.md "A port to expose") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port`
 
-*   [Port](./pod-defs-port.md "A port to expose") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Port`
+*   [Probe](./workflow-defs-probe.md "A probe to check if the task is alive, it will be restarted if not") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe`
 
-*   [Probe](./pod-defs-probe.md "A probe to check if the task is alive, it will be restarted if not") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Probe`
+*   [TCPSocketAction](./workflow-defs-tcpsocketaction.md "TCPSocketAction describes an action based on opening a socket") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/TCPSocketAction`
 
-*   [TCPSocketAction](./pod-defs-tcpsocketaction.md "TCPSocketAction describes an action based on opening a socket") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/TCPSocketAction`
+*   [Task](./workflow-defs-task.md "A task is a container or a command to run") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task`
 
-*   [Task](./pod-defs-task.md "A task is a container or a command to run") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Task`
+*   [Tasks](./workflow-defs-tasks.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Tasks`
 
-*   [Tasks](./pod-defs-tasks.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Tasks`
+*   [Volume](./workflow-defs-volume.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume`
 
-*   [Volume](./pod-defs-volume.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Volume`
+*   [VolumeMount](./workflow-defs-volumemount.md "VolumeMount describes a mounting of a Volume within a container") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount`
 
-*   [VolumeMount](./pod-defs-volumemount.md "VolumeMount describes a mounting of a Volume within a container") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/VolumeMount`
+*   [Workflow](./workflow-defs-workflow.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow`
 
-*   [semaphores](./pod-defs-pod-properties-semaphores.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/semaphores`
+*   [semaphores](./workflow-defs-workflow-properties-semaphores.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores`
 
 ### Arrays
 
-*   [Envfile](./pod-defs-envfile.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Envfile`
+*   [Envfile](./workflow-defs-envfile.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Envfile`
 
-*   [Ports](./pod-defs-ports.md "A list of ports to expose") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Ports`
+*   [Ports](./workflow-defs-ports.md "A list of ports to expose") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Ports`
 
-*   [Strings](./pod-defs-strings.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Strings`
+*   [Strings](./workflow-defs-strings.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Strings`
 
-*   [volumeMounts](./pod-defs-task-properties-volumemounts.md "Volumes to mount in the container") – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Task/properties/volumeMounts`
+*   [volumeMounts](./workflow-defs-task-properties-volumemounts.md "Volumes to mount in the container") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/volumeMounts`
 
-*   [volumes](./pod-defs-pod-properties-volumes.md) – `https://github.com/kitproj/kit/internal/types/pod#/$defs/Pod/properties/volumes`
+*   [volumes](./workflow-defs-workflow-properties-volumes.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/volumes`
 
 ## Version Note
 

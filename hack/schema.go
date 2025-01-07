@@ -13,7 +13,7 @@ func updateSchema() error {
 	log.Println("updating schema")
 	r := new(jsonschema.Reflector)
 	_ = r.AddGoComments("github.com/kitproj/kit", "./")
-	s := r.Reflect(types.Pod{})
+	s := r.Reflect(types.Workflow{})
 	for i, definition := range s.Definitions {
 		definition.Title = i
 		s.Definitions[i] = definition
@@ -26,7 +26,7 @@ func updateSchema() error {
 		}
 	}
 	data, _ := json.MarshalIndent(s, "", "  ")
-	if err := os.WriteFile("schema/pod.schema.json", data, 0o777); err != nil {
+	if err := os.WriteFile("schema/workflow.schema.json", data, 0o777); err != nil {
 		return err
 	}
 	return nil

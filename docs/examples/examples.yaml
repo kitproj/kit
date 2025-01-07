@@ -3,7 +3,7 @@
 
 - name: postgres
   description: The postgres container image provides a preconfigured PostgreSQL database server for easy deployment in containerized environments.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: postgres
@@ -11,7 +11,7 @@
             - POSTGRES_PASSWORD=password
 - name: mysql
   description: The MySQL container image provides a pre-configured and optimized environment for running the MySQL database service within a container.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: mysql
@@ -19,7 +19,7 @@
             - MYSQL_ROOT_PASSWORD=password
 - name: mariadb
   description: MariaDB is an open-source relational database management system (RDBMS) and a community-driven fork of MySQL, designed to be a drop-in replacement for MySQL with enhanced performance, stability, and security features, including support for advanced clustering, storage engines, and plugins.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: mariadb
@@ -30,20 +30,20 @@
 
 - name: redis
   description: The Redis container image is a lightweight, open-source, and in-memory data structure store used as a cache, database, and message broker.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: redis
 - name: mongo
   description: The mongo container image provides a lightweight and scalable solution for running MongoDB databases in a containerized environment.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: mongo
 
 - name: memcached
   description: The memcached container image provides an efficient in-memory caching system for key-value pairs.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: memcached
@@ -52,7 +52,7 @@
 
 - name: influxdb
   description: The influxdb container image provides a pre-configured instance of the InfluxDB database that can be easily deployed for time-series data storage and analysis.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: influxdb
@@ -60,25 +60,25 @@
 # Streaming
 
 - name: kafka
-  pod:
+  workflow:
     spec:
       tasks:
         - image: ghcr.io/kitproj/kafka
 - name: rabbitmq
   description: The RabbitMQ container image provides a scalable and highly-available message broker that supports various messaging protocols and can be easily deployed and managed in a containerized environment.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: rabbitmq
 - name: nats
   description: The nats container image provides a lightweight messaging system for distributed applications running in containerized environments.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: nats
 - name: pulsar
   description: The apachepulsar/pulsar container image provides a scalable and distributed messaging system for enterprise-grade applications.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: apachepulsar/pulsar
@@ -88,7 +88,7 @@
 # Simulation
 
 - name: sim
-  pod:
+  workflow:
     spec:
       tasks:
         - image: ghcr.io/kitproj/sim
@@ -99,7 +99,7 @@
 
 - name: nginx
   description: The nginx container image is a lightweight and high-performance web server designed to efficiently serve static and dynamic content.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: nginx
@@ -113,7 +113,7 @@
 
 - name: httpd
   description: The httpd container image provides an Apache HTTP server for serving web content.
-  pod:
+  workflow:
     spec:
       tasks:
         - image: httpd
@@ -128,7 +128,7 @@
 # AWS
 - name: dynamo
   description: Dynamo is a distributed key-value storage system developed by Amazon Web Services (AWS) for highly available, scalable and reliable NoSQL data storage.
-  pod:
+  workflow:
     spec:
       tasks:
         - name: dynamo
@@ -136,7 +136,7 @@
 
 - name: timestream
   description: Timestream is a fully-managed, scalable time-series database service developed by Amazon Web Services (AWS) that enables users to store, process, and analyze time-series data, such as logs, sensor data, and industrial telemetry, with high precision and accuracy, and built-in analytics and visualization tools.
-  pod:
+  workflow:
     spec:
       tasks:
       - name: timestream

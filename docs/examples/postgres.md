@@ -6,7 +6,7 @@ The postgres container image provides a preconfigured PostgreSQL database server
 tasks:
   "":
     env:
-    - POSTGRES_PASSWORD=password
+      POSTGRES_PASSWORD: password
     image: postgres
 volumes:
 - hostPath:

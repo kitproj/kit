@@ -8,7 +8,7 @@ import (
 
 func TestEnviron(t *testing.T) {
 
-	environ, err := Environ(PodSpec{
+	environ, err := Environ(Spec{
 		Envfile: Envfile{"testdata/spec.env"},
 		Env: EnvVars{
 			"BAR": "2",

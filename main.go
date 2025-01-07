@@ -66,18 +66,18 @@ func main() {
 		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 		defer cancel()
 
-		pod := &types.Pod{}
+		wf := &types.Workflow{}
 
 		in, err := os.ReadFile(configFile)
 		if err != nil {
 			return err
 		}
-		if err = yaml.UnmarshalStrict(in, pod); err != nil {
+		if err = yaml.UnmarshalStrict(in, wf); err != nil {
 			return err
 		}
 
 		if rewrite {
-			out, err := yaml.Marshal(pod)
+			out, err := yaml.Marshal(wf)
 			if err != nil {
 				return err
 			}
@@ -85,7 +85,7 @@ func main() {
 		}
 
 		dag := internal.NewDAG[bool]()
-		for name, t := range pod.Tasks {
+		for name, t := range wf.Tasks {
 			dag.AddNode(name, true)
 			for _, dependency := range t.Dependencies {
 				dag.AddEdge(dependency, name)
@@ -93,7 +93,7 @@ func main() {
 		}
 		visited := dag.Subgraph(args)
 
-		taskByName := pod.Tasks
+		taskByName := wf.Tasks
 		subgraph := internal.NewDAG[*taskNode]()
 		for name := range visited {
 			task := taskByName[name]
@@ -143,7 +143,7 @@ func main() {
 			}()
 		}
 
-		semaphores := util.NewSemaphores(pod.Semaphores)
+		semaphores := util.NewSemaphores(wf.Semaphores)
 
 		wg := sync.WaitGroup{}
 
@@ -287,7 +287,7 @@ func main() {
 						defer sema.Release(1)
 					}
 
-					p := proc.New(t, log, types.PodSpec(*pod))
+					p := proc.New(t, log, types.Spec(*wf))
 
 					if probe := t.GetLivenessProbe(); probe != nil {
 						liveFunc := func(live bool, err error) {

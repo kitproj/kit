@@ -32,7 +32,7 @@ import (
 
 type container struct {
 	log  *log.Logger
-	spec types.PodSpec
+	spec types.Spec
 	name string
 	types.Task
 }
