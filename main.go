@@ -73,13 +73,19 @@ func main() {
 			return os.WriteFile(configFile, out, 0644)
 		}
 
+		// split the tasks on comma, but don't end up with a single entry of ""
+		split := strings.Split(tasksToSkip, ",")
+		if len(split) == 1 && split[0] == "" {
+			split = []string{}
+		}
+
 		return internal.RunSubgraph(
 			ctx,
 			cancel,
 			log.Default(),
 			wf,
 			taskNames,
-			strings.Split(tasksToSkip, ","))
+			split)
 	}()
 
 	if err != nil {
