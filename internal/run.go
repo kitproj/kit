@@ -37,6 +37,13 @@ func RunSubgraph(
 		}
 	}
 
+	// check skipped tasks are valid
+	for _, name := range tasksToSkip {
+		if _, ok := wf.Tasks[name]; !ok {
+			return fmt.Errorf("skipped task %q not found in workflow", name)
+		}
+	}
+
 	dag := NewDAG[bool]()
 	for name, t := range wf.Tasks {
 		dag.AddNode(name, true)
@@ -87,7 +94,7 @@ func RunSubgraph(
 					return
 				case event := <-watcher.Events:
 					if event.Op&fsnotify.Write == fsnotify.Write {
-						log.Printf("file changed, re-running %s\n", node.name)
+						logger.Printf("file changed, re-running %s\n", node.name)
 						events <- node.name
 						node.cancel()
 					}
@@ -104,15 +111,16 @@ func RunSubgraph(
 		select {
 		case <-ctx.Done():
 
-			log.Println("waiting for all tasks to finish")
+			logger.Println("waiting for all tasks to finish")
 
 			wg.Wait()
 
 			// if any task failed, we will return an error
 			var failures []string
 			for _, node := range subgraph.Nodes {
+				logger.Printf("%s %s\n", node.name, node.phase)
 				if node.phase == "failed" {
-					failures = append(failures, fmt.Sprintf("%s %s", node.name, node.message))
+					failures = append(failures, fmt.Sprintf("%s: %s", node.name, node.message))
 				}
 			}
 
