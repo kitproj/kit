@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -89,7 +90,7 @@ func TestRunSubgraph(t *testing.T) {
 			[]string{"job"},
 			nil,
 		)
-		assert.EqualError(t, err, "failed tasks: [job: exit status 1]")
+		assert.EqualError(t, err, "failed tasks: [job]")
 	})
 	t.Run("Single running service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
@@ -146,7 +147,7 @@ func TestRunSubgraph(t *testing.T) {
 				[]string{"service"},
 				nil,
 			)
-			assert.EqualError(t, err, "failed tasks: [service: exit status 1]")
+			assert.EqualError(t, err, "failed tasks: [service]")
 		}()
 
 		time.Sleep(time.Second)
@@ -155,5 +156,32 @@ func TestRunSubgraph(t *testing.T) {
 		wg.Wait()
 
 		assert.Contains(t, buffer.String(), "[service] (failed) exit status 1")
+	})
+
+	t.Run("Logging to file", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"echo", "hello"}, Log: "test.log"},
+			},
+		}
+		err := RunSubgraph(
+			ctx,
+			cancel,
+			logger,
+			wf,
+			[]string{"job"},
+			nil,
+		)
+		assert.NoError(t, err)
+		assert.NotContains(t, buffer.String(), "hello")
+		assert.Contains(t, buffer.String(), "[job] (succeeded)")
+
+		// check file is written
+		file, err := os.ReadFile("test.log")
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\n", string(file))
 	})
 }
