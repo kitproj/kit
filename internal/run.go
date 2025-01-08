@@ -99,7 +99,7 @@ func RunSubgraph(
 					return
 				case event := <-watcher.Events:
 					if event.Op&fsnotify.Write == fsnotify.Write {
-						logger.Printf("file changed, re-running %s\n", node.name)
+						logger.Printf("%s changed, re-running %s\n", event.Name, node.name)
 						events <- node.name
 						node.cancel()
 					}
@@ -312,6 +312,7 @@ func RunSubgraph(
 					err := p.Run(ctx, out, out)
 					// if the task was cancelled, we don't want to restart it, this is normal exit
 					if errors.Is(ctx.Err(), context.Canceled) {
+						setNodeStatus(node, "success", "cancelled")
 						return
 					}
 

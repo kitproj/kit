@@ -23,7 +23,7 @@ func Test_taskNode_blocked(t *testing.T) {
 	})
 	t.Run("service succeeded", func(t *testing.T) {
 		n := TaskNode{phase: "succeeded", task: service}
-		assert.True(t, n.blocked())
+		assert.False(t, n.blocked())
 	})
 	t.Run("service failed", func(t *testing.T) {
 		n := TaskNode{phase: "failed", task: service}

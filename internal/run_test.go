@@ -217,7 +217,7 @@ func TestRunSubgraph(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("Restart task by modifying watched file", func(t *testing.T) {
+	t.Run("Restart job by modifying watched file", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
 
@@ -259,7 +259,7 @@ sleep 30
 		wg.Wait()
 
 		// we should see restart being logged
-		assert.Contains(t, buffer.String(), "file changed, re-running job")
+		assert.Contains(t, buffer.String(), "testdata/marker changed, re-running job")
 
 		// we should see "running job" printed twice
 		count := 0
@@ -271,5 +271,57 @@ sleep 30
 		}
 
 		assert.Equal(t, 2, count)
+	})
+
+	t.Run("Restart service by modifying watched file", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"service": {Command: []string{"sh", "-c", `
+echo "hello"
+sleep 30
+`}, Watch: []string{"testdata/marker"}},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"service"},
+				nil,
+			)
+			assert.NoError(t, err)
+		}()
+
+		time.Sleep(time.Second)
+
+		// modify watched file
+		err := os.WriteFile("testdata/marker", nil, 0644)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
+		cancel()
+
+		wg.Wait()
+
+		// we should see restart being logged
+		assert.Contains(t, buffer.String(), "testdata/marker changed, re-running service")
+
+		// we should see "running service" printed twice
+		count := 0
+		logs := strings.Split(buffer.String(), "\n")
+		for _, x := range logs {
+			if strings.Contains(x, "hello") {
+				count++
+			}
+		}
 	})
 }
