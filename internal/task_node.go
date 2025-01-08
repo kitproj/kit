@@ -1,6 +1,10 @@
 package internal
 
-import "github.com/kitproj/kit/internal/types"
+import (
+	"sync"
+
+	"github.com/kitproj/kit/internal/types"
+)
 
 type TaskNode struct {
 	name string
@@ -11,6 +15,8 @@ type TaskNode struct {
 	message string
 	// cancel function
 	cancel func()
+	// a mutex
+	mu *sync.Mutex
 }
 
 func (n TaskNode) blocked() bool {

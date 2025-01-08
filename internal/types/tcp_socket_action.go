@@ -12,5 +12,5 @@ type TCPSocketAction struct {
 }
 
 func (a TCPSocketAction) URL() *url.URL {
-	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf(":%v", a.Port)}
+	return &url.URL{Scheme: "tcp", Host: fmt.Sprintf("localhost:%v", a.Port)}
 }

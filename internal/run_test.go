@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -98,7 +99,7 @@ func TestRunSubgraph(t *testing.T) {
 
 		wf := &types.Workflow{
 			Tasks: map[string]types.Task{
-				"service": {Command: []string{"cat"}, Ports: []types.Port{{}}},
+				"service": {Command: []string{"sleep", "30"}, Ports: []types.Port{{}}},
 			},
 		}
 		// services block until they are ready, so we must run them in in a goroutine
@@ -214,6 +215,61 @@ func TestRunSubgraph(t *testing.T) {
 		cancel()
 
 		wg.Wait()
+	})
 
+	t.Run("Restart task by modifying watched file", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"sh", "-c", `
+set -eu
+echo "hello"
+sleep 30
+`}, Watch: []string{"testdata/marker"}},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"job"},
+				nil,
+			)
+			assert.NoError(t, err)
+		}()
+
+		time.Sleep(time.Second)
+
+		// modify watched file
+		err := os.WriteFile("testdata/marker", nil, 0644)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
+
+		cancel()
+		wg.Wait()
+
+		// we should see restart being logged
+		assert.Contains(t, buffer.String(), "file changed, re-running job")
+
+		// we should see "running job" printed twice
+		count := 0
+		logs := strings.Split(buffer.String(), "\n")
+		for _, x := range logs {
+			if strings.Contains(x, "hello") {
+				count++
+			}
+		}
+
+		assert.Equal(t, 2, count)
 	})
 }

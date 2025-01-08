@@ -18,7 +18,7 @@ type HTTPGetAction struct {
 }
 
 func (a HTTPGetAction) URL() *url.URL {
-	return &url.URL{Scheme: a.GetProto(), Host: fmt.Sprintf(":%v", a.Port), Path: a.Path}
+	return &url.URL{Scheme: a.GetProto(), Host: fmt.Sprintf("localhost:%v", a.Port), Path: a.Path}
 }
 
 func (a *HTTPGetAction) Unstring(s string) error {

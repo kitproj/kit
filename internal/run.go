@@ -57,7 +57,12 @@ func RunSubgraph(
 	subgraph := NewDAG[*TaskNode]()
 	for name := range visited {
 		task := taskByName[name]
-		subgraph.AddNode(name, &TaskNode{name: name, task: task, phase: "pending", cancel: func() {}})
+		subgraph.AddNode(name, &TaskNode{
+			name:   name,
+			task:   task,
+			phase:  "pending",
+			cancel: func() {},
+			mu:     &sync.Mutex{}})
 		for _, parent := range dag.Parents[name] {
 			subgraph.AddEdge(parent, name)
 		}
@@ -171,13 +176,12 @@ func RunSubgraph(
 
 				// we might already be pending, waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
-				if node.phase == "waiting" || node.phase == "starting" || node.phase == "running" {
-					continue
-				}
-				node.cancel()
 
 				// each task is executed in a separate goroutine
 				wg.Add(1)
+
+				// lock the task so we do not run two instances of it at the same time
+				node.mu.Lock()
 
 				go func(node *TaskNode) {
 					ctx, cancel := context.WithCancel(ctx)
@@ -188,6 +192,7 @@ func RunSubgraph(
 					// send a poison pill to indicate that we've finish and the main loop must check to see if we need to exit
 					defer func() { events <- poisonPill }()
 					defer wg.Done()
+					defer node.mu.Unlock()
 
 					t := node.task
 
@@ -256,6 +261,7 @@ func RunSubgraph(
 					p := proc.New(t, logger, types.Spec(*wf))
 
 					if probe := t.GetLivenessProbe(); probe != nil {
+						log.Printf("starting liveness probe: %v", probe)
 						liveFunc := func(live bool, err error) {
 							if !live {
 								setNodeStatus(node, "failed", fmt.Sprintf("liveness probe failed: %v", err))
@@ -265,6 +271,7 @@ func RunSubgraph(
 						go probeLoop(ctx, *probe, liveFunc)
 					}
 					if probe := t.GetReadinessProbe(); probe != nil {
+						log.Printf("starting readiness probe: %v", probe)
 						readyFunc := func(ready bool, err error) {
 							if ready {
 								setNodeStatus(node, "running", "readiness probe succeeded")
@@ -289,6 +296,7 @@ func RunSubgraph(
 						case <-ctx.Done():
 						case <-time.After(3 * time.Second):
 							logger.Println("restarting")
+							node.cancel()
 							events <- node.name
 						}
 					}

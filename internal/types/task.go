@@ -166,5 +166,5 @@ func (t *Task) Skip() bool {
 }
 
 func (t *Task) IsService() bool {
-	return len(t.Ports) > 0
+	return len(t.Ports) > 0 || t.LivenessProbe != nil || t.ReadinessProbe != nil
 }
