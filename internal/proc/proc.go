@@ -13,18 +13,35 @@ type Interface interface {
 	Run(ctx context.Context, stdout, stderr io.Writer) error
 }
 
-func New(t types.Task, log *log.Logger, spec types.Spec) Interface {
+func New(name string, t types.Task, log *log.Logger, spec types.Spec) Interface {
 	if t.Image != "" {
-		return &container{log: log, Task: t, spec: spec}
+		return &container{
+			name: name,
+			log:  log,
+			spec: spec,
+			Task: t,
+		}
 	}
 	if len(t.Command) > 0 {
-		return &host{log: log, Task: t, spec: spec}
+		return &host{
+			log:  log,
+			spec: spec,
+			Task: t,
+		}
 	}
 	if t.Sh != "" {
-		return &shell{Task: t, spec: spec}
+		return &shell{
+			spec: spec,
+			Task: t,
+		}
 	}
 	if len(t.Manifests) > 0 {
-		return &k8s{log: log, Task: t, spec: spec}
+		return &k8s{
+			name: name,
+			log:  log,
+			Task: t,
+			spec: spec,
+		}
 	}
 	return &noop{}
 }

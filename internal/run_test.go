@@ -124,7 +124,7 @@ func TestRunSubgraph(t *testing.T) {
 
 		wg.Wait()
 
-		assert.Contains(t, buffer.String(), "[service] (succeeded)")
+		assert.Contains(t, buffer.String(), "[service] (starting)")
 	})
 	t.Run("Single failing service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)

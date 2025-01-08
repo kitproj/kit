@@ -31,9 +31,9 @@ import (
 )
 
 type container struct {
+	name string
 	log  *log.Logger
 	spec types.Spec
-	name string
 	types.Task
 }
 

@@ -258,10 +258,9 @@ func RunSubgraph(
 						defer sema.Release(1)
 					}
 
-					p := proc.New(t, logger, types.Spec(*wf))
+					p := proc.New(taskName, t, logger, types.Spec(*wf))
 
 					if probe := t.GetLivenessProbe(); probe != nil {
-						log.Printf("starting liveness probe: %v", probe)
 						liveFunc := func(live bool, err error) {
 							if !live {
 								setNodeStatus(node, "failed", fmt.Sprintf("liveness probe failed: %v", err))
@@ -271,7 +270,6 @@ func RunSubgraph(
 						go probeLoop(ctx, *probe, liveFunc)
 					}
 					if probe := t.GetReadinessProbe(); probe != nil {
-						log.Printf("starting readiness probe: %v", probe)
 						readyFunc := func(ready bool, err error) {
 							if ready {
 								setNodeStatus(node, "running", "readiness probe succeeded")

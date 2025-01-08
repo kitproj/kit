@@ -17,8 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/utils/strings/slices"
-
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,6 +31,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/yaml"
 )
 
@@ -43,10 +42,10 @@ type k8s struct {
 	types.Task
 }
 
-const managedByLabel = "app.kubernetes.io/managed-by"
-const managedByValue = "kit"
-const nameLabel = "app.kubernetes.io/name"
-const versionLabel = "app.kubernetes.io/version"
+// previously we used the K8s common labels, but because charts use them themselves (e.g. Helm) we cannot and must create our own annotations
+const x = "kit.kitproj.github.com"
+const nameLabel = x + "/name"
+const versionLabel = x + "/version"
 
 func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
 
@@ -169,7 +168,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				u.SetAnnotations(make(map[string]string))
 			}
 			labels := u.GetLabels()
-			labels[managedByLabel] = managedByValue
 			labels[nameLabel] = k.name
 			u.SetLabels(labels)
 
@@ -180,7 +178,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels[managedByLabel] = managedByValue
 				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
 				if err != nil {
@@ -192,7 +189,6 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				if err != nil {
 					return err
 				}
-				labels[managedByLabel] = managedByValue
 				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
 				if err != nil {
@@ -259,7 +255,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 	// Create a shared informer factory for only the labelled resource managed-by kit and named after the task
 	factory := informers.NewSharedInformerFactoryWithOptions(clientset, 10*time.Second, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-		options.LabelSelector = fmt.Sprintf("%s=%s,%s=%s", managedByLabel, managedByValue, nameLabel, k.name)
+		options.LabelSelector = fmt.Sprintf("%s=%s", nameLabel, k.name)
 	}))
 
 	// Create a pod informer
