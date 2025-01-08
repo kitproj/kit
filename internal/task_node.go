@@ -5,7 +5,7 @@ import "github.com/kitproj/kit/internal/types"
 type TaskNode struct {
 	name string
 	task types.Task
-	// the phase of the task, e.g. "waiting", "running", "succeeded", "failed"
+	// the phase of the task, e.g. "pending", "waiting", "running", "succeeded", "failed"
 	phase string
 	// the message for the task phase, e.g. "exit code 1'
 	message string

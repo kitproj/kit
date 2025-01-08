@@ -169,8 +169,11 @@ func RunSubgraph(
 					continue
 				}
 
-				// we might already be waiting, starting or running this task, so we don't want to start it again
+				// we might already be pending, waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
+				if node.phase == "waiting" || node.phase == "starting" || node.phase == "running" {
+					continue
+				}
 				node.cancel()
 
 				// each task is executed in a separate goroutine

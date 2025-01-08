@@ -184,4 +184,36 @@ func TestRunSubgraph(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "hello\n", string(file))
 	})
+
+	t.Run("Scheduled task twice", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"true"}},
+			},
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"job", "job"},
+				nil,
+			)
+			assert.NoError(t, err)
+		}()
+
+		time.Sleep(time.Second)
+		cancel()
+
+		wg.Wait()
+
+	})
 }
