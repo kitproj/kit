@@ -93,6 +93,7 @@ func TestRunSubgraph(t *testing.T) {
 		)
 		assert.EqualError(t, err, "failed tasks: [job]")
 	})
+
 	t.Run("Single running service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
@@ -126,6 +127,7 @@ func TestRunSubgraph(t *testing.T) {
 
 		assert.Contains(t, buffer.String(), "[service] (starting)")
 	})
+
 	t.Run("Single failing service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()

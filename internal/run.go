@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -196,18 +196,24 @@ func RunSubgraph(
 
 					t := node.task
 
-					var out io.Writer = funcWriter(func(bytes []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s) ", Color(node.name, t.IsService()), node.name, node.phase)
+					var out io.Writer = funcWriter(func(p []byte) (int, error) {
+						prefix := fmt.Sprintf("%s[%s] (%s)  ", Color(node.name), node.name, node.phase)
 						// reset color and bold
 						suffix := "\033[0m"
 
-						// split on newlines
-						lines := strings.Split(strings.TrimRight(string(bytes), "\n"), "\n")
-						for _, line := range lines {
-							logger.Println(prefix + line + suffix)
+						lines := bytes.Split(p, []byte("\n"))
+						for i, line := range lines {
+							if len(line) == 0 {
+								continue
+							}
+							if i == len(lines)-1 {
+								logger.Printf("%s%s%s", prefix, string(line), suffix)
+							} else {
+								logger.Printf("%s%s%s\n", prefix, string(line), suffix)
+							}
 						}
 
-						return len(bytes), nil
+						return len(p), nil
 					})
 
 					logger := log.New(out, "", 0)
