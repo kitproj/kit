@@ -78,7 +78,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	// connect to the k8s cluster
 	kubeConfig := os.Getenv("KUBECONFIG")
 	if kubeConfig == "" {
-		kubeConfig = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		kubeConfig = clientcmd.RecommendedHomeFile
 	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
@@ -88,7 +88,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 	// Get the namespace associated with the current context
 	defaultNamespace, _, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: clientcmd.RecommendedHomeFile},
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfig},
 		&clientcmd.ConfigOverrides{},
 	).Namespace()
 	if err != nil {
