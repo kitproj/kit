@@ -355,7 +355,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 					ports := []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}
 
-					fw, err := portforward.New(dialer, ports, stopChan, readyChan, stdout, stderr)
+					fw, err := portforward.New(dialer, ports, stopChan, readyChan, nil, nil)
 					if err != nil {
 						panic(err)
 					}
