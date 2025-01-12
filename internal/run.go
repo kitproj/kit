@@ -101,7 +101,6 @@ func RunSubgraph(
 					if event.Op&fsnotify.Write == fsnotify.Write {
 						logger.Printf("%s changed, re-running %s\n", event.Name, node.name)
 						events <- node.name
-						node.cancel()
 					}
 				}
 			}
@@ -194,6 +193,8 @@ func RunSubgraph(
 
 				// we might already be pending, waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
+
+				node.cancel()
 
 				// lock the task so we do not run two instances of it at the same time
 				node.mu.Lock()
@@ -318,7 +319,7 @@ func RunSubgraph(
 						case <-ctx.Done():
 						case <-time.After(3 * time.Second):
 							logger.Println("restarting")
-							node.cancel()
+							cancel()
 							events <- node.name
 						}
 					}

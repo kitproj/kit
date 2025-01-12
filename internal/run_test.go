@@ -15,15 +15,15 @@ import (
 )
 
 func TestRunSubgraph(t *testing.T) {
-
 	setup := func(t *testing.T) (context.Context, context.CancelFunc, *log.Logger, *bytes.Buffer) {
 		ctx, cancel := context.WithCancel(context.Background())
 		buffer := &bytes.Buffer{}
-		logger := log.New(buffer, "", 0)
-		t.Cleanup(func() {
-			t.Log(buffer.String())
-			buffer.Reset()
+		out := funcWriter(func(i []byte) (int, error) {
+			t.Log(strings.TrimSuffix(string(i), "\n"))
+			return buffer.Write(i)
 		})
+		logger := log.New(out, "", 0)
+		t.Cleanup(buffer.Reset)
 		return ctx, cancel, logger, buffer
 
 	}
@@ -94,7 +94,6 @@ func TestRunSubgraph(t *testing.T) {
 		assert.EqualError(t, err, "failed tasks: [job]")
 	})
 
-	const x = 200 * time.Millisecond
 	t.Run("Single running service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
@@ -120,7 +119,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(x)
+		sleep(t)
 
 		cancel()
 
@@ -154,7 +153,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.EqualError(t, err, "failed tasks: [service]")
 		}()
 
-		time.Sleep(x)
+		sleep(t)
 		cancel()
 
 		wg.Wait()
@@ -214,7 +213,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(x)
+		sleep(t)
 		cancel()
 
 		wg.Wait()
@@ -252,13 +251,13 @@ sleep 30
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(x)
+		sleep(t)
 
 		// modify watched file
 		err := os.WriteFile("testdata/marker", nil, 0644)
 		assert.NoError(t, err)
 
-		time.Sleep(x)
+		sleep(t)
 
 		cancel()
 		wg.Wait()
@@ -287,7 +286,7 @@ sleep 30
 				"service": {Command: []string{"sh", "-c", `
 echo "hello"
 sleep 30
-`}, Watch: []string{"testdata/marker"}},
+`}, Watch: []string{"testdata/marker"}, Ports: []types.Port{{}}},
 			},
 		}
 
@@ -306,13 +305,13 @@ sleep 30
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(x)
+		sleep(t)
 
 		// modify watched file
 		err := os.WriteFile("testdata/marker", nil, 0644)
 		assert.NoError(t, err)
 
-		time.Sleep(x)
+		sleep(t)
 		cancel()
 
 		wg.Wait()
@@ -329,4 +328,58 @@ sleep 30
 			}
 		}
 	})
+
+	t.Run("Changing jobs watched file re-runs job and downstream service", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"sh", "-c", `
+set -eu
+echo "hello"
+`}, Watch: []string{"testdata/marker"},
+				},
+				"service": {Command: []string{"sh", "-c", `
+echo "gutten tag"
+sleep 30
+`}, Dependencies: []string{"job"}, Ports: []types.Port{{}},
+				},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"service"},
+				nil,
+			)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+
+		// modify the watched file
+		err := os.WriteFile("testdata/marker", nil, 0644)
+		assert.NoError(t, err)
+
+		sleep(t)
+		cancel()
+
+		wg.Wait()
+
+	})
+
+}
+
+func sleep(t *testing.T) {
+	x := 200 * time.Millisecond
+	t.Logf("sleeping for %s", x)
+	time.Sleep(x)
 }
