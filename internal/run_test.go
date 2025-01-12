@@ -94,6 +94,7 @@ func TestRunSubgraph(t *testing.T) {
 		assert.EqualError(t, err, "failed tasks: [job]")
 	})
 
+	const x = 200 * time.Millisecond
 	t.Run("Single running service", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
@@ -119,7 +120,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 
 		cancel()
 
@@ -153,7 +154,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.EqualError(t, err, "failed tasks: [service]")
 		}()
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 		cancel()
 
 		wg.Wait()
@@ -213,7 +214,7 @@ func TestRunSubgraph(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 		cancel()
 
 		wg.Wait()
@@ -229,7 +230,9 @@ func TestRunSubgraph(t *testing.T) {
 set -eu
 echo "hello"
 sleep 30
-`}, Watch: []string{"testdata/marker"}},
+`}, Watch: []string{"testdata/marker"},
+				},
+				"service": {Command: []string{"sleep", "30"}, Ports: []types.Port{{}}},
 			},
 		}
 
@@ -243,19 +246,19 @@ sleep 30
 				cancel,
 				logger,
 				wf,
-				[]string{"job"},
+				[]string{"job", "service"},
 				nil,
 			)
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 
 		// modify watched file
 		err := os.WriteFile("testdata/marker", nil, 0644)
 		assert.NoError(t, err)
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 
 		cancel()
 		wg.Wait()
@@ -303,13 +306,13 @@ sleep 30
 			assert.NoError(t, err)
 		}()
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 
 		// modify watched file
 		err := os.WriteFile("testdata/marker", nil, 0644)
 		assert.NoError(t, err)
 
-		time.Sleep(time.Second)
+		time.Sleep(x)
 		cancel()
 
 		wg.Wait()

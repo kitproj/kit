@@ -123,10 +123,20 @@ func RunSubgraph(
 			// if any task failed, we will return an error
 			var failures []string
 			for _, node := range subgraph.Nodes {
-				logger.Printf("[%s] (%s) %s\n", node.name, node.phase, node.message)
-				if node.phase == "failed" {
+
+				color := 30
+				faint := 0
+				switch node.phase {
+				case "failed":
+					// red
+					color = 31
+					faint = 1
 					failures = append(failures, node.name)
+				case "pending", "waiting":
+					faint = 2
 				}
+
+				logger.Printf("\033[%d;%dm[%s] (%s) %s\033[0m\n", faint, color, node.name, node.phase, node.message)
 			}
 
 			if len(failures) > 0 {
@@ -139,11 +149,12 @@ func RunSubgraph(
 			// if we get the poison pill, we should see if any job tasks are failed, if so we must exist
 			// if all jobs are either succeeded or skipped, we can exit
 			case struct{}:
+				anyServices := false
 				anyJobFailed := false
 				numJobsSucceeded := 0
 				for _, node := range subgraph.Nodes {
 					if node.task.IsService() {
-						continue
+						anyServices = true
 					}
 					if node.phase == "failed" {
 						anyJobFailed = true
@@ -153,8 +164,15 @@ func RunSubgraph(
 					}
 				}
 				everyJobSucceeded := numJobsSucceeded == len(subgraph.Nodes)
-				if everyJobSucceeded || anyJobFailed {
-					cancel()
+				if !anyServices {
+					if anyJobFailed {
+						logger.Println("exiting because a job failed")
+						cancel()
+					}
+					if everyJobSucceeded {
+						logger.Println("exiting because all jobs succeeded")
+						cancel()
+					}
 				}
 			// if the event is a string, it is the name of the task to run
 			case string:
@@ -177,11 +195,11 @@ func RunSubgraph(
 				// we might already be pending, waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
 
-				// each task is executed in a separate goroutine
-				wg.Add(1)
-
 				// lock the task so we do not run two instances of it at the same time
 				node.mu.Lock()
+
+				// each task is executed in a separate goroutine
+				wg.Add(1)
 
 				go func(node *TaskNode) {
 					ctx, cancel := context.WithCancel(ctx)
@@ -318,7 +336,7 @@ func RunSubgraph(
 					err := p.Run(ctx, out, out)
 					// if the task was cancelled, we don't want to restart it, this is normal exit
 					if errors.Is(ctx.Err(), context.Canceled) {
-						setNodeStatus(node, "success", "cancelled")
+						setNodeStatus(node, "succeeded", "cancelled")
 						return
 					}
 
