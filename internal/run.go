@@ -215,7 +215,7 @@ func RunSubgraph(
 					t := node.task
 
 					var out io.Writer = funcWriter(func(p []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s)  ", Color(node.name), node.name, node.phase)
+						prefix := fmt.Sprintf("%s[%s] (%s)  ", color(node.name), node.name, node.phase)
 						// reset color and bold
 						suffix := "\033[0m"
 
