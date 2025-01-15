@@ -35,7 +35,7 @@ tasks:
       echo "hello world"
       sleep 5
   service:
-    type: service
+    type: Service
     sh: |
       set -eux
       echo "hello world"

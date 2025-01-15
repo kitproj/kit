@@ -151,8 +151,12 @@ func RunSubgraph(
 				// check if any job failed, if so we must exit
 				// if all requests tasks are succeeded, we can exit
 
-				numJobsSucceeded := 0
 				anyJobFailed := false
+
+				pending := map[string]bool{}
+				for _, x := range taskNames {
+					pending[x] = true
+				}
 
 				for _, node := range subgraph.Nodes {
 					if node.task.GetType() == types.TaskTypeService {
@@ -162,15 +166,14 @@ func RunSubgraph(
 						anyJobFailed = true
 					}
 					if node.phase == "succeeded" {
-						numJobsSucceeded++
+						delete(pending, node.name)
 					}
 				}
-				everyJobSucceeded := numJobsSucceeded == len(taskNames)
 				if anyJobFailed {
 					logger.Println("exiting because a job failed")
 					cancel()
 				}
-				if everyJobSucceeded {
+				if len(pending) == 0 {
 					logger.Println("exiting because all jobs succeeded")
 					cancel()
 				}
