@@ -163,15 +163,14 @@ func RunSubgraph(
 					}
 				}
 				everyJobSucceeded := numJobsSucceeded == len(subgraph.Nodes)
-				if !anyServices {
-					if anyJobFailed {
-						logger.Println("exiting because a job failed")
-						cancel()
-					}
-					if everyJobSucceeded {
-						logger.Println("exiting because all jobs succeeded")
-						cancel()
-					}
+				if anyJobFailed {
+					logger.Println("exiting because a job failed")
+					cancel()
+				}
+				if !anyServices && everyJobSucceeded {
+					logger.Println("exiting because all jobs succeeded")
+					cancel()
+
 				}
 			// if the event is a string, it is the name of the task to run
 			case string:

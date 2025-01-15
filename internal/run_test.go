@@ -407,6 +407,37 @@ sleep 30
 
 		assert.Contains(t, buffer.String(), "[service] (running)")
 	})
+
+	t.Run("Job fails while service running", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job":     {Command: []string{"false"}},
+				"service": {Command: []string{"sleep", "30"}, Ports: []types.Port{{}}},
+			},
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"job", "service"},
+				nil,
+			)
+			assert.EqualError(t, err, "failed tasks: [job]")
+		}()
+
+		sleep(t)
+		cancel()
+
+		wg.Wait()
+	})
 }
 
 func sleep(t *testing.T) {
