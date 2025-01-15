@@ -58,9 +58,9 @@ func RunSubgraph(
 	for name := range visited {
 		task := taskByName[name]
 		subgraph.AddNode(name, &TaskNode{
-			name:   name,
+			Name:   name,
 			task:   task,
-			phase:  "pending",
+			Phase:  "pending",
 			cancel: func() {},
 			mu:     &sync.Mutex{}})
 		for _, parent := range dag.Parents[name] {
@@ -99,8 +99,8 @@ func RunSubgraph(
 					return
 				case event := <-watcher.Events:
 					if event.Op&fsnotify.Write == fsnotify.Write {
-						logger.Printf("%s changed, re-running %s\n", event.Name, node.name)
-						events <- node.name
+						logger.Printf("%s changed, re-running %s\n", event.Name, node.Name)
+						events <- node.Name
 					}
 				}
 			}
@@ -110,6 +110,8 @@ func RunSubgraph(
 	semaphores := util.NewSemaphores(wf.Semaphores)
 
 	wg := sync.WaitGroup{}
+
+	go StartServer(ctx, subgraph, events)
 
 	for {
 		select {
@@ -125,17 +127,17 @@ func RunSubgraph(
 
 				color := 30
 				faint := 0
-				switch node.phase {
+				switch node.Phase {
 				case "failed":
 					// red
 					color = 31
 					faint = 1
-					failures = append(failures, node.name)
+					failures = append(failures, node.Name)
 				case "pending", "waiting":
 					faint = 2
 				}
 
-				logger.Printf("\033[%d;%dm[%s] (%s) %s\033[0m\n", faint, color, node.name, node.phase, node.message)
+				logger.Printf("\033[%d;%dm[%s] (%s) %s\033[0m\n", faint, color, node.Name, node.Phase, node.Message)
 			}
 
 			if len(failures) > 0 {
@@ -162,11 +164,11 @@ func RunSubgraph(
 					if node.task.GetType() == types.TaskTypeService {
 						continue
 					}
-					if node.phase == "failed" {
+					if node.Phase == "failed" {
 						anyJobFailed = true
 					}
-					if node.phase == "succeeded" {
-						delete(pending, node.name)
+					if node.Phase == "succeeded" {
+						delete(pending, node.Name)
 					}
 				}
 				if anyJobFailed {
@@ -186,7 +188,7 @@ func RunSubgraph(
 				for _, parentName := range subgraph.Parents[taskName] {
 					parent := subgraph.Nodes[parentName]
 					if parent.blocked() {
-						logger.Printf("task %q is blocked by %q (%s): %s\n", taskName, parentName, parent.phase, parent.message)
+						logger.Printf("task %q is blocked by %q (%s): %s\n", taskName, parentName, parent.Phase, parent.Message)
 						blocked = true
 					}
 				}
@@ -220,7 +222,7 @@ func RunSubgraph(
 					t := node.task
 
 					var out io.Writer = funcWriter(func(p []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s)  ", color(node.name), node.name, node.phase)
+						prefix := fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase)
 						// reset color and bold
 						suffix := "\033[0m"
 
@@ -242,15 +244,16 @@ func RunSubgraph(
 					logger := log.New(out, "", 0)
 
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
-						node.phase = phase
-						node.message = message
+						node.Phase = phase
+						node.Message = message
 						logger.Println(message)
+						events <- node
 					}
 
 					setNodeStatus(node, "waiting", "")
 
 					queueChildren := func() {
-						for _, child := range subgraph.Children[node.name] {
+						for _, child := range subgraph.Children[node.Name] {
 							// only queue tasks in the subgraph
 							if _, ok := subgraph.Nodes[child]; ok {
 								logger.Printf("queuing %q\n", child)
@@ -260,7 +263,7 @@ func RunSubgraph(
 					}
 
 					// if the task can be skipped, lets exit early
-					if t.Skip() || slices.Contains(tasksToSkip, node.name) {
+					if t.Skip() || slices.Contains(tasksToSkip, node.Name) {
 						setNodeStatus(node, "succeeded", "skipped")
 						queueChildren()
 						return
@@ -324,7 +327,7 @@ func RunSubgraph(
 						case <-time.After(3 * time.Second):
 							logger.Println("restarting")
 							cancel()
-							events <- node.name
+							events <- node.Name
 						}
 					}
 
@@ -360,6 +363,8 @@ func RunSubgraph(
 					queueChildren()
 
 				}(node)
+			case *TaskNode:
+				// noop
 			default:
 				panic(fmt.Sprintf("unexpected event: %v", event))
 			}

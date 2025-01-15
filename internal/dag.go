@@ -4,11 +4,11 @@ package internal
 
 type DAG[Node any] struct {
 	// Nodes in the graph
-	Nodes map[string]Node
+	Nodes map[string]Node `json:"nodes"`
 	// edges in the graph
-	Children map[string][]string
+	Children map[string][]string `json:"children"`
 	// parents of each node
-	Parents map[string][]string
+	Parents map[string][]string `json:"parents"`
 }
 
 func NewDAG[Node any]() DAG[Node] {
