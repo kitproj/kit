@@ -438,6 +438,26 @@ sleep 30
 
 		wg.Wait()
 	})
+
+	t.Run("All requested jobs succeed", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"true"}},
+			},
+		}
+		err := RunSubgraph(
+			ctx,
+			cancel,
+			logger,
+			wf,
+			[]string{"job"},
+			nil,
+		)
+		assert.NoError(t, err)
+	})
 }
 
 func sleep(t *testing.T) {

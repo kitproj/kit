@@ -148,12 +148,15 @@ func RunSubgraph(
 			// if we get the poison pill, we should see if any job tasks are failed, if so we must exist
 			// if all jobs are either succeeded or skipped, we can exit
 			case struct{}:
-				anyServices := false
-				anyJobFailed := false
+				// check if any job failed, if so we must exit
+				// if all requests tasks are succeeded, we can exit
+
 				numJobsSucceeded := 0
+				anyJobFailed := false
+
 				for _, node := range subgraph.Nodes {
 					if node.task.GetType() == types.TaskTypeService {
-						anyServices = true
+						continue
 					}
 					if node.phase == "failed" {
 						anyJobFailed = true
@@ -162,15 +165,14 @@ func RunSubgraph(
 						numJobsSucceeded++
 					}
 				}
-				everyJobSucceeded := numJobsSucceeded == len(subgraph.Nodes)
+				everyJobSucceeded := numJobsSucceeded == len(taskNames)
 				if anyJobFailed {
 					logger.Println("exiting because a job failed")
 					cancel()
 				}
-				if !anyServices && everyJobSucceeded {
+				if everyJobSucceeded {
 					logger.Println("exiting because all jobs succeeded")
 					cancel()
-
 				}
 			// if the event is a string, it is the name of the task to run
 			case string:
