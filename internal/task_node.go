@@ -20,7 +20,7 @@ type TaskNode struct {
 }
 
 func (n TaskNode) blocked() bool {
-	if n.task.IsService() {
+	if n.task.GetType() == types.TaskTypeService {
 		// skipped services are succeeded
 		return n.phase != "running" && n.phase != "succeeded"
 	} else {

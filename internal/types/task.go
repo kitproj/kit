@@ -12,6 +12,10 @@ func (t *Task) HasMutex() bool {
 
 // A task is a container or a command to run.
 type Task struct {
+	// Type is the type of the task: "service" or "job". If omitted, if there are ports, it's a service, otherwise it's a job.
+	// This is only needed when you have service that does not listen on ports.
+	// Services are running in the background.
+	Type TaskType `json:"type,omitempty"`
 	// Where to log the output of the task. E.g. if the task is verbose. Defaults to /dev/stdout. Maybe a file, or /dev/null.
 	Log string `json:"log,omitempty"`
 	// Either the container image to run, or a directory containing a Dockerfile. If omitted, the process runs on the host.
@@ -165,6 +169,13 @@ func (t *Task) Skip() bool {
 	return oldestTarget.After(youngestSource)
 }
 
-func (t *Task) IsService() bool {
-	return len(t.Ports) > 0 || t.LivenessProbe != nil || t.ReadinessProbe != nil
+func (t *Task) GetType() TaskType {
+	if t.Type != "" {
+		return t.Type
+	}
+	if len(t.Ports) > 0 || t.LivenessProbe != nil || t.ReadinessProbe != nil {
+		return TaskTypeService
+	}
+	return TaskTypeJob
+
 }

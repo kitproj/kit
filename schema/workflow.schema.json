@@ -147,6 +147,11 @@
     },
     "Task": {
       "properties": {
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Type is the type of the task: \"service\" or \"job\". If omitted, if there are ports, it's a service, otherwise it's a job.\nThis is only needed when you have service that does not listen on ports.\nServices are running in the background."
+        },
         "log": {
           "type": "string",
           "title": "log",

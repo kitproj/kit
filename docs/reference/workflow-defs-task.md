@@ -18,6 +18,7 @@ A task is a container or a command to run.
 
 | Property                            | Type      | Required | Nullable       | Defined by                                                                                                                                                          |
 | :---------------------------------- | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [type](#type)                       | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-type.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/type")                       |
 | [log](#log)                         | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/log")                         |
 | [image](#image)                     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/image")                     |
 | [imagePullPolicy](#imagepullpolicy) | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/imagePullPolicy") |
@@ -41,6 +42,26 @@ A task is a container or a command to run.
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/dependencies")                            |
 | [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")     |
+
+## type
+
+Type is the type of the task: "service" or "job". If omitted, if there are ports, it's a service, otherwise it's a job.
+This is only needed when you have service that does not listen on ports.
+Services are running in the background.
+
+`type`
+
+*   is optional
+
+*   Type: `string` ([type](workflow-defs-task-properties-type.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-task-properties-type.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/type")
+
+### type Type
+
+`string` ([type](workflow-defs-task-properties-type.md))
 
 ## log
 

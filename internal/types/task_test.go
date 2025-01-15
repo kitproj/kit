@@ -36,21 +36,25 @@ func TestTask_AllTargetsExist(t *testing.T) {
 	}
 }
 
-func TestTask_IsService(t *testing.T) {
+func TestTask_GetType(t *testing.T) {
+	t.Run("Defined", func(t *testing.T) {
+		task := &Task{Type: TaskTypeService}
+		assert.Equal(t, TaskTypeService, task.GetType())
+	})
 	t.Run("Job", func(t *testing.T) {
 		task := &Task{}
-		assert.False(t, task.IsService())
+		assert.Equal(t, TaskTypeJob, task.GetType())
 	})
 	t.Run("Ports", func(t *testing.T) {
 		task := &Task{Ports: []Port{{}}}
-		assert.True(t, task.IsService())
+		assert.Equal(t, TaskTypeService, task.GetType())
 	})
 	t.Run("LivenessProbe", func(t *testing.T) {
 		task := &Task{LivenessProbe: &Probe{}}
-		assert.True(t, task.IsService())
+		assert.Equal(t, TaskTypeService, task.GetType())
 	})
 	t.Run("ReadinessProbe", func(t *testing.T) {
 		task := &Task{ReadinessProbe: &Probe{}}
-		assert.True(t, task.IsService())
+		assert.Equal(t, TaskTypeService, task.GetType())
 	})
 }

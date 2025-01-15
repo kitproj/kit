@@ -152,7 +152,7 @@ func RunSubgraph(
 				anyJobFailed := false
 				numJobsSucceeded := 0
 				for _, node := range subgraph.Nodes {
-					if node.task.IsService() {
+					if node.task.GetType() == types.TaskTypeService {
 						anyServices = true
 					}
 					if node.phase == "failed" {
@@ -307,7 +307,7 @@ func RunSubgraph(
 						go probeLoop(ctx, *probe, readyFunc)
 					}
 
-					if t.IsService() {
+					if t.GetType() == types.TaskTypeService && t.GetReadinessProbe() != nil {
 						setNodeStatus(node, "starting", "")
 					} else {
 						// non a service, must be a job

@@ -34,8 +34,14 @@ tasks:
       set -eux
       echo "hello world"
       sleep 5
+  service:
+    type: service
+    sh: |
+      set -eux
+      echo "hello world"
+      sleep 10
   up:
-    dependencies: go-demo docker script k8s
+    dependencies: go-demo script k8s service
 terminationGracePeriodSeconds: 3
 volumes:
 - hostPath:

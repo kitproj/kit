@@ -376,6 +376,37 @@ sleep 30
 
 	})
 
+	t.Run("Service without ports is running", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"service": {Command: []string{"sleep", "30"}, Type: types.TaskTypeService},
+			},
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(
+				ctx,
+				cancel,
+				logger,
+				wf,
+				[]string{"service"},
+				nil,
+			)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+		cancel()
+
+		wg.Wait()
+
+		assert.Contains(t, buffer.String(), "[service] (running)")
+	})
 }
 
 func sleep(t *testing.T) {
