@@ -111,7 +111,9 @@ func RunSubgraph(
 
 	wg := sync.WaitGroup{}
 
-	go StartServer(ctx, subgraph, events)
+	statusEvents := make(chan *TaskNode, 10)
+
+	go StartServer(ctx, subgraph, statusEvents)
 
 	for {
 		select {
@@ -247,7 +249,7 @@ func RunSubgraph(
 						node.Phase = phase
 						node.Message = message
 						logger.Println(message)
-						events <- node
+						statusEvents <- node
 					}
 
 					setNodeStatus(node, "waiting", "")
@@ -363,8 +365,6 @@ func RunSubgraph(
 					queueChildren()
 
 				}(node)
-			case *TaskNode:
-				// noop
 			default:
 				panic(fmt.Sprintf("unexpected event: %v", event))
 			}

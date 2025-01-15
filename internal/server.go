@@ -5,13 +5,14 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 )
 
 //go:embed index.html
 var indexHTML string
 
-func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan any) {
+func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan *TaskNode) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -35,18 +36,15 @@ func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan any) {
 			case <-ctx.Done():
 				return
 			case event := <-events:
-				switch event.(type) {
-				case *TaskNode:
-					marshal, err := json.Marshal(event)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					w.Write([]byte("data: "))
-					w.Write(marshal)
-					w.Write([]byte("\n\n"))
-					w.(http.Flusher).Flush()
+				marshal, err := json.Marshal(event)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				}
+				w.Write([]byte("data: "))
+				w.Write(marshal)
+				w.Write([]byte("\n\n"))
+				w.(http.Flusher).Flush()
 			}
 		}
 	})
@@ -61,6 +59,8 @@ func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan any) {
 		<-ctx.Done()
 		server.Shutdown(ctx)
 	}()
+
+	log.Println("starting Kit server on http://localhost:3000")
 
 	err := server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
