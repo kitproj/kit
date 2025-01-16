@@ -30,6 +30,7 @@
 <svg width=100% height=800>
     <g/>
 </svg>
+<p id="status">...</p>
 
 
 <script id="js">
@@ -60,12 +61,12 @@
     // failed: x + red
     // succeeded: check + green
     const icons = {};
-    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#F2994A"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#4A90E2"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#EB5757"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
-    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#27AE60"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#FFD700"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#FFA500"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#1E90FF"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#FF4500"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
+    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#32CD32"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
 
     const renderGraph = () => render(inner, g);
 
@@ -81,30 +82,34 @@
     fetch('/dag')
         .then(response => response.json())
         .then(data => {
-            // data.nodes is a map of node names to node objects
-            Object.values(data.nodes).forEach(node => {
-                addNode(node);
-            });
-            // data.children is a map from node name to children name
-            Object.keys(data.children).forEach(parent => {
-                data.children[parent].forEach(child => {
-                    g.setEdge(parent, child);
+                // data.nodes is a map of node names to node objects
+                Object.values(data.nodes).forEach(node => {
+                    addNode(node);
                 });
-            });
+                // data.children is a map from node name to children name
+                Object.keys(data.children).forEach(parent => {
+                    data.children[parent].forEach(child => {
+                        g.setEdge(parent, child);
+                    });
+                });
 
-            renderGraph()
-
-            svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width) / 2, 20).scale(1));
-
-            // start the event stream
-            const eventSource = new EventSource('/events');
-
-            eventSource.onmessage = (event) => {
-                const node = JSON.parse(event.data);
-                addNode(node);
                 renderGraph()
+
+                svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width) / 2, 20).scale(1));
+
+                // start the event stream
+                const eventSource = new EventSource('/events');
+
+                eventSource.onopen = () => document.getElementById('status').innerText = 'Connected';
+                eventSource.onerror = () => document.getElementById('status').innerText = 'Disconnected';
+
+                eventSource.onmessage = (event) => {
+                    const node = JSON.parse(event.data);
+                    addNode(node);
+                    renderGraph()
+                }
             }
-        });
+        );
 </script>
 
 </body>

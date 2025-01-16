@@ -6,14 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"sync"
 )
 
 //go:embed index.html
 var indexHTML string
 
-func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan *TaskNode) {
+func StartServer(ctx context.Context, wg *sync.WaitGroup, dag DAG[*TaskNode], events chan *TaskNode) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// if internal/index.html exists, serve that
@@ -56,15 +58,22 @@ func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan *TaskNode)
 		// only allow local connections
 		Addr:    "127.0.0.1:3000",
 		Handler: mux,
+		BaseContext: func(listener net.Listener) context.Context {
+			return ctx
+		},
 	}
 
 	go func() {
+		defer wg.Done()
 		<-ctx.Done()
-		server.Shutdown(ctx)
+		if err := server.Shutdown(ctx); err != nil {
+			log.Println(err)
+		}
 	}()
 
 	log.Println("starting Kit server on http://localhost:3000")
 
+	wg.Add(1)
 	err := server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic(err)

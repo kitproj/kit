@@ -109,11 +109,11 @@ func RunSubgraph(
 
 	semaphores := util.NewSemaphores(wf.Semaphores)
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
 	statusEvents := make(chan *TaskNode, 100)
 
-	go StartServer(ctx, subgraph, statusEvents)
+	go StartServer(ctx, wg, subgraph, statusEvents)
 
 	for {
 		select {
