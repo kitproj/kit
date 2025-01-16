@@ -12,7 +12,7 @@ type TaskNode struct {
 	task types.Task
 	// logFile is the log file path
 	logFile string
-	// the phase of the task, e.g. "pending", "waiting", "running", "succeeded", "failed"
+	// the phase of the task, e.g. "pending", "waiting", "running", "succeeded", "failed", "cancelled", "skipped"
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
 	Message string `json:"message,omitempty"`
@@ -30,7 +30,7 @@ func (n TaskNode) blocked() bool {
 	switch n.Phase {
 	case "running":
 		return n.task.GetType() == types.TaskTypeJob
-	case "succeeded":
+	case "succeeded", "skipped":
 		return false
 	default:
 		return true

@@ -173,19 +173,19 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logge
 					if node.task.GetType() == types.TaskTypeService {
 						continue
 					}
-					if node.Phase == "failed" {
+					switch node.Phase {
+					case "failed":
 						anyJobFailed = true
-					}
-					if node.Phase == "succeeded" {
+					case "succeeded", "skipped":
 						delete(pending, node.Name)
 					}
 				}
 				if anyJobFailed {
-					logger.Println("exiting because a job failed")
+					logger.Println("exiting because a ob failed")
 					cancel()
 				}
 				if len(pending) == 0 {
-					logger.Println("exiting because all jobs succeeded")
+					logger.Println("exiting because all requested jobs completed")
 					cancel()
 				}
 			// if the event is a string, it is the name of the task to run
@@ -277,7 +277,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logge
 
 					// if the task can be skipped, lets exit early
 					if t.Skip() || slices.Contains(tasksToSkip, node.Name) {
-						setNodeStatus(node, "succeeded", "skipped")
+						setNodeStatus(node, "skipped", "")
 						return
 					}
 
@@ -377,7 +377,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logge
 					err = p.Run(ctx, out, out)
 					// if the task was cancelled, we don't want to restart it, this is normal exit
 					if errors.Is(ctx.Err(), context.Canceled) {
-						setNodeStatus(node, "succeeded", "cancelled")
+						setNodeStatus(node, "cancelled", "")
 						return
 					}
 

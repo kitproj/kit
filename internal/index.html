@@ -74,6 +74,8 @@
     icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#1E90FF"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
     icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#FF4500"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
     icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#32CD32"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+    icons['skipped'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 4l4 4-4 4V4zm4 0l4 4-4 4V4z" fill="#FFF"/>';
+    icons["cancelled"] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
 
     const renderGraph = () => render(inner, g);
 
@@ -122,11 +124,12 @@
                 eventSource.onmessage = (event) => {
                     const node = JSON.parse(event.data);
                     const startedAt = new Date(node.startedAt);
-                    const updatedAt = new Date(node.updatedAt);
+                    const updatedAt = node.phase === "starting" || node.phase === 'running' ? new Date() : new Date(node.updatedAt);
+
                     const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
 
                     // format at either 0m0s or 0s
-                    const duration = durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s`;
+                    const duration = durationSeconds > 0 ? durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s` : '';
 
                     g.setNode(node.name, {
                         labelType: "html",

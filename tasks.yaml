@@ -40,6 +40,8 @@ tasks:
       set -eux
       echo "hello world"
       sleep 10
+  skipped:
+    targets: go.mod
   logs:
     sh: |
         set -eux
@@ -49,7 +51,7 @@ tasks:
         done
 
   up:
-    dependencies: go-demo script k8s service logs
+    dependencies: go-demo script k8s service logs skipped
 terminationGracePeriodSeconds: 3
 volumes:
 - hostPath:
