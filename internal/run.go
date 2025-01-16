@@ -21,14 +21,7 @@ import (
 
 var poisonPill = struct{}{}
 
-func RunSubgraph(
-	ctx context.Context,
-	cancel context.CancelFunc,
-	logger *log.Logger,
-	wf *types.Workflow,
-	taskNames []string,
-	tasksToSkip []string,
-) error {
+func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logger *log.Logger, wf *types.Workflow, taskNames []string, tasksToSkip []string) error {
 
 	// check that the task names are valid
 	for _, name := range taskNames {
@@ -125,7 +118,9 @@ func RunSubgraph(
 
 	statusEvents := make(chan *TaskNode, 100)
 
-	go StartServer(ctx, wg, subgraph, statusEvents)
+	if port > 0 {
+		go StartServer(ctx, port, wg, subgraph, statusEvents)
+	}
 
 	for {
 		select {
@@ -360,10 +355,23 @@ func RunSubgraph(
 					}
 					defer file.Close()
 
+					// if the task has a log file, we will write to that file, we sync after each write
+					// so when we tail the log file, we see the output immediately
+					buf := funcWriter(func(p []byte) (int, error) {
+						n, err := file.Write(p)
+						if err != nil {
+							return n, err
+						}
+						if err := file.Sync(); err != nil {
+							return n, err
+						}
+						return n, nil
+					})
+
 					if t.Log != "" {
-						out = file
+						out = buf
 					} else {
-						out = io.MultiWriter(out, file)
+						out = io.MultiWriter(out, buf)
 					}
 
 					err = p.Run(ctx, out, out)

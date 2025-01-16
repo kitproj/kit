@@ -13,10 +13,6 @@
             border-radius: 4px;
             background-color: #fbfbfb;
             overflow: scroll;
-            /* align the to the middle */
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .node {
@@ -46,7 +42,7 @@
         <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
     </svg>
 </div>
-<iframe id="logs"></iframe>
+<iframe id="logs" onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight)"></iframe>
 
 
 <script id="js">
@@ -81,25 +77,6 @@
 
     const renderGraph = () => render(inner, g);
 
-    const addNode = (node) => {
-        const startedAt = new Date(node.startedAt);
-        const updatedAt = new Date(node.updatedAt);
-        const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
-
-        // format at either 0m0s or 0s
-        const duration = durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s`;
-
-        g.setNode(node.name, {
-            labelType: "html",
-            label: `<svg width="160" height="16" viewBox="0 0 160 16">
-            <title>${node.message}</title>
-            ${icons[node.phase]}
-            <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
-            <text x="150"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
-            </>`,
-            rx: 2, ry: 2
-        });
-    }
 
     // get the graph from the server at /dag
     fetch('/dag')
@@ -107,7 +84,12 @@
         .then(data => {
                 // data.nodes is a map of node names to node objects
                 Object.values(data.nodes).forEach(node => {
-                    addNode(node);
+                    g.setNode(node.name, {
+                        labelType: "html",
+                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
+            </>`,
+                        rx: 2, ry: 2
+                    });
                 });
                 // data.children is a map from node name to children name
                 Object.keys(data.children).forEach(parent => {
@@ -115,18 +97,6 @@
                         g.setEdge(parent, child);
                     });
                 });
-
-                const resize = () => {
-                    const innerWidth = window.innerWidth - 16;
-                    const innerHeight = window.innerHeight - 16;
-                    document.getElementById('container').style.width = innerWidth + 'px';
-                    document.getElementById('container').style.height = innerHeight/2 + 'px';
-                    document.getElementById('logs').style.width = innerWidth + 'px';
-                    document.getElementById('logs').style.height = innerHeight / 2 + 'px';
-                }
-
-                window.addEventListener('resize', resize);
-                resize();
 
                 renderGraph()
 
@@ -137,8 +107,11 @@
                 // set the width and height of the svg to that of the graph
                 const bbox = svg.node().getBBox();
                 svg.attr("width", bbox.width);
-                svg.attr("height", bbox.height);
+                svg.attr("height", bbox.height + 40);
 
+                // Center the graph
+                const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
+                inner.attr("transform", `translate(${xCenterOffset}, 20)`);
 
                 // start the event stream
                 const eventSource = new EventSource('/events');
@@ -148,11 +121,41 @@
 
                 eventSource.onmessage = (event) => {
                     const node = JSON.parse(event.data);
-                    addNode(node);
+                    const startedAt = new Date(node.startedAt);
+                    const updatedAt = new Date(node.updatedAt);
+                    const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
+
+                    // format at either 0m0s or 0s
+                    const duration = durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s`;
+
+                    g.setNode(node.name, {
+                        labelType: "html",
+                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
+            <title>${node.name}\n${node.message}</title>
+            ${icons[node.phase]}
+            <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
+            <text x="190"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
+            </>`,
+                        rx: 2, ry: 2
+                    });
                     renderGraph()
                 }
             }
         );
+
+    setInterval(() => document.getElementById("logs").onload(), 1000);
+
+    const resize = () => {
+        const innerWidth = window.innerWidth - 16;
+        const innerHeight = window.innerHeight - 16;
+        document.getElementById('container').style.width = innerWidth + 'px';
+        document.getElementById('container').style.height = innerHeight / 2 + 'px';
+        document.getElementById('logs').style.width = innerWidth + 'px';
+        document.getElementById('logs').style.height = innerHeight / 2 + 'px';
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
 </script>
 
 </body>
