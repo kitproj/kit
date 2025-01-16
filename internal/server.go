@@ -53,6 +53,11 @@ func StartServer(ctx context.Context, wg *sync.WaitGroup, dag DAG[*TaskNode], ev
 			w.(http.Flusher).Flush()
 		}
 	})
+	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
+		task := r.PathValue("task")
+		logFile := dag.Nodes[task].logFile
+		http.ServeFile(w, r, logFile)
+	})
 
 	server := &http.Server{
 		// only allow local connections

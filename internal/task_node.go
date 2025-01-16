@@ -10,6 +10,8 @@ import (
 type TaskNode struct {
 	Name string `json:"name"`
 	task types.Task
+	// logFile is the log file path
+	logFile string
 	// the phase of the task, e.g. "pending", "waiting", "running", "succeeded", "failed"
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
