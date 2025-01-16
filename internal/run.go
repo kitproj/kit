@@ -16,12 +16,13 @@ import (
 	"github.com/kitproj/kit/internal/proc"
 	"github.com/kitproj/kit/internal/types"
 	"github.com/kitproj/kit/internal/util"
+	"github.com/pkg/browser"
 	"k8s.io/utils/strings/slices"
 )
 
 var poisonPill = struct{}{}
 
-func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logger *log.Logger, wf *types.Workflow, taskNames []string, tasksToSkip []string) error {
+func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openBrowser bool, logger *log.Logger, wf *types.Workflow, taskNames []string, tasksToSkip []string) error {
 
 	// check that the task names are valid
 	for _, name := range taskNames {
@@ -77,6 +78,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logge
 		}
 	}
 
+	if len(subgraph.Nodes) == 0 {
+		logger.Println("no tasks to run")
+		return nil
+	}
+
 	// create logs directory
 	if err := os.MkdirAll("logs", 0755); err != nil && !errors.Is(err, os.ErrExist) {
 		return err
@@ -120,6 +126,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logge
 
 	if port > 0 {
 		go StartServer(ctx, port, wg, subgraph, statusEvents)
+		if openBrowser {
+			if err := browser.OpenURL(fmt.Sprintf("http://localhost:%d", port)); err != nil {
+				return fmt.Errorf("failed to open browser: %v", err)
+			}
+		}
 	}
 
 	for {

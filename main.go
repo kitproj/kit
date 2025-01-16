@@ -31,13 +31,15 @@ func main() {
 	configFile := ""
 	tasksToSkip := ""
 	port := 0
+	openBrowser := false
 	rewrite := false
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", "tasks.yaml", "config file (default tasks.yaml)")
 	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
-	flag.IntVar(&port, "p", 3000, "port to listen on (default 3000, zero disables)")
+	flag.IntVar(&port, "p", 3000, "port to start UI on (default 3000, zero disables)")
+	flag.BoolVar(&openBrowser, "b", false, "open the UI in the browser (default false)")
 	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
 	flag.Parse()
 	taskNames := flag.Args()
@@ -85,6 +87,7 @@ func main() {
 			ctx,
 			cancel,
 			port,
+			openBrowser,
 			log.Default(),
 			wf,
 			taskNames,

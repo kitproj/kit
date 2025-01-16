@@ -91,8 +91,12 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 	})
 	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
 		task := r.PathValue("task")
-		logFile := dag.Nodes[task].logFile
-		http.ServeFile(w, r, logFile)
+		node, ok := dag.Nodes[task]
+		if !ok {
+			http.Error(w, "task not found", http.StatusNotFound)
+			return
+		}
+		http.ServeFile(w, r, node.logFile)
 	})
 
 	server := &http.Server{
@@ -112,7 +116,7 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 		}
 	}()
 
-	log.Printf("UI available on %s", server.Addr)
+	log.Printf("UI available on http://%s", server.Addr)
 
 	wg.Add(1)
 	err := server.ListenAndServe()

@@ -10,6 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.1-0.20221221211819-c6f5cfa163ed
 	github.com/invopop/jsonschema v0.7.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.8.0
 	k8s.io/api v0.26.2
