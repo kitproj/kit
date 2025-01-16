@@ -8,13 +8,20 @@
     <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
 
     <style id="css">
-        body > svg {
+        #container {
             border: 1px solid #fafafa;
             border-radius: 4px;
             background-color: #fbfbfb;
+            overflow: scroll;
+            /* align the to the middle */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .node {cursor: pointer;}
+        .node {
+            cursor: pointer;
+        }
 
         .node rect {
             stroke: #ddd;
@@ -26,21 +33,19 @@
         }
 
         #logs {
-            width: 1024px;
-            height: 400px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            margin-top: 8px;
         }
 
     </style>
 </head>
 <body>
 
-<svg width=1024 height=800>
-    <g/>
-    <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
-</svg>
+<div id="container">
+    <svg>
+        <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
+    </svg>
+</div>
 <iframe id="logs"></iframe>
 
 
@@ -111,19 +116,29 @@
                     });
                 });
 
-                // Set up zoom support
-                const zoom = d3.zoom().on("zoom", () => inner.attr("transform", d3.event.transform));
-                svg.call(zoom);
+                const resize = () => {
+                    const innerWidth = window.innerWidth - 16;
+                    const innerHeight = window.innerHeight - 16;
+                    document.getElementById('container').style.width = innerWidth + 'px';
+                    document.getElementById('container').style.height = innerHeight/2 + 'px';
+                    document.getElementById('logs').style.width = innerWidth + 'px';
+                    document.getElementById('logs').style.height = innerHeight / 2 + 'px';
+                }
+
+                window.addEventListener('resize', resize);
+                resize();
 
                 renderGraph()
 
-            // Set up the click event
-            svg.selectAll("g.node")
-                .on("click", (d) => document.getElementById('logs').src = `/logs/${d}`);
+                // Set up the click event
+                svg.selectAll("g.node")
+                    .on("click", (d) => document.getElementById('logs').src = `/logs/${d}`);
 
-            const initialScale = 1.0;
-                svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
-                svg.attr('height', g.graph().height * initialScale + 40);
+                // set the width and height of the svg to that of the graph
+                const bbox = svg.node().getBBox();
+                svg.attr("width", bbox.width);
+                svg.attr("height", bbox.height);
+
 
                 // start the event stream
                 const eventSource = new EventSource('/events');
