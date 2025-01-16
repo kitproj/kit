@@ -162,7 +162,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		Image:        image,
 		User:         c.User,
 		WorkingDir:   c.WorkingDir,
-		Entrypoint:   strslice.StrSlice(c.Command),
+		Entrypoint:   strslice.StrSlice(c.GetCommand()),
 		Labels:       map[string]string{hashLabel: expectedHash},
 	}, &dockercontainer.HostConfig{
 		PortBindings: portBindings,

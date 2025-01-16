@@ -22,15 +22,9 @@ func New(name string, t types.Task, log *log.Logger, spec types.Spec) Interface 
 			Task: t,
 		}
 	}
-	if len(t.Command) > 0 {
+	if len(t.GetCommand()) > 0 {
 		return &host{
 			log:  log,
-			spec: spec,
-			Task: t,
-		}
-	}
-	if t.Sh != "" {
-		return &shell{
 			spec: spec,
 			Task: t,
 		}

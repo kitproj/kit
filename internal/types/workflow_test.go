@@ -27,8 +27,9 @@ func TestPod(t *testing.T) {
 	assert.Equal(t, 20, probe.GetFailureThreshold())
 	assert.Nil(t, task.GetLivenessProbe())
 	//
-	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, wf.Tasks["bar"].Command)
-	assert.Equal(t, Strings{"baz", "qux"}, wf.Tasks["bar"].Dependencies)
+	tasks := wf.Tasks["bar"]
+	assert.Equal(t, Strings{"sh", "-c", "echo bar"}, tasks.GetCommand())
+	assert.Equal(t, Strings{"baz", "qux"}, tasks.Dependencies)
 }
 
 func TestPorts_Map(t *testing.T) {

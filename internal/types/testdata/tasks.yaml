@@ -9,5 +9,5 @@ spec:
   - name: foo
     ports: "8080"
   - name: bar
-    command: sh -c "echo bar"
+    sh: echo bar
     dependencies: baz qux

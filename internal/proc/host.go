@@ -29,8 +29,9 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("error getting spec environ: %w", err)
 	}
 
-	path := h.Command[0]
-	cmd := exec.CommandContext(ctx, path, append(h.Command[1:], h.Args...)...)
+	command := h.GetCommand()
+	path := command[0]
+	cmd := exec.CommandContext(ctx, path, append(command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr

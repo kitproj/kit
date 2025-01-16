@@ -114,8 +114,8 @@ func (t *Task) String() string {
 	if t.Image != "" {
 		return t.Image
 	}
-	if len(t.Command) > 0 {
-		return t.Command.String()
+	if len(t.GetCommand()) > 0 {
+		return t.GetCommand().String()
 	}
 	if t.Args != nil {
 		return t.Args.String()
@@ -134,6 +134,16 @@ func (t *Task) Environ() ([]string, error) {
 	}
 	s, err := t.Env.Environ()
 	return append(environ, s...), err
+}
+
+func (t *Task) GetCommand() Strings {
+	if len(t.Command) > 0 {
+		return t.Command
+	}
+	if t.Sh != "" {
+		return []string{"sh", "-c", t.Sh}
+	}
+	return nil
 }
 
 // Skip Determines if all the targets exist. And if they're all newer that the newest source file.
