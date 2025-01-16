@@ -10,10 +10,15 @@ like Docker Compose), Kubernetes resource
 management (like Tilt, Skaffold), and a focus on local development (like Garden) in one binary.
 
 For example, a `tasks.yaml` file can describe a Go project. It could start out by downloading a Helm chart, applying
-that to a cluster and at the same time starting a local MySQL database, automatically starting port-forwards for both. It could then generate some souce code, build the Go service, and
-start the service. If a file changes, it could rebuild the project and restart the service. Meanwhile, it is downloading, building and serving a Yarn project, configuring a Kubernetes app and 
+that to a cluster and at the same time starting a local MySQL database, automatically starting port-forwards for both.
+It could then generate some souce code, build the Go service, and
+start the service. If a file changes, it could rebuild the project and restart the service. Meanwhile, it is
+downloading, building and serving a Yarn project, configuring a Kubernetes app and
 
-It's aimed at supporting more complex development use cases, where you need to run several software components at the same time.
+It's aimed at supporting more complex development use cases, where you need to run several software components at the
+same time.
+
+![img.png](img.png)
 
 ## Install
 
@@ -40,7 +45,8 @@ kit build
 
 ### Jobs vs Service
 
-Every task is either a **job** or a **service**. A job is a task that runs once and exits, a service is a task that runs indefinitely and listens on a port.
+Every task is either a **job** or a **service**. A job is a task that runs once and exits, a service is a task that runs
+indefinitely and listens on a port.
 
 By default, a task is a job. To make a task a service, add a `ports` field:
 
@@ -99,6 +105,22 @@ service:
       path: /healthz 
 ```
 
+Sometimes a task is a service, but you don't know what port it'll listen on. You can explicitly set the type as a
+service:
+
+```yaml
+service:
+  command: go run .
+  type: Service  
+```
+
+Sometimes you just want a task to block indefinitely, often you'll have a task named `up` that does this:
+
+```yaml
+up:
+  command: cat
+```
+
 #### Shell Task
 
 A **shell task** is just a host task that runs in a shell:
@@ -146,8 +168,7 @@ The ports will be forwarded from the Kubernetes cluster to the host.
 
 #### No-op Task
 
-A **no-op task** is a task that does nothing, commonly a task named `up` is provided and that depends on all other
-tasks:
+A **no-op task** is a task that does nothing, depends on all other tasks:
 
 ```yaml
 up:

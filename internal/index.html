@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Kit</title>
+
+    <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
+
+    <style id="css">
+        body > svg {
+            border: 1px solid #fafafa;
+            border-radius: 4px;
+            background-color: #fbfbfb;
+        }
+
+        .node rect {
+            stroke: #ddd;
+            fill: #fff;
+        }
+
+        .edgePath path {
+            stroke: #ccc;
+        }
+
+    </style>
+</head>
+<body>
+
+<svg width=100% height=800>
+    <g/>
+</svg>
+
+
+<script id="js">
+    // Create a new directed graph
+    const g = new dagreD3.graphlib.Graph()
+        .setGraph({rankdir: "LR",})
+        .setDefaultEdgeLabel(() => ({}));
+
+    // Create the renderer
+    const render = new dagreD3.render();
+
+    // Set up an SVG group so that we can translate the final graph.
+    const svg = d3.select("svg"),
+        inner = svg.append("g");
+
+    // Set up zoom support
+    const zoom = d3.zoom().on("zoom", () => inner.attr("transform", d3.event.transform));
+
+    svg.call(zoom);
+
+    // icons are svgs, keyed by phase
+    // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
+    // the icon is centered in the circle, and is a <path/>
+    // waiting: pause + gray
+    // pending : pause + gray
+    // starting: play + blue
+    // running : play + blue
+    // failed: x + red
+    // succeeded: check + green
+    const icons = {};
+    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#F2994A"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#4A90E2"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#EB5757"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
+    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#27AE60"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+
+    const renderGraph = () => render(inner, g);
+
+    const addNode = (node) => {
+        g.setNode(node.name, {
+            labelType: "html",
+            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="13" font-size="16" fill="#444">${node.name}</text></>`,
+            rx: 2, ry: 2
+        });
+    }
+
+    // get the graph from the server at /dag
+    fetch('/dag')
+        .then(response => response.json())
+        .then(data => {
+            // data.nodes is a map of node names to node objects
+            Object.values(data.nodes).forEach(node => {
+                addNode(node);
+            });
+            // data.children is a map from node name to children name
+            Object.keys(data.children).forEach(parent => {
+                data.children[parent].forEach(child => {
+                    g.setEdge(parent, child);
+                });
+            });
+
+            renderGraph()
+
+            svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width) / 2, 20).scale(1));
+
+            // start the event stream
+            const eventSource = new EventSource('/events');
+
+            eventSource.onmessage = (event) => {
+                const node = JSON.parse(event.data);
+                addNode(node);
+                renderGraph()
+            }
+        });
+</script>
+
+</body>
+</html>
