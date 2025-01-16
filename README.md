@@ -15,6 +15,8 @@ start the service. If a file changes, it could rebuild the project and restart t
 
 It's aimed at supporting more complex development use cases, where you need to run several software components at the same time.
 
+![img.png](img.png)
+
 ## Install
 
 Like `jq`, `kit` is a small standalone binary. You can download it from

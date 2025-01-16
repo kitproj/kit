@@ -72,7 +72,7 @@
     const addNode = (node) => {
         g.setNode(node.name, {
             labelType: "html",
-            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="13" font-size="16" >${node.name}</text></>`,
+            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="13" font-size="16" fill="#444">${node.name}</text></>`,
             rx: 2, ry: 2
         });
     }
