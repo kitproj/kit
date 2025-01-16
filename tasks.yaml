@@ -40,8 +40,18 @@ tasks:
       set -eux
       echo "hello world"
       sleep 10
+  skipped:
+    targets: go.mod
+  logs:
+    sh: |
+        set -eux
+        for i in {1..100}; do
+          echo "hello $i"
+          sleep 1
+        done
+
   up:
-    dependencies: go-demo script k8s service
+    dependencies: go-demo script k8s service logs skipped
 terminationGracePeriodSeconds: 3
 volumes:
 - hostPath:

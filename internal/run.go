@@ -21,14 +21,7 @@ import (
 
 var poisonPill = struct{}{}
 
-func RunSubgraph(
-	ctx context.Context,
-	cancel context.CancelFunc,
-	logger *log.Logger,
-	wf *types.Workflow,
-	taskNames []string,
-	tasksToSkip []string,
-) error {
+func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, logger *log.Logger, wf *types.Workflow, taskNames []string, tasksToSkip []string) error {
 
 	// check that the task names are valid
 	for _, name := range taskNames {
@@ -57,12 +50,19 @@ func RunSubgraph(
 	subgraph := NewDAG[*TaskNode]()
 	for name := range visited {
 		task := taskByName[name]
+
+		logFile := filepath.Join("logs", fmt.Sprintf("%s.log", name))
+		if task.Log != "" {
+			logFile = task.Log
+		}
+
 		subgraph.AddNode(name, &TaskNode{
-			Name:   name,
-			task:   task,
-			Phase:  "pending",
-			cancel: func() {},
-			mu:     &sync.Mutex{}})
+			Name:    name,
+			logFile: logFile,
+			task:    task,
+			Phase:   "pending",
+			cancel:  func() {},
+			mu:      &sync.Mutex{}})
 		for _, parent := range dag.Parents[name] {
 			subgraph.AddEdge(parent, name)
 		}
@@ -75,6 +75,11 @@ func RunSubgraph(
 		if len(subgraph.Parents[taskName]) == 0 {
 			events <- taskName
 		}
+	}
+
+	// create logs directory
+	if err := os.MkdirAll("logs", 0755); err != nil && !errors.Is(err, os.ErrExist) {
+		return err
 	}
 
 	// start a file watcher for each task
@@ -109,11 +114,13 @@ func RunSubgraph(
 
 	semaphores := util.NewSemaphores(wf.Semaphores)
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
 	statusEvents := make(chan *TaskNode, 100)
 
-	go StartServer(ctx, subgraph, statusEvents)
+	if port > 0 {
+		go StartServer(ctx, port, wg, subgraph, statusEvents)
+	}
 
 	for {
 		select {
@@ -166,19 +173,19 @@ func RunSubgraph(
 					if node.task.GetType() == types.TaskTypeService {
 						continue
 					}
-					if node.Phase == "failed" {
+					switch node.Phase {
+					case "failed":
 						anyJobFailed = true
-					}
-					if node.Phase == "succeeded" {
+					case "succeeded", "skipped":
 						delete(pending, node.Name)
 					}
 				}
 				if anyJobFailed {
-					logger.Println("exiting because a job failed")
+					logger.Println("exiting because a ob failed")
 					cancel()
 				}
 				if len(pending) == 0 {
-					logger.Println("exiting because all jobs succeeded")
+					logger.Println("exiting because all requested jobs completed")
 					cancel()
 				}
 			// if the event is a string, it is the name of the task to run
@@ -248,7 +255,11 @@ func RunSubgraph(
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
 						node.Phase = phase
 						node.Message = message
-						logger.Println(message)
+						if node.StartedAt.IsZero() {
+							node.StartedAt = time.Now()
+						}
+						node.UpdatedAt = time.Now()
+						logger.Printf("%v %s", time.Now().Sub(node.StartedAt).Truncate(time.Second), node.Message)
 						statusEvents <- node
 					}
 
@@ -266,7 +277,7 @@ func RunSubgraph(
 
 					// if the task can be skipped, lets exit early
 					if t.Skip() || slices.Contains(tasksToSkip, node.Name) {
-						setNodeStatus(node, "succeeded", "skipped")
+						setNodeStatus(node, "skipped", "")
 						return
 					}
 
@@ -337,20 +348,36 @@ func RunSubgraph(
 						}
 					}
 
-					if t.Log != "" {
-						file, err := os.Create(t.Log)
+					file, err := os.Create(node.logFile)
+					if err != nil {
+						setNodeStatus(node, "failed", fmt.Sprintf("failed to create log file: %v", err))
+						return
+					}
+					defer file.Close()
+
+					// if the task has a log file, we will write to that file, we sync after each write
+					// so when we tail the log file, we see the output immediately
+					buf := funcWriter(func(p []byte) (int, error) {
+						n, err := file.Write(p)
 						if err != nil {
-							setNodeStatus(node, "failed", fmt.Sprintf("failed to create log file: %v", err))
-							return
+							return n, err
 						}
-						out = file
-						defer file.Close()
+						if err := file.Sync(); err != nil {
+							return n, err
+						}
+						return n, nil
+					})
+
+					if t.Log != "" {
+						out = buf
+					} else {
+						out = io.MultiWriter(out, buf)
 					}
 
-					err := p.Run(ctx, out, out)
+					err = p.Run(ctx, out, out)
 					// if the task was cancelled, we don't want to restart it, this is normal exit
 					if errors.Is(ctx.Err(), context.Canceled) {
-						setNodeStatus(node, "succeeded", "cancelled")
+						setNodeStatus(node, "cancelled", "")
 						return
 					}
 

@@ -31,28 +31,14 @@ func TestRunSubgraph(t *testing.T) {
 	t.Run("Task not found", func(t *testing.T) {
 		ctx, cancel, logger, _ := setup(t)
 		defer cancel()
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			&types.Workflow{},
-			[]string{"job"},
-			nil,
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, &types.Workflow{}, []string{"job"}, nil)
 		assert.EqualError(t, err, "task \"job\" not found in workflow")
 	})
 
 	t.Run("Skipped task not found", func(t *testing.T) {
 		ctx, cancel, logger, _ := setup(t)
 		defer cancel()
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			&types.Workflow{},
-			nil,
-			[]string{"job"},
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, &types.Workflow{}, nil, []string{"job"})
 		assert.EqualError(t, err, "skipped task \"job\" not found in workflow")
 	})
 
@@ -64,14 +50,7 @@ func TestRunSubgraph(t *testing.T) {
 				"job": {Command: []string{"true"}},
 			},
 		}
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			wf,
-			[]string{"job"},
-			nil,
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job"}, nil)
 		assert.NoError(t, err)
 	})
 
@@ -83,14 +62,7 @@ func TestRunSubgraph(t *testing.T) {
 				"job": {Command: []string{"false"}},
 			},
 		}
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			wf,
-			[]string{"job"},
-			nil,
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job"}, nil)
 		assert.EqualError(t, err, "failed tasks: [job]")
 	})
 
@@ -108,14 +80,7 @@ func TestRunSubgraph(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"service"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -142,14 +107,7 @@ func TestRunSubgraph(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"service"}, nil)
 			assert.EqualError(t, err, "failed tasks: [service]")
 		}()
 
@@ -170,14 +128,7 @@ func TestRunSubgraph(t *testing.T) {
 				"job": {Command: []string{"echo", "hello"}, Log: "test.log"},
 			},
 		}
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			wf,
-			[]string{"job"},
-			nil,
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job"}, nil)
 		assert.NoError(t, err)
 		assert.NotContains(t, buffer.String(), "hello")
 		assert.Contains(t, buffer.String(), "[job] (succeeded)")
@@ -202,14 +153,7 @@ func TestRunSubgraph(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"job", "job"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job", "job"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -240,14 +184,7 @@ sleep 30
 		go func() {
 			defer wg.Done()
 
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"job", "service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job", "service"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -294,14 +231,7 @@ sleep 30
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"service"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -352,14 +282,7 @@ sleep 30
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"service"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -389,14 +312,7 @@ sleep 30
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"service"}, nil)
 			assert.NoError(t, err)
 		}()
 
@@ -422,14 +338,7 @@ sleep 30
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := RunSubgraph(
-				ctx,
-				cancel,
-				logger,
-				wf,
-				[]string{"job", "service"},
-				nil,
-			)
+			err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job", "service"}, nil)
 			assert.EqualError(t, err, "failed tasks: [job]")
 		}()
 
@@ -448,14 +357,7 @@ sleep 30
 				"job": {Command: []string{"true"}},
 			},
 		}
-		err := RunSubgraph(
-			ctx,
-			cancel,
-			logger,
-			wf,
-			[]string{"job"},
-			nil,
-		)
+		err := RunSubgraph(ctx, cancel, 0, logger, wf, []string{"job"}, nil)
 		assert.NoError(t, err)
 	})
 }

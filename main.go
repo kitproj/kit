@@ -30,12 +30,14 @@ func main() {
 	printVersion := false
 	configFile := ""
 	tasksToSkip := ""
+	port := 0
 	rewrite := false
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
-	flag.StringVar(&configFile, "f", "tasks.yaml", "config file")
+	flag.StringVar(&configFile, "f", "tasks.yaml", "config file (default tasks.yaml)")
 	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
+	flag.IntVar(&port, "p", 3000, "port to listen on (default 3000, zero disables)")
 	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
 	flag.Parse()
 	taskNames := flag.Args()
@@ -82,10 +84,12 @@ func main() {
 		return internal.RunSubgraph(
 			ctx,
 			cancel,
+			port,
 			log.Default(),
 			wf,
 			taskNames,
-			split)
+			split,
+		)
 	}()
 
 	if err != nil {

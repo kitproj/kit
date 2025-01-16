@@ -30,7 +30,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 
 	path := h.Command[0]
-	cmd := exec.Command(path, append(h.Command[1:], h.Args...)...)
+	cmd := exec.CommandContext(ctx, path, append(h.Command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr

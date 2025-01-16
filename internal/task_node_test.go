@@ -25,6 +25,10 @@ func Test_taskNode_blocked(t *testing.T) {
 		n := TaskNode{Phase: "succeeded", task: service}
 		assert.False(t, n.blocked())
 	})
+	t.Run("service cancelled", func(t *testing.T) {
+		n := TaskNode{Phase: "cancelled", task: service}
+		assert.True(t, n.blocked())
+	})
 	t.Run("service failed", func(t *testing.T) {
 		n := TaskNode{Phase: "failed", task: service}
 		assert.True(t, n.blocked())

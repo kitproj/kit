@@ -8,10 +8,15 @@
     <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
 
     <style id="css">
-        body > svg {
+        #container {
             border: 1px solid #fafafa;
             border-radius: 4px;
             background-color: #fbfbfb;
+            overflow: scroll;
+        }
+
+        .node {
+            cursor: pointer;
         }
 
         .node rect {
@@ -23,19 +28,27 @@
             stroke: #ccc;
         }
 
+        #logs {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
     </style>
 </head>
 <body>
 
-<svg width=100% height=800>
-    <g/>
-</svg>
+<div id="container">
+    <svg>
+        <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
+    </svg>
+</div>
+<iframe id="logs" onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight)"></iframe>
 
 
 <script id="js">
     // Create a new directed graph
     const g = new dagreD3.graphlib.Graph()
-        .setGraph({rankdir: "LR",})
+        .setGraph({rankdir: "LR"})
         .setDefaultEdgeLabel(() => ({}));
 
     // Create the renderer
@@ -44,11 +57,6 @@
     // Set up an SVG group so that we can translate the final graph.
     const svg = d3.select("svg"),
         inner = svg.append("g");
-
-    // Set up zoom support
-    const zoom = d3.zoom().on("zoom", () => inner.attr("transform", d3.event.transform));
-
-    svg.call(zoom);
 
     // icons are svgs, keyed by phase
     // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
@@ -60,51 +68,97 @@
     // failed: x + red
     // succeeded: check + green
     const icons = {};
-    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#F2994A"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#4A90E2"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#EB5757"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
-    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#27AE60"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#FFD700"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#FFA500"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#1E90FF"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
+    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#FF4500"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
+    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#32CD32"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+    icons['skipped'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 4l4 4-4 4V4zm4 0l4 4-4 4V4z" fill="#FFF"/>';
+    icons["cancelled"] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
 
     const renderGraph = () => render(inner, g);
 
-    const addNode = (node) => {
-        g.setNode(node.name, {
-            labelType: "html",
-            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="13" font-size="16" fill="#444">${node.name}</text></>`,
-            rx: 2, ry: 2
-        });
-    }
 
     // get the graph from the server at /dag
     fetch('/dag')
         .then(response => response.json())
         .then(data => {
-            // data.nodes is a map of node names to node objects
-            Object.values(data.nodes).forEach(node => {
-                addNode(node);
-            });
-            // data.children is a map from node name to children name
-            Object.keys(data.children).forEach(parent => {
-                data.children[parent].forEach(child => {
-                    g.setEdge(parent, child);
+                // data.nodes is a map of node names to node objects
+                Object.values(data.nodes).forEach(node => {
+                    g.setNode(node.name, {
+                        labelType: "html",
+                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
+            </>`,
+                        rx: 2, ry: 2
+                    });
                 });
-            });
+                // data.children is a map from node name to children name
+                Object.keys(data.children).forEach(parent => {
+                    data.children[parent].forEach(child => {
+                        g.setEdge(parent, child);
+                    });
+                });
 
-            renderGraph()
-
-            svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width) / 2, 20).scale(1));
-
-            // start the event stream
-            const eventSource = new EventSource('/events');
-
-            eventSource.onmessage = (event) => {
-                const node = JSON.parse(event.data);
-                addNode(node);
                 renderGraph()
+
+                // Set up the click event
+                svg.selectAll("g.node")
+                    .on("click", (d) => document.getElementById('logs').src = `/logs/${d}`);
+
+                // set the width and height of the svg to that of the graph
+                const bbox = svg.node().getBBox();
+                svg.attr("width", bbox.width);
+                svg.attr("height", bbox.height + 40);
+
+                // Center the graph
+                const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
+                inner.attr("transform", `translate(${xCenterOffset}, 20)`);
+
+                // start the event stream
+                const eventSource = new EventSource('/events');
+
+                eventSource.onopen = () => document.getElementById('status').textContent = '';
+                eventSource.onerror = () => document.getElementById('status').textContent = 'disconnected';
+
+                eventSource.onmessage = (event) => {
+                    const node = JSON.parse(event.data);
+                    const startedAt = new Date(node.startedAt);
+                    const updatedAt = node.phase === "starting" || node.phase === 'running' ? new Date() : new Date(node.updatedAt);
+
+                    const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
+
+                    // format at either 0m0s or 0s
+                    const duration = durationSeconds > 0 ? durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s` : '';
+
+                    g.setNode(node.name, {
+                        labelType: "html",
+                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
+            <title>${node.name}\n${node.message}</title>
+            ${icons[node.phase]}
+            <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
+            <text x="190"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
+            </>`,
+                        rx: 2, ry: 2
+                    });
+                    renderGraph()
+                }
             }
-        });
+        );
+
+    setInterval(() => document.getElementById("logs").onload(), 1000);
+
+    const resize = () => {
+        const innerWidth = window.innerWidth - 16;
+        const innerHeight = window.innerHeight - 16;
+        document.getElementById('container').style.width = innerWidth + 'px';
+        document.getElementById('container').style.height = innerHeight / 2 + 'px';
+        document.getElementById('logs').style.width = innerWidth + 'px';
+        document.getElementById('logs').style.height = innerHeight / 2 + 'px';
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
 </script>
 
 </body>
