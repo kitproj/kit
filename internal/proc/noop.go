@@ -8,6 +8,5 @@ import (
 type noop struct{}
 
 func (n noop) Run(ctx context.Context, stdout, stderr io.Writer) error {
-	<-ctx.Done()
 	return nil
 }

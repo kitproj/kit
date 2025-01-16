@@ -20,10 +20,12 @@ type TaskNode struct {
 }
 
 func (n TaskNode) blocked() bool {
-	if n.task.GetType() == types.TaskTypeService {
-		// skipped services are succeeded
-		return n.Phase != "running" && n.Phase != "succeeded"
-	} else {
-		return n.Phase != "succeeded"
+	switch n.Phase {
+	case "running":
+		return n.task.GetType() == types.TaskTypeJob
+	case "succeeded":
+		return false
+	default:
+		return true
 	}
 }

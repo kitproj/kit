@@ -267,7 +267,6 @@ func RunSubgraph(
 					// if the task can be skipped, lets exit early
 					if t.Skip() || slices.Contains(tasksToSkip, node.Name) {
 						setNodeStatus(node, "succeeded", "skipped")
-						queueChildren()
 						return
 					}
 
@@ -316,11 +315,16 @@ func RunSubgraph(
 						go probeLoop(ctx, *probe, readyFunc)
 					}
 
-					if t.GetType() == types.TaskTypeService && t.GetReadinessProbe() != nil {
-						setNodeStatus(node, "starting", "")
+					if t.GetType() == types.TaskTypeService {
+						if t.Ports != nil {
+							setNodeStatus(node, "starting", "service starting")
+						} else {
+							setNodeStatus(node, "running", "no ports to expose")
+							queueChildren()
+						}
 					} else {
 						// non a service, must be a job
-						setNodeStatus(node, "running", "")
+						setNodeStatus(node, "running", "job running")
 					}
 
 					restart := func() {
