@@ -71,9 +71,21 @@
     const renderGraph = () => render(inner, g);
 
     const addNode = (node) => {
+        const startedAt = new Date(node.startedAt);
+        const updatedAt = new Date(node.updatedAt);
+        const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
+
+        // format at either 0m0s or 0s
+        const duration = durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s`;
+
         g.setNode(node.name, {
             labelType: "html",
-            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="13" font-size="16" fill="#444">${node.name}</text></>`,
+            label: `<svg width="160" height="16" viewBox="0 0 160 16">
+            <title>${node.message}</title>
+            ${icons[node.phase]}
+            <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
+            <text x="150"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
+            </>`,
             rx: 2, ry: 2
         });
     }

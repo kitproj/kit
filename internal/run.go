@@ -248,7 +248,11 @@ func RunSubgraph(
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
 						node.Phase = phase
 						node.Message = message
-						logger.Println(message)
+						if node.StartedAt.IsZero() {
+							node.StartedAt = time.Now()
+						}
+						node.UpdatedAt = time.Now()
+						logger.Printf("%v %s", time.Now().Sub(node.StartedAt).Truncate(time.Second), node.Message)
 						statusEvents <- node
 					}
 
