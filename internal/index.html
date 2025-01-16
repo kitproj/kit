@@ -42,8 +42,9 @@
         <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
     </svg>
 </div>
-<iframe id="logs" onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight)"></iframe>
-
+<iframe id="logs" src='data:text/html,<p>Click on a node to see logs</p>'
+        onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
+<label><input type="checkbox" id="follow" checked>Follow</label>
 
 <script id="js">
     // Create a new directed graph
@@ -57,6 +58,11 @@
     // Set up an SVG group so that we can translate the final graph.
     const svg = d3.select("svg"),
         inner = svg.append("g");
+
+    const container = document.getElementById('container');
+    const status = document.getElementById('status');
+    const logs = document.getElementById("logs");
+    const follow = document.getElementById("follow");
 
     // icons are svgs, keyed by phase
     // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
@@ -78,7 +84,6 @@
     icons["cancelled"] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
 
     const renderGraph = () => render(inner, g);
-
 
     // get the graph from the server at /dag
     fetch('/dag')
@@ -118,8 +123,8 @@
                 // start the event stream
                 const eventSource = new EventSource('/events');
 
-                eventSource.onopen = () => document.getElementById('status').textContent = '';
-                eventSource.onerror = () => document.getElementById('status').textContent = 'disconnected';
+                eventSource.onopen = () => status.textContent = '';
+                eventSource.onerror = () => status.textContent = 'disconnected';
 
                 eventSource.onmessage = (event) => {
                     const node = JSON.parse(event.data);
@@ -146,15 +151,22 @@
             }
         );
 
-    setInterval(() => document.getElementById("logs").onload(), 1000);
+    setInterval(() => {
+        if (follow.checked && !logs.src.startsWith('data:')) {
+            // update the src causing a reload, and also scroll to the bottom
+            const x = logs.src;
+            logs.src = '';
+            logs.src = x;
+        }
+    }, 3000);
 
     const resize = () => {
         const innerWidth = window.innerWidth - 16;
-        const innerHeight = window.innerHeight - 16;
-        document.getElementById('container').style.width = innerWidth + 'px';
-        document.getElementById('container').style.height = innerHeight / 2 + 'px';
-        document.getElementById('logs').style.width = innerWidth + 'px';
-        document.getElementById('logs').style.height = innerHeight / 2 + 'px';
+        const innerHeight = window.innerHeight - 48;
+        container.style.width = innerWidth + 'px';
+        container.style.height = innerHeight / 2 + 'px';
+        logs.style.width = innerWidth + 'px';
+        logs.style.height = innerHeight / 2 + 'px';
     }
 
     window.addEventListener('resize', resize);

@@ -45,7 +45,7 @@ tasks:
   logs:
     sh: |
         set -eux
-        for i in {1..100}; do
+        for i in {1..1000}; do
           echo "hello $i"
           sleep 1
         done

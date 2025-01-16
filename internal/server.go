@@ -92,7 +92,6 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
 		task := r.PathValue("task")
 		logFile := dag.Nodes[task].logFile
-		w.Header().Set("Refresh", "3")
 		http.ServeFile(w, r, logFile)
 	})
 
