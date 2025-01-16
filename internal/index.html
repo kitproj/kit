@@ -8,46 +8,31 @@
     <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
 
     <style id="css">
+
         body {
-            font: 300 14px 'Helvetica Neue', Helvetica;
+            font-size: 16px
+        }
+
+        body > svg {
+            border: 1px solid #fafafa;
+            border-radius: 4px;
+            background-color: #fbfbfb;
         }
 
         .node rect {
-            stroke: #999;
+            stroke: #ddd;
             fill: #fff;
-            stroke-width: 1.5px;
         }
 
         .edgePath path {
-            stroke: #333;
-            stroke-width: 1.5px;
-        }
-
-        .name {
-            font-weight: bold;
-        }
-
-        .starting> rect {
-            fill: aqua;
-        }
-
-        .running > rect {
-            fill: mediumspringgreen;
-        }
-
-        .failed > rect {
-            fill: red;
-        }
-
-        .failed div {
-            color: white;
+            stroke: #ccc;
         }
 
     </style>
 </head>
 <body>
 
-<svg width=100% height=100%>
+<svg width=800 height=600>
     <g/>
 </svg>
 
@@ -55,30 +40,45 @@
 <script id="js">
     // Create a new directed graph
     const g = new dagreD3.graphlib.Graph()
-        .setGraph({
-            rankdir: "LR",
-        })
-        .setDefaultEdgeLabel(function () {
-            return {};
-        });
+        .setGraph({rankdir: "LR",})
+        .setDefaultEdgeLabel(() => ({}));
 
-    const renderNode = (node) => {
+    // Create the renderer
+    const render = new dagreD3.render();
 
-        console.log(node.name)
+    // Set up an SVG group so that we can translate the final graph.
+    const svg = d3.select("svg"),
+        inner = svg.append("g");
 
-        const phase = node.phase;
-        const symbol = phase === 'pending' || phase === 'waiting' ? '⏸' :
-            phase === 'starting' || phase === 'running' ? '▶' :
-                phase === 'succeeded' ? '✔' :
-                    phase === 'failed' ? '⛒' : '';
+    // Set up zoom support
+    const zoom = d3.zoom().on("zoom", () => inner.attr("transform", d3.event.transform));
 
+    svg.call(zoom);
+
+    // icons are svgs, keyed by phase
+    // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
+    // the icon is centered in the circle, and is a <path/>
+    // waiting: pause + gray
+    // pending : pause + gray
+    // starting: play + blue
+    // running : play + blue
+    // failed: x + red
+    // succeeded: check + green
+    const icons = {};
+    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#808080"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
+    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#2F80ED"/> <path d="M5.5 4.5l6 3.5-6 3.5z" fill="#FFF"/>';
+    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#2F80ED"/> <path d="M5.5 4.5l6 3.5-6 3.5z" fill="#FFF"/>';
+    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#EB5757"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
+    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#27AE60"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
+
+    const renderGraph = () => render(inner, g);
+
+    const addNode = (node) => {
         g.setNode(node.name, {
             labelType: "html",
-            title: node.message,
-            label: `<div ><div class="name">${node.name}</div><div>${symbol} ${node.phase}: ${node.message}</div></div>`,
-            class: node.phase,
-            rx: 5,
-            ry: 5,
+            label: `<svg width="160" height="16" viewBox="0 0 160 16">${icons[node.phase]} <text x="20" y="12" font-size="12" >${node.name}</text></>`,
+            rx: 2, ry: 2
         });
     }
 
@@ -88,7 +88,7 @@
         .then(data => {
             // data.nodes is a map of node names to node objects
             Object.values(data.nodes).forEach(node => {
-                renderNode(node);
+                addNode(node);
             });
             // data.children is a map from node name to children name
             Object.keys(data.children).forEach(parent => {
@@ -97,28 +97,17 @@
                 });
             });
 
-            // Create the renderer
-            const render = new dagreD3.render();
+            renderGraph()
 
-            // Set up an SVG group so that we can translate the final graph.
-            const svg = d3.select("svg"),
-                svgGroup = svg.append("g");
-
-            // Run the renderer. This is what draws the final graph.
-            render(d3.select("svg g"), g);
-
-            // Center the graph
-            const xCenterOffset = (svg.attr("width") - g.graph().width) / 2;
-            svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
-            svg.attr("height", g.graph().height + 40);
+            svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width) / 2, 20).scale(1));
 
             // start the event stream
             const eventSource = new EventSource('/events');
 
             eventSource.onmessage = (event) => {
                 const node = JSON.parse(event.data);
-                renderNode(node);
-                render(d3.select("svg g"), g);
+                addNode(node);
+                renderGraph()
             }
         });
 </script>

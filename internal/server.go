@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 )
 
 //go:embed index.html
@@ -15,6 +16,13 @@ var indexHTML string
 func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan *TaskNode) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// if internal/index.html exists, serve that
+		_, err := os.Stat("internal/index.html")
+		if err == nil {
+			http.ServeFile(w, r, "internal/index.html")
+			return
+		}
+
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(indexHTML))
 	})
@@ -31,21 +39,16 @@ func StartServer(ctx context.Context, dag DAG[*TaskNode], events chan *TaskNode)
 	mux.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
 		// return an event stream
 		w.Header().Set("Content-Type", "text/event-stream")
-		for {
-			select {
-			case <-ctx.Done():
+		for event := range events {
+			marshal, err := json.Marshal(event)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
-			case event := <-events:
-				marshal, err := json.Marshal(event)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				w.Write([]byte("data: "))
-				w.Write(marshal)
-				w.Write([]byte("\n\n"))
-				w.(http.Flusher).Flush()
 			}
+			w.Write([]byte("data: "))
+			w.Write(marshal)
+			w.Write([]byte("\n\n"))
+			w.(http.Flusher).Flush()
 		}
 	})
 

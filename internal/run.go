@@ -111,7 +111,7 @@ func RunSubgraph(
 
 	wg := sync.WaitGroup{}
 
-	statusEvents := make(chan *TaskNode, 10)
+	statusEvents := make(chan *TaskNode, 100)
 
 	go StartServer(ctx, subgraph, statusEvents)
 
