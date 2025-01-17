@@ -35,6 +35,9 @@ Create a [`tasks.yaml`](tasks.yaml) file, e.g.:
 tasks:
   build:
     command: go build .
+  run:
+    dependencies: [ build ]
+    command: go run .
 ```
 
 Start:
