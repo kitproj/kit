@@ -261,6 +261,14 @@ debugger connected to it):
 kit -s foo,bar up
 ```
 
+### User Interface
+
+The user interface runs on port 3000 by default. The UI provides the following features:
+
+- Displays the graph of the workflow, showing dependencies between tasks.
+- Updates the graph as each task change status (e.g. starts or finishes).
+- Read and follows logs.
+
 ## Documentation
 
 - [Examples](docs/examples) - examples of how to use kit, e.g. with MySQL, or Kafka
