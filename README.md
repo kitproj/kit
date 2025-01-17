@@ -13,7 +13,7 @@ For example, a `tasks.yaml` file can describe a Go project. It could start out b
 that to a cluster and at the same time starting a local MySQL database, automatically starting port-forwards for both.
 It could then generate some souce code, build the Go service, and
 start the service. If a file changes, it could rebuild the project and restart the service. Meanwhile, it is
-downloading, building and serving a Yarn project, configuring a Kubernetes app and
+downloading, building and serving a Yarn project, configuring a Kubernetes cluster, and setting up secrets.
 
 It's aimed at supporting more complex development use cases, where you need to run several software components at the
 same time.
@@ -62,7 +62,7 @@ is listening on the port).
 Kit will exit if:
 
 - Any job fails.
-- If the workflow only has jobs and they all complete successfully.
+- If you requested a specify job, and that completes successfully (e.g. test suite).
 - You press `Ctrl+C`.
 
 ### Dependencies
@@ -91,7 +91,7 @@ build:
   command: go build .
 ```
 
-Once a task completes successfully, any downstream tasks are started. If it is unsuccessful, Kit will exit
+Once a job completes successfully, its downstream task will be started. Once a service is listing on its port, its downstream task are started.
 
 Unlike a plain task, if a service does not start-up (i.e. it is listening on the port), it will be restarted. You can
 specify a probe to determine if the service is running correctly:
@@ -175,6 +175,8 @@ up:
   dependencies: [ deploy ]
 ```
 
+No-op tasks are always succsessful.
+
 ### Environment Variables
 
 A task can have **environment variables**:
@@ -208,13 +210,13 @@ build:
   target: bin/app
 ```
 
-The task will be skipped if the target is newer that the watched sources (just like Make).
+The task will be skipped if the target is newer that the sources (just like Make).
 
 ### Mutexes and Semaphores
 
-Task can have **mutexes** and **semaphores** to control concurrency:
+Use **mutexes** and **semaphores** to control concurrency:
 
-If you want to prevent two tasks from running at the same time, you can use a mutex:
+If you want to prevent two tasks from running at the same time, use a mutex:
 
 ```yaml
 tasks:
@@ -224,7 +226,7 @@ tasks:
     mutex: my-mutex
 ```
 
-If you want to limit the number of tasks that can run at the same time, you can use a semaphore:
+If you want to limit the number of tasks that can run at the same time, use a semaphore:
 
 ```yaml
 # only two can run at the same time
@@ -244,7 +246,7 @@ Sometimes a task logs too much, you can send logs to a file:
 ```yaml 
 build:
   command: go build .
-  log: build.log
+  log: logs/build.log
 ```
 
 ### Skipping Tasks
