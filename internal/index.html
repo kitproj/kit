@@ -64,7 +64,7 @@
     // Create a new directed graph
     const g = new dagreD3.graphlib.Graph()
         .setGraph({rankdir: "LR"})
-        .setDefaultEdgeLabel(() => ({}));
+        .setDefaultEdgeLabel(() => ({arrowhead: 'undirected'}));
 
     // Create the renderer
     const render = new dagreD3.render();
@@ -152,11 +152,11 @@
 
                     g.setNode(node.name, {
                         labelType: "html",
-                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
-            <title>${node.name}\n${node.message}</title>
-            ${icons[node.phase]}
-            <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
-            <text x="190"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
+                        label: `<svg width="200" height="18">
+            <title>${node.name}\n${node.message || ''}</title>
+            <g transform="translate(10, 2)">${icons[node.phase]}</g>
+            <text x="34" y="14" font-size="14" fill="#666">${node.name}</text>
+            <text x="190"  y="14" font-size="10" fill="#bbb" text-anchor="end">${duration}</text>
             </>`,
                         rx: 4, ry: 4
                     });
