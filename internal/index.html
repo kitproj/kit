@@ -8,10 +8,20 @@
     <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
 
     <style id="css">
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body > div {
+            margin: 16px;
+        }
+
         #container {
             border: 1px solid #fafafa;
             border-radius: 4px;
             background-color: #fbfbfb;
+            text-align: center;
             overflow: scroll;
         }
 
@@ -42,9 +52,13 @@
         <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
     </svg>
 </div>
-<iframe id="logs" src='data:text/html,<p>Click on a node to see logs</p>'
-        onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
-<label><input type="checkbox" id="follow" checked>Follow</label>
+<div>
+    <div>
+        <iframe id="logs" src='data:text/html,<p>Click on a node to see logs</p>'
+                onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
+    </div>
+    <div><label><input type="checkbox" id="follow" checked>Follow</label></div>
+</div>
 
 <script id="js">
     // Create a new directed graph
@@ -144,7 +158,7 @@
             <text x="20" y="13" font-size="16" fill="#444">${node.name}</text>
             <text x="190"  y="13" font-size="12" fill="#bbb" text-anchor="end">${duration}</text>
             </>`,
-                        rx: 2, ry: 2
+                        rx: 4, ry: 4
                     });
                     renderGraph()
                 }
@@ -161,8 +175,8 @@
     }, 3000);
 
     const resize = () => {
-        const innerWidth = window.innerWidth - 16;
-        const innerHeight = window.innerHeight - 48;
+        const innerWidth = window.innerWidth - 32;
+        const innerHeight = window.innerHeight - 32 - 32 - 16;
         container.style.width = innerWidth + 'px';
         container.style.height = innerHeight / 2 + 'px';
         logs.style.width = innerWidth + 'px';
