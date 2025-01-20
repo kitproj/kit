@@ -1,7 +1,6 @@
 default:
 	# build
 	go mod tidy
-	go generate ./...
 	command -v goimports || go install golang.org/x/tools/cmd/goimports@latest
 	goimports -w .
 	go vet ./...

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
 
@@ -15,10 +16,6 @@ import (
 	"github.com/kitproj/kit/internal/types"
 	"sigs.k8s.io/yaml"
 )
-
-//go:generate sh -c "git describe --tags > tag"
-//go:embed tag
-var tag string
 
 func init() {
 	log.SetOutput(os.Stdout)
@@ -50,7 +47,8 @@ func main() {
 	}
 
 	if printVersion {
-		fmt.Println(tag)
+		info, _ := debug.ReadBuildInfo()
+		fmt.Printf("%v\n", info.Main.Version)
 		os.Exit(0)
 	}
 
