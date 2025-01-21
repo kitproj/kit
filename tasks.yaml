@@ -1,57 +1,67 @@
 tasks:
-  baz:
-    image: httpd
-    log: baz.log
-    ports: 80:10080
-    readinessProbe: http://:10080?failureThreshold=20&initialDelay=3s&period=5s&successThreshold=1
-  build-go-demo:
-    command: go build -v .
-    watch: main.go
+  build-app:
+    command:
+    - go
+    - build
+    - -v
+    - .
+    watch:
+    - main.go
     workingDir: demo/go
-  docker:
-    command: ls /work
-    env:
-    - NAME=kit
-    image: ubuntu
-    volumeMounts:
-    - mountPath: /work
-      name: work
   error:
     sh: |
       set -ex
       nopes
-  go-demo:
-    command: ./demo/go/go
-    dependencies: build-go-demo
+  logs:
+    sh: |
+      set -eux
+      for i in {1..1000}; do
+        echo "hello $i"
+        sleep 1
+      done
+  run-app:
+    command:
+    - ./demo/go/go
+    dependencies:
+    - build-app
     env:
-    - PORT=9090
-    ports: "9090"
-  k8s:
-    manifests: testdata
-    ports: 80:8080
+      PORT: "9090"
+    ports:
+    - "9090"
+  run-container:
+    image: httpd
+    log: baz.log
+    ports:
+    - 80:10080
+    readinessProbe: http://localhost:10080?failureThreshold=20&initialDelay=3s&period=5s&successThreshold=1
+  run-k8s:
+    manifests:
+    - testdata
+    ports:
+    - 80:8080
   script:
     sh: |
       set -eux
       echo "hello world"
       sleep 5
   service:
-    type: Service
     sh: |
       set -eux
       echo "hello world"
-      sleep 10
+      sleep 1000
+    type: Service
   skipped:
-    targets: go.mod
-  logs:
-    sh: |
-        set -eux
-        for i in {1..1000}; do
-          echo "hello $i"
-          sleep 1
-        done
-
+    targets:
+    - go.mod
   up:
-    dependencies: go-demo script k8s service logs skipped
+    dependencies:
+    - run-app
+    - script
+    - run-container
+    - run-k8s
+    - service
+    - logs
+    - skipped
 terminationGracePeriodSeconds: 3
 volumes:
 - hostPath:

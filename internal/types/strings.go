@@ -36,17 +36,6 @@ func (p *Strings) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-
-func (p Strings) MarshalJSON() ([]byte, error) {
-	b := new(bytes.Buffer)
-	r := csv.NewWriter(b)
-	r.Comma = ' '
-	if err := r.WriteAll([][]string{p}); err != nil {
-		return nil, err
-	}
-	return json.Marshal(strings.TrimSpace(b.String()))
-}
-
 func (p Strings) String() string {
 	return strings.Join(p, " ")
 }
