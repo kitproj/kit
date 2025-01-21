@@ -53,8 +53,11 @@
     </svg>
 </div>
 <div>
+    <span id="name">No task selected</span>: <span id="message"></span>
+</div>
+<div>
     <div>
-        <iframe id="logs" src='data:text/html,<p>Click on a node to see logs</p>'
+        <iframe id="logs" src='data:text/html,<p>Click on a task to see logs</p>'
                 onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
     </div>
     <div><label><input type="checkbox" id="follow" checked>Follow</label></div>
@@ -75,6 +78,8 @@
 
     const container = document.getElementById('container');
     const status = document.getElementById('status');
+    const name = document.getElementById('name');
+    const message = document.getElementById('message');
     const logs = document.getElementById("logs");
     const follow = document.getElementById("follow");
 
@@ -123,7 +128,11 @@
 
                 // Set up the click event
                 svg.selectAll("g.node")
-                    .on("click", (d) => document.getElementById('logs').src = `/logs/${d}`);
+                    .on("click", (n) => {
+                    name.textContent = n;
+                    message.textContent = g.node(n).message;
+                    logs.src = `/logs/${n}`;
+                    });
 
                 // set the width and height of the svg to that of the graph
                 const bbox = svg.node().getBBox();
@@ -158,7 +167,7 @@
             <text x="34" y="14" font-size="14" fill="#666">${node.name}</text>
             <text x="190"  y="14" font-size="10" fill="#bbb" text-anchor="end">${duration}</text>
             </>`,
-                        rx: 4, ry: 4
+                        rx: 4, ry: 4, message: node.message
                     });
                     renderGraph()
                 }
@@ -176,7 +185,7 @@
 
     const resize = () => {
         const innerWidth = window.innerWidth - 32;
-        const innerHeight = window.innerHeight - 32 - 32 - 16;
+        const innerHeight = window.innerHeight - 32 - 32 - 16 - 16 - 8;
         container.style.width = innerWidth + 'px';
         container.style.height = innerHeight / 2 + 'px';
         logs.style.width = innerWidth + 'px';
