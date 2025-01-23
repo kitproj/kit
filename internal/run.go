@@ -289,6 +289,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					// if the task can be skipped, lets exit early
 					if t.Skip() || slices.Contains(tasksToSkip, node.Name) {
 						setNodeStatus(node, "skipped", "")
+						queueChildren()
 						return
 					}
 
