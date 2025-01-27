@@ -13,6 +13,7 @@
             padding: 0;
             overflow: hidden;
         }
+
         body > div {
             margin: 16px;
         }
@@ -60,7 +61,7 @@
         <iframe id="logs" src='data:text/html,<p>Click on a task to see logs</p>'
                 onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
     </div>
-    <div><label><input type="checkbox" id="follow" checked>Follow</label></div>
+    <div id="follow"></div>
 </div>
 
 <script id="js">
@@ -132,6 +133,7 @@
                         name.textContent = n;
                         message.textContent = g.node(n).message;
                         logs.src = `/logs/${n}`;
+                        follow.innerHTML = 'Following logs';
                     });
 
                 // set the width and height of the svg to that of the graph
@@ -175,13 +177,16 @@
         );
 
     setInterval(() => {
-        if (follow.checked && !logs.src.startsWith('data:')) {
+        if (follow.innerHTML.includes( 'Following') && !logs.src.startsWith('data:')) {
             // update the src causing a reload, and also scroll to the bottom
             const x = logs.src;
             logs.src = '';
             logs.src = x;
         }
     }, 3000);
+
+    logs.addEventListener('mouseover', () => follow.innerHTML = 'Paused logs');
+    logs.addEventListener('mouseout', () => follow.innerHTML = 'Following logs');
 
     const resize = () => {
         const innerWidth = window.innerWidth - 32;
