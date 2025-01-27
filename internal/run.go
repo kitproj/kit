@@ -114,7 +114,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					if event.Op&fsnotify.Write == fsnotify.Write {
 						debounceTimer.Stop()
 						debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
-							logger.Printf("%s changed, re-running %s\n", event.Name, node.Name)
+							logger.Printf("[%s] %s changed, re-running\n", node.Name, event.Name)
 							events <- node.Name
 						})
 					}
@@ -227,13 +227,14 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 				node.cancel()
 
-				// lock the task so we do not run two instances of it at the same time
-				node.mu.Lock()
-
 				// each task is executed in a separate goroutine
 				wg.Add(1)
 
 				go func(node *TaskNode) {
+
+					// lock the task, so we do not run two instances of it at the same time
+					node.mu.Lock()
+
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
 
@@ -275,7 +276,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 							node.StartedAt = time.Now()
 						}
 						node.UpdatedAt = time.Now()
-						logger.Printf("%v %s", time.Now().Sub(node.StartedAt).Truncate(time.Second), node.Message)
+						logger.Println(node.Message)
 						statusEvents <- node
 					}
 

@@ -207,7 +207,7 @@ sleep 30
 		wg.Wait()
 
 		// we should see restart being logged
-		assert.Contains(t, buffer.String(), "testdata/marker changed, re-running job")
+		assert.Contains(t, buffer.String(), "[job] testdata/marker changed, re-running")
 
 		// we should see "running job" printed twice
 		count := 0
@@ -227,10 +227,14 @@ sleep 30
 
 		wf := &types.Workflow{
 			Tasks: map[string]types.Task{
-				"service": {Command: []string{"sh", "-c", `
+				"service": {
+					Command: []string{"sh", "-c", `
 echo "hello"
 sleep 30
-`}, Watch: []string{"testdata/marker"}, Ports: []types.Port{{}}},
+`},
+					Watch: []string{"testdata/marker"},
+					Ports: []types.Port{{}},
+				},
 			},
 		}
 
@@ -249,12 +253,13 @@ sleep 30
 		assert.NoError(t, err)
 
 		sleep(t)
+
 		cancel()
 
 		wg.Wait()
 
 		// we should see restart being logged
-		assert.Contains(t, buffer.String(), "testdata/marker changed, re-running service")
+		assert.Contains(t, buffer.String(), "[service] testdata/marker changed, re-running")
 
 		// we should see "running service" printed twice
 		count := 0
