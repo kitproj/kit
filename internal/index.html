@@ -53,7 +53,7 @@
     </svg>
 </div>
 <div>
-    <span id="name">No task selected</span>: <span id="message"></span>
+    <b id="name">No task selected</b>: <span id="message"></span>
 </div>
 <div>
     <div>
@@ -66,7 +66,7 @@
 <script id="js">
     // Create a new directed graph
     const g = new dagreD3.graphlib.Graph()
-        .setGraph({rankdir: "LR"})
+        .setGraph({rankdir: "LR", nodesep: 20, ranksep: 32})
         .setDefaultEdgeLabel(() => ({arrowhead: 'undirected'}));
 
     // Create the renderer
@@ -129,9 +129,9 @@
                 // Set up the click event
                 svg.selectAll("g.node")
                     .on("click", (n) => {
-                    name.textContent = n;
-                    message.textContent = g.node(n).message;
-                    logs.src = `/logs/${n}`;
+                        name.textContent = n;
+                        message.textContent = g.node(n).message;
+                        logs.src = `/logs/${n}`;
                     });
 
                 // set the width and height of the svg to that of the graph
