@@ -29,7 +29,7 @@ func probeLoop(ctx context.Context, probe types.Probe, callback func(ok bool, er
 				err = func() error {
 					resp, err := http.Get(httpGet.GetURL())
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to get %q: %w", httpGet.GetURL(), err)
 					}
 					if resp.StatusCode >= 300 {
 						data, _ := io.ReadAll(resp.Body)

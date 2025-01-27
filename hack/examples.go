@@ -31,26 +31,26 @@ func updateExamples(ctx context.Context) error {
 	log.Println("updating examples")
 	data, err := os.ReadFile("docs/examples/examples.yaml")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read examples.yaml: %w", err)
 	}
 	var examples []Example
 	if err := yaml.Unmarshal(data, &examples); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal examples.yaml: %w", err)
 	}
 	for _, example := range examples {
 		if err := updateExample(ctx, &example); err != nil {
-			return err
+			return fmt.Errorf("failed to update %s: %w", example.Name, err)
 		}
 		if err := writeExampleMarkdown(example.Name, example); err != nil {
-			return err
+			return fmt.Errorf("failed to write %s: %w", example.Name, err)
 		}
 		if err := writeExampleYAML(example.Name, example); err != nil {
-			return err
+			return fmt.Errorf("failed to write %s: %w", example.Name, err)
 		}
 	}
 
 	if err := createExamplesReadme(err, examples); err != nil {
-		return err
+		return fmt.Errorf("failed to create examples README: %w", err)
 	}
 	return nil
 }
@@ -58,12 +58,12 @@ func updateExamples(ctx context.Context) error {
 func createExamplesReadme(err error, examples []Example) error {
 	out, err := os.Create("docs/examples/README.md")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create README.md: %w", err)
 	}
 	defer out.Close()
 	_, err = out.WriteString("# Examples\n\n")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write README.md: %w", err)
 	}
 	for _, example := range examples {
 		description := example.Description
@@ -72,7 +72,7 @@ func createExamplesReadme(err error, examples []Example) error {
 		}
 		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", example.Title, example.Name+".md", description))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to write README.md: %w", err)
 		}
 	}
 	return nil
@@ -82,7 +82,7 @@ func updateExample(ctx context.Context, example *Example) error {
 	log.Printf("updating %s", example.Name)
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create client: %w", err)
 	}
 	defer cli.Close()
 
@@ -91,7 +91,7 @@ func updateExample(ctx context.Context, example *Example) error {
 		image = task.Image
 	}
 	if err := pullImage(ctx, cli, image); err != nil {
-		return err
+		return fmt.Errorf("failed to pull %s: %w", image, err)
 	}
 
 	inspection, _, err := cli.ImageInspectWithRaw(ctx, image)
@@ -164,15 +164,15 @@ func pullImage(ctx context.Context, cli *client.Client, image string) error {
 func writeExampleYAML(name string, example Example) error {
 	out, err := os.Create("docs/examples/" + name + ".yaml")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create %s: %w", name, err)
 	}
 	defer out.Close()
 	data, err := yaml.Marshal(example.Pod)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal %s: %w", name, err)
 	}
 	if _, err = out.Write(data); err != nil {
-		return err
+		return fmt.Errorf("failed to write %s: %w", name, err)
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func writeExampleYAML(name string, example Example) error {
 func writeExampleMarkdown(name string, example Example) error {
 	out, err := os.Create("docs/examples/" + name + ".md")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create %s: %w", name, err)
 	}
 	defer out.Close()
 

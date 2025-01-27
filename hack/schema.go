@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -27,7 +28,7 @@ func updateSchema() error {
 	}
 	data, _ := json.MarshalIndent(s, "", "  ")
 	if err := os.WriteFile("schema/workflow.schema.json", data, 0o777); err != nil {
-		return err
+		return fmt.Errorf("failed to write schema/workflow.schema.json: %w", err)
 	}
 	return nil
 }

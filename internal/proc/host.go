@@ -43,7 +43,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	log.Println("starting process")
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to start process: %w", err)
 	}
 	// capture pgid straight away because it's not available after the process exits,
 	// the process may exit and leave children behind.

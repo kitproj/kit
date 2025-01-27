@@ -45,7 +45,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create docker client: %w", err)
 	}
 	defer cli.Close()
 
@@ -74,7 +74,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		log.Printf("creating tar image from %q", dockerfile)
 		r, err := archive.TarWithOptions(filepath.Dir(dockerfile), &archive.TarOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create tar: %w", err)
 		}
 		defer r.Close()
 		log.Printf("building image from %q", dockerfile)
@@ -141,11 +141,11 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 	portSet, portBindings, err := c.createPorts()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create ports: %w", err)
 	}
 	binds, err := c.createBinds()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create binds: %w", err)
 	}
 	image := c.Image
 	if _, err := os.Stat(filepath.Join(c.Image, "Dockerfile")); err == nil {
@@ -173,7 +173,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 	id, _, err = c.getContainer(ctx, cli)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get container ID: %w", err)
 	}
 	if err = cli.ContainerStart(ctx, id, dockertypes.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %w", err)
@@ -206,7 +206,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 		return nil
 	case err := <-errC:
-		return err
+		return fmt.Errorf("failed to wait for container: %w", err)
 	}
 }
 
@@ -250,12 +250,12 @@ func (c *container) stop(ctx context.Context) error {
 	log := c.log
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create docker client: %w", err)
 	}
 	defer cli.Close()
 	id, _, err := c.getContainer(ctx, cli)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get container ID: %w", err)
 	}
 	if id == "" {
 		return nil

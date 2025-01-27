@@ -57,7 +57,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		// walk the file tree
 		err := filepath.WalkDir(file, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to walk directory: %w", err)
 			}
 			// must be a YAML ile
 			if d.IsDir() {
@@ -71,7 +71,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			return nil
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to walk directory: %w", err)
 		}
 	}
 
@@ -83,7 +83,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build config: %w", err)
 	}
 
 	// Get the namespace associated with the current context
@@ -92,7 +92,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		&clientcmd.ConfigOverrides{},
 	).Namespace()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get namespace: %w", err)
 	}
 
 	if k.Namespace != "" {
@@ -102,25 +102,25 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	// Create a Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create clientset: %w", err)
 	}
 
 	// Create a Discovery client
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create discovery client: %w", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
 	// for each manifest, read it as YAML (splitting by ---)
 	for _, file := range files {
 		data, err := os.ReadFile(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read file: %w", err)
 		}
 		var uns []*unstructured.Unstructured
 
@@ -129,7 +129,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			var manifest map[string]any
 			err = yaml.Unmarshal(doc, &manifest)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to unmarshal YAML: %w", err)
 			}
 			uns = append(uns, &unstructured.Unstructured{Object: manifest})
 		}
@@ -140,7 +140,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		for _, u := range uns {
 			apiResources, err := discoveryClient.ServerResourcesForGroupVersion(u.GetAPIVersion())
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get server resources: %w", err)
 			}
 
 			// Find the resource that matches the kind
@@ -176,23 +176,23 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 				// update selector labels
 				labels, _, err := unstructured.NestedMap(u.Object, "spec", "selector", "matchLabels")
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to get selector labels: %w", err)
 				}
 				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "selector", "matchLabels")
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to set selector labels: %w", err)
 				}
 
 				// update template labels
 				labels, _, err = unstructured.NestedMap(u.Object, "spec", "template", "metadata", "labels")
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to get template labels: %w", err)
 				}
 				labels[nameLabel] = k.name
 				err = unstructured.SetNestedMap(u.Object, labels, "spec", "template", "metadata", "labels")
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to set template labels: %w", err)
 				}
 			}
 
@@ -210,7 +210,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 			existing, err := dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Get(ctx, u.GetName(), metav1.GetOptions{})
 			if err != nil {
 				if !apierrors.IsNotFound(err) {
-					return err
+					return fmt.Errorf("failed to get resource: %w", err)
 				}
 			} else {
 				expectedHash := u.GetAnnotations()[versionLabel]
@@ -225,7 +225,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 				err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Delete(ctx, u.GetName(), metav1.DeleteOptions{})
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to delete resource: %w", err)
 				}
 				// wait for the resource to be deleted
 				for {
@@ -241,7 +241,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 			_, err = dynamicClient.Resource(gvr).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create resource: %w", err)
 			}
 		}
 	}
@@ -374,7 +374,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add event handler: %w", err)
 	}
 
 	factory.Start(ctx.Done())

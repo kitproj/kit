@@ -85,7 +85,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 	// create logs directory
 	if err := os.MkdirAll("logs", 0755); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
+		return fmt.Errorf("failed to create logs directory: %w", err)
 	}
 
 	// start a file watcher for each task
@@ -94,11 +94,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		// start watching files for changes
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create watcher: %w", err)
 		}
 		for _, source := range node.task.Watch {
 			if err := watcher.Add(filepath.Join(node.task.WorkingDir, source)); err != nil {
-				return err
+				return fmt.Errorf("failed to watch %q: %w", source, err)
 			}
 		}
 		defer watcher.Close()

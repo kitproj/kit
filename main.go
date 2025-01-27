@@ -61,16 +61,16 @@ func main() {
 
 		in, err := os.ReadFile(configFile)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read %s: %w", configFile, err)
 		}
 		if err = yaml.UnmarshalStrict(in, wf); err != nil {
-			return err
+			return fmt.Errorf("failed to parse %s: %w", configFile, err)
 		}
 
 		if rewrite {
 			out, err := yaml.Marshal(wf)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to marshal %s: %w", configFile, err)
 			}
 			return os.WriteFile(configFile, out, 0644)
 		}
