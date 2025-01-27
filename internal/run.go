@@ -104,14 +104,19 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		defer watcher.Close()
 
 		go func() {
+			debounceTimer := time.AfterFunc(0, func() {})
+			defer debounceTimer.Stop()
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case event := <-watcher.Events:
 					if event.Op&fsnotify.Write == fsnotify.Write {
-						logger.Printf("%s changed, re-running %s\n", event.Name, node.Name)
-						events <- node.Name
+						debounceTimer.Stop()
+						debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
+							logger.Printf("%s changed, re-running %s\n", event.Name, node.Name)
+							events <- node.Name
+						})
 					}
 				}
 			}
