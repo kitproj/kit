@@ -38,7 +38,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		}
 	}
 
-	dag := NewDAG[bool]()
+	// name is last part of pwd
+	pwd := os.Getenv("PWD")
+	name := filepath.Base(pwd)
+
+	dag := NewDAG[bool](name)
 	for name, t := range wf.Tasks {
 		dag.AddNode(name, true)
 		for _, dependency := range t.Dependencies {
@@ -48,7 +52,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 	visited := dag.Subgraph(taskNames)
 
 	taskByName := wf.Tasks
-	subgraph := NewDAG[*TaskNode]()
+	subgraph := NewDAG[*TaskNode](name)
 	for name := range visited {
 		task := taskByName[name]
 

@@ -5,7 +5,7 @@ import (
 )
 
 func TestDAG_Subgraph(t *testing.T) {
-	d := NewDAG[int]()
+	d := NewDAG[int]("")
 	d.AddNode("a", 1)
 	d.AddNode("b", 2)
 	d.AddNode("c", 3)

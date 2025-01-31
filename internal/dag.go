@@ -3,6 +3,8 @@ package internal
 // describe a directed acyclic graph
 
 type DAG[Node any] struct {
+	// Name of the graph
+	Name string `json:"name"`
 	// Nodes in the graph
 	Nodes map[string]Node `json:"nodes"`
 	// edges in the graph
@@ -11,8 +13,9 @@ type DAG[Node any] struct {
 	Parents map[string][]string `json:"parents"`
 }
 
-func NewDAG[Node any]() DAG[Node] {
+func NewDAG[Node any](name string) DAG[Node] {
 	return DAG[Node]{
+		Name:     name,
 		Nodes:    make(map[string]Node),
 		Children: make(map[string][]string),
 		Parents:  make(map[string][]string),

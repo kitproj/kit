@@ -109,6 +109,9 @@
     fetch('/dag')
         .then(response => response.json())
         .then(data => {
+                // set the title of the page to the name of the graph
+                document.title = data.name;
+
                 // data.nodes is a map of node names to node objects
                 Object.values(data.nodes).forEach(node => {
                     g.setNode(node.name, {
