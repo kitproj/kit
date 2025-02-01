@@ -28,14 +28,14 @@ the [releases page](https://github.com/kitproj/kit/releases/latest).
 The recommended way to install is to download the binary and put it in your `PATH`:
 
 ```bash
-sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/vvvvvvv0.1.81/kit_vv0.1.76_linux_386
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.81/kit_v0.1.76_linux_386
 sudo chmod +x /usr/local/bin/kit
 ```
 
 For Go users, you can install it with:
 
 ```bash
-go install github.com/kitproj/kit@vvvvvvv0.1.81
+go install github.com/kitproj/kit@v0.1.81
 ```
 
 ## Usage

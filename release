@@ -3,14 +3,13 @@ set -eu -o pipefail
 
 go install github.com/ffurrer2/semver/v2/cmd/semver@latest
 
-previous_version=$(git tag|sort -V|tail -n1|cut -c 2-)
-new_version=v$(semver next patch $previous_version)
+previous_version=$(git tag|sort -V|tail -n1)
+new_version=v$(semver next patch $(echo $previous_version | sed 's/v//'))
 
 echo "$previous_version -> $new_version"
 
 # replace the previous version with the new version in README.md
 sed -i '' "s|$previous_version|$new_version|" README.md
-
 git reset
 git add README.md
 git commit -m 'docs: update version in README'
