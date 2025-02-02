@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Kit</title>
+    <title>...</title>
 
     <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
@@ -10,18 +10,26 @@
     <style id="css">
         body {
             margin: 0;
-            padding: 0;
+            padding: 0
             overflow: hidden;
+            background: linear-gradient(to bottom, #fbfbfb, #ebebeb);
+            font-family: "Roboto Light", Helvetica, sans-serif;
         }
 
-        body > div {
+        .flex {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .box {
+            border: 0;
+            border-radius: 8px;
+            padding: 16px;
             margin: 16px;
+            background-color: #fff;
         }
 
-        #container {
-            border: 1px solid #fafafa;
-            border-radius: 4px;
-            background-color: #fbfbfb;
+        #graph-container {
             text-align: center;
             overflow: scroll;
         }
@@ -30,39 +38,104 @@
             cursor: pointer;
         }
 
-        .node rect {
-            stroke: #ddd;
-            fill: #fff;
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .node.succeeded rect {
+            fill: #A8E6CF; /* pastel green */
+            animation: pulse 2s;
+        }
+
+        .node.failed rect {
+            fill: #F9a;
+            animation: pulse 2s;
+        }
+
+        .node.waiting rect {
+            fill: #FDC; /* pastel orange */
+            animation: pulse 2s
+        }
+
+        .node.pending rect {
+            fill: #Fe7;
+            animation: pulse 2s
+        }
+
+        .node.starting rect {
+            fill: #FA7;
+            animation: pulse 2s infinite;
+        }
+
+        .node.running rect {
+            fill: #BEF;
+            animation: pulse 2s infinite;
+        }
+
+        .node.skipped rect {
+            fill: #eee;
+            animation: pulse 2s
+        }
+
+        .node.cancelled rect {
+            fill: #eee;
+            animation: pulse 2s
         }
 
         .edgePath path {
             stroke: #ccc;
         }
 
-        #logs {
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        #log-container {
+            background-color: #333;
+            color: #fff;
+        }
+
+        #log-container > div.flex {
+            padding-bottom: 8px;
+            border-bottom: 1px solid #666;
+        }
+
+        #follow {
+            color: #666;
+        }
+
+
+        iframe {
+            border: 0;
+            width: 100%;
         }
 
     </style>
 </head>
 <body>
 
-<div id="container">
+<div id="graph-container" class="box">
     <svg>
-        <text id="status" x="4" y="14" font-size="14" fill="#bbb">...</text>
+        <text id="status" x="4" y="14" font-size="16" fill="#bbb">...</text>
     </svg>
 </div>
-<div>
-    <b id="name">No task selected</b>: <span id="message"></span>
-</div>
-<div>
-    <div>
-        <iframe id="logs" src='data:text/html,<p>Click on a task to see logs</p>'
-                onload="this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
+<div class="box" id="log-container">
+    <div class="flex">
+        <div>
+            <b id="name">Click on a task to see logs</b>
+            <span id="message"></span>
+        </div>
+        <div id="follow">...</div>
     </div>
-    <div id="follow"></div>
+    <iframe id="logs"
+            onload="this.contentWindow.document.body.style.color = '#fff'; this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
 </div>
+
 
 <script id="js">
     // Create a new directed graph
@@ -77,31 +150,33 @@
     const svg = d3.select("svg"),
         inner = svg.append("g");
 
-    const container = document.getElementById('container');
+    const container = document.getElementById('graph-container');
     const status = document.getElementById('status');
     const name = document.getElementById('name');
     const message = document.getElementById('message');
     const logs = document.getElementById("logs");
+    const logsContainer = document.getElementById("log-container");
     const follow = document.getElementById("follow");
 
     // icons are svgs, keyed by phase
     // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
     // the icon is centered in the circle, and is a <path/>
-    // waiting: pause + gray
-    // pending : pause + gray
-    // starting: play + blue
-    // running : play + blue
-    // failed: x + red
-    // succeeded: check + green
-    const icons = {};
-    icons['waiting'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['pending'] = ' <circle cx="8" cy="8" r="8" fill="#FFD700"/> <path d="M6 4.5v7h1.5v-7H6zm3 0v7h1.5v-7H9z" fill="#FFF"/> ';
-    icons['starting'] = ' <circle cx="8" cy="8" r="8" fill="#FFA500"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['running'] = ' <circle cx="8" cy="8" r="8" fill="#1E90FF"/> <circle cx="8" cy="8" r="4" fill="#FFF"/><circle cx="8" cy="2" r="2" fill="#FFF"> <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="2s" repeatCount="indefinite"/> </circle>';
-    icons['failed'] = ' <circle cx="8" cy="8" r="8" fill="#FF4500"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
-    icons['succeeded'] = ' <circle cx="8" cy="8" r="8" fill="#32CD32"/> <path d="M5 8l2 2 4-4" stroke="#FFF" fill="none" stroke-width="2"/>';
-    icons['skipped'] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 4l4 4-4 4V4zm4 0l4 4-4 4V4z" fill="#FFF"/>';
-    icons["cancelled"] = ' <circle cx="8" cy="8" r="8" fill="#A9A9A9"/> <path d="M5 5l6 6m0-6L5 11" stroke="#FFF" stroke-width="2"/>';
+    const pause = '<path d="M4 3v10h2V3H4zm6 0v10h2V3h-2z" fill="#FFF" stroke-width="2" stroke="#FFF"/>'
+    const play = '<path d="M5 4l8 4-8 4z" fill="#FFF" stroke-width="2" stroke="#FFF"/>';
+    const check = '<path d="M2 8l4 4 8-8" stroke="#FFF" fill="none" stroke-width="4"/>';
+    const cross = '<path d="M3 3l10 10m0-10L3 13" stroke="#FFF" stroke-width="4"/>'
+    const skip = '<path d="M5 2l6 6-6 6" stroke="#FFF" stroke-width="4" fill="none"/>'
+
+    const icons = {
+        waiting: pause,
+        pending: pause,
+        starting: play,
+        running: play,
+        failed: cross,
+        succeeded: check,
+        skipped: skip,
+        cancelled: skip
+    };
 
     const renderGraph = () => render(inner, g);
 
@@ -113,12 +188,13 @@
                 document.title = data.name;
 
                 // data.nodes is a map of node names to node objects
+                const radius = 8;
                 Object.values(data.nodes).forEach(node => {
                     g.setNode(node.name, {
                         labelType: "html",
-                        label: `<svg width="200" height="16" viewBox="0 0 200 16">
+                        label: `<svg width="200" height="16">
             </>`,
-                        rx: 2, ry: 2
+                        rx: radius, ry: radius
                     });
                 });
                 // data.children is a map from node name to children name
@@ -141,12 +217,13 @@
 
                 // set the width and height of the svg to that of the graph
                 const bbox = svg.node().getBBox();
-                svg.attr("width", bbox.width);
+                svg.attr("width", bbox.width + 40);
                 svg.attr("height", bbox.height + 40);
 
                 // Center the graph
                 const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
-                inner.attr("transform", `translate(${xCenterOffset}, 20)`);
+                const yCenterOffset = (svg.attr("height") - bbox.height) / 2;
+                inner.attr("transform", `translate(${xCenterOffset}, ${yCenterOffset})`);
 
                 // start the event stream
                 const eventSource = new EventSource('/events');
@@ -156,23 +233,17 @@
 
                 eventSource.onmessage = (event) => {
                     const node = JSON.parse(event.data);
-                    const startedAt = new Date(node.startedAt);
-                    const updatedAt = node.phase === "starting" || node.phase === 'running' ? new Date() : new Date(node.updatedAt);
-
-                    const durationSeconds = ((updatedAt - startedAt) / 1000).toFixed(0);
-
-                    // format at either 0m0s or 0s
-                    const duration = durationSeconds > 0 ? durationSeconds > 60 ? `${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s` : `${durationSeconds}s` : '';
-
                     g.setNode(node.name, {
                         labelType: "html",
-                        label: `<svg width="200" height="18">
-            <title>${node.name}\n${node.message || ''}</title>
-            <g transform="translate(10, 2)">${icons[node.phase]}</g>
-            <text x="34" y="14" font-size="14" fill="#666">${node.name}</text>
-            <text x="190"  y="14" font-size="10" fill="#bbb" text-anchor="end">${duration}</text>
-            </>`,
-                        rx: 4, ry: 4, message: node.message
+                        label: `<svg width="200" height="20">
+    <title>${node.name}\n${node.message || ''}</title>
+    <circle cx="10" cy="10" r="10" fill="#000" opacity="0.2"/>
+    <g transform="translate(2, 2)">
+        ${icons[node.phase]}
+    </g>
+    <text x="34" y="16" font-size="16" fill="#000" opacity="0.6">${node.name}</text>
+</svg>`,
+                        rx: radius, ry: radius, message: node.message, class: node.phase
                     });
                     renderGraph()
                 }
@@ -180,7 +251,7 @@
         );
 
     setInterval(() => {
-        if (follow.innerHTML.includes( 'Following') && !logs.src.startsWith('data:')) {
+        if (follow.innerHTML.includes('Following') && !name.innerHTML.includes('Click')) {
             // update the src causing a reload, and also scroll to the bottom
             const x = logs.src;
             logs.src = '';
@@ -188,16 +259,17 @@
         }
     }, 3000);
 
-    logs.addEventListener('mouseover', () => follow.innerHTML = 'Paused logs');
+    logs.addEventListener('mouseenter', () => follow.innerHTML = 'Paused logs');
     logs.addEventListener('mouseout', () => follow.innerHTML = 'Following logs');
 
     const resize = () => {
-        const innerWidth = window.innerWidth - 32;
-        const innerHeight = window.innerHeight - 32 - 32 - 16 - 16 - 8;
+        const innerWidth = window.innerWidth - 64;
+        const innerHeight = window.innerHeight - 128 + 16;
         container.style.width = innerWidth + 'px';
         container.style.height = innerHeight / 2 + 'px';
-        logs.style.width = innerWidth + 'px';
-        logs.style.height = innerHeight / 2 + 'px';
+        logsContainer.style.width = innerWidth + 'px';
+        logsContainer.style.height = innerHeight / 2 + 'px';
+        logs.style.height = (innerHeight / 2 - 16) + 'px';
     }
 
     window.addEventListener('resize', resize);

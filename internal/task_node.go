@@ -2,7 +2,6 @@ package internal
 
 import (
 	"sync"
-	"time"
 
 	"github.com/kitproj/kit/internal/types"
 )
@@ -16,10 +15,6 @@ type TaskNode struct {
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
 	Message string `json:"message,omitempty"`
-	// Started at is the start time of the task
-	StartedAt time.Time `json:"startedAt"`
-	// Completed at is the end time of the task
-	UpdatedAt time.Time `json:"updatedAt"`
 	// cancel function
 	cancel func()
 	// a mutex

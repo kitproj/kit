@@ -276,10 +276,6 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
 						node.Phase = phase
 						node.Message = message
-						if node.StartedAt.IsZero() {
-							node.StartedAt = time.Now()
-						}
-						node.UpdatedAt = time.Now()
 						logger.Println(node.Message)
 						statusEvents <- node
 					}
