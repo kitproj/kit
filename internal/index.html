@@ -60,15 +60,15 @@
         }
 
         .node.waiting rect {
-            fill: #FDC;
+            fill: #eee;
         }
 
         .node.pending rect {
-            fill: #Fe7;
+            fill: #eee;
         }
 
         .node.starting rect {
-            fill: #FA7;
+            fill: #Fe7;
             animation: pulse 2s infinite;
         }
 
@@ -212,7 +212,7 @@
                 // set the width and height of the svg to that of the graph
                 const bbox = svg.node().getBBox();
                 svg.attr("width", bbox.width + 40);
-                svg.attr("height", bbox.height + 40);
+                svg.attr("height", bbox.height + 20);
 
                 // Center the graph
                 const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
