@@ -10,7 +10,7 @@
     <style id="css">
         body {
             margin: 0;
-            padding: 0
+            padding: 0;
             overflow: hidden;
             background: linear-gradient(to bottom, #fbfbfb, #ebebeb);
             font-family: "Roboto Light", Helvetica, sans-serif;
@@ -89,6 +89,12 @@
             stroke: #ccc;
         }
 
+        #resizer {
+            height: 16px;
+            cursor: row-resize;
+            margin: 0;
+        }
+
         #log-container {
             background-color: #333;
             color: #fff;
@@ -99,16 +105,24 @@
             border-bottom: 1px solid #666;
         }
 
-        #follow {
+        #logs {
+            margin-top: 8px;
+            overflow: auto;
+            font-family: monospace;
+        }
+
+        .lineNumber {
             color: #666;
         }
 
-
-        iframe {
-            border: 0;
-            width: 100%;
+        a {
+            color: #BEF;
+            text-decoration: none;
         }
 
+         a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -118,16 +132,16 @@
         <text id="status" x="4" y="14" font-size="16" fill="#bbb">...</text>
     </svg>
 </div>
+<div id="resizer"></div>
 <div class="box" id="log-container">
     <div class="flex">
         <div>
             <b id="name">Click on a task to see logs</b>
             <span id="message"></span>
         </div>
-        <div id="follow">...</div>
+        <div id="follow">Auto-scroll</div>
     </div>
-    <iframe id="logs"
-            onload="this.contentWindow.document.body.style.color = '#fff'; this.contentWindow.scrollTo(0, this.contentWindow.document.body.scrollHeight);"></iframe>
+    <div id="logs"></div>
 </div>
 
 
@@ -144,13 +158,16 @@
     const svg = d3.select("svg"),
         inner = svg.append("g");
 
-    const container = document.getElementById('graph-container');
+    const resizer = document.getElementById('resizer');
+    const graphContainer = document.getElementById('graph-container');
     const status = document.getElementById('status');
     const name = document.getElementById('name');
     const message = document.getElementById('message');
     const logs = document.getElementById("logs");
     const logsContainer = document.getElementById("log-container");
     const follow = document.getElementById("follow");
+
+    let autoScroll = true;
 
     // icons are svgs, keyed by phase
     // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
@@ -169,10 +186,13 @@
         failed: cross,
         succeeded: check,
         skipped: skip,
-        cancelled: skip
+        cancelled: cross
     };
 
     const renderGraph = () => render(inner, g);
+
+    var logSource; // EventSource for logs
+    var lineNumber = 0; // line number for logs
 
     // get the graph from the server at /dag
     fetch('/dag')
@@ -203,16 +223,37 @@
                 // Set up the click event
                 svg.selectAll("g.node")
                     .on("click", (n) => {
+
+                        if (logSource) logSource.close();
+
                         name.textContent = n;
                         message.textContent = g.node(n).message;
-                        logs.src = `/logs/${n}`;
-                        follow.innerHTML = 'Following logs';
+                        autoScroll = true;
+                        follow.innerHTML = 'Auto-scroll';
+
+                        // Start the event stream for logs
+                        logSource = new EventSource(`/logs/${n}`);
+                        lineNumber = 0;
+                        logs.innerHTML = ''; // Clear previous logs
+
+                        logSource.onmessage = (event) => {
+                            const logLine = document.createElement('div');
+                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>')}`;
+                            logs.appendChild(logLine);
+                            if (autoScroll)
+                                logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
+                        };
+
+                        logSource.onerror = () => {
+                            logSource.close();
+                            follow.innerHTML = 'Disconnected';
+                        };
                     });
 
                 // set the width and height of the svg to that of the graph
                 const bbox = svg.node().getBBox();
                 svg.attr("width", bbox.width + 40);
-                svg.attr("height", bbox.height + 20);
+                svg.attr("height", bbox.height + 40);
 
                 // Center the graph
                 const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
@@ -244,30 +285,50 @@
             }
         );
 
-    setInterval(() => {
-        if (follow.innerHTML.includes('Following') && !name.innerHTML.includes('Click')) {
-            // update the src causing a reload, and also scroll to the bottom
-            const x = logs.src;
-            logs.src = '';
-            logs.src = x;
-        }
-    }, 3000);
+    logs.addEventListener('mousedown', () => {
+        follow.innerHTML = 'Manual scroll';
+        autoScroll = false;
+    });
 
-    logs.addEventListener('mouseenter', () => follow.innerHTML = 'Paused logs');
-    logs.addEventListener('mouseout', () => follow.innerHTML = 'Following logs');
+    follow.addEventListener('click', () => {
+        autoScroll = !autoScroll;
+        follow.innerHTML = autoScroll ? 'Auto-scroll' : 'Manual scroll';
+        if (autoScroll)
+            logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
+    });
 
-    const resize = () => {
+    // the ratio of the graph height to the logs height
+    let ratio = 0.5;
+
+    const layout = () => {
         const innerWidth = window.innerWidth - 64;
-        const innerHeight = window.innerHeight - 128 + 16;
-        container.style.width = innerWidth + 'px';
-        container.style.height = innerHeight / 2 + 'px';
+        const innerHeight = window.innerHeight - 128 - 24;
+        graphContainer.style.width = innerWidth + 'px';
+        graphContainer.style.height = innerHeight * ratio + 'px';
         logsContainer.style.width = innerWidth + 'px';
-        logsContainer.style.height = innerHeight / 2 + 'px';
-        logs.style.height = (innerHeight / 2 - 16) + 'px';
+        logsContainer.style.height = innerHeight * (1 - ratio) + 'px';
+        logs.style.height = (innerHeight * (1 - ratio) -32)+ 'px';
     }
 
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', layout);
+
+    let resizing = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        resizing = true;
+    })
+    window.addEventListener('mouseup', () => resizing = false);
+
+    window.addEventListener('mousemove', (e) => {
+        if (resizing) {
+            ratio = Math.max(Math.min((e.clientY - 64) / (window.innerHeight - 128 - 24), 0.95), 0.05);
+            layout();
+        }
+    });
+
+
+    layout();
 </script>
 
 </body>

@@ -43,7 +43,7 @@ tasks:
   script:
     sh: |
       set -eux
-      echo "hello world"
+      echo "hello world https://github.com"
       sleep 5
   service:
     sh: |

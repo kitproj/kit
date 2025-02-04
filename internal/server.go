@@ -1,17 +1,20 @@
 package internal
 
 import (
+	"bufio"
 	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"os"
 	"sync"
+	"time"
 )
 
 //go:embed index.html
@@ -90,13 +93,49 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 		}
 	})
 	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
+		//ctx := r.Context()
 		task := r.PathValue("task")
 		node, ok := dag.Nodes[task]
 		if !ok {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
-		http.ServeFile(w, r, node.logFile)
+		file, err := os.Open(node.logFile)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		w.Header().Set("Content-Type", "text/event-stream")
+
+		for {
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := scanner.Text()
+				_, err := fmt.Fprintf(w, "data: %s\n\n", line)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.(http.Flusher).Flush()
+			}
+
+			if err := scanner.Err(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Sleep for a short duration before checking for new lines
+			time.Sleep(1 * time.Second)
+
+			// Reset the scanner to continue reading new lines
+			_, err := file.Seek(0, io.SeekCurrent)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 	})
 
 	server := &http.Server{
