@@ -28,7 +28,7 @@ the [releases page](https://github.com/kitproj/kit/releases/latest).
 The recommended way to install is to download the binary and put it in your `PATH`:
 
 ```bash
-sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.84/kit_v0.1.83_linux_386
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.84/kit_v0.1.84_linux_386
 sudo chmod +x /usr/local/bin/kit
 ```
 

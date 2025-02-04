@@ -9,7 +9,7 @@ new_version=v$(semver next patch $(echo $previous_version | sed 's/v//'))
 echo "$previous_version -> $new_version"
 
 # replace the previous version with the new version in README.md
-sed -i '' "s|$previous_version|$new_version|" README.md
+sed -i '' "s|$previous_version|$new_version|g" README.md
 git reset
 git add README.md
 git commit -m 'docs: update version in README'
