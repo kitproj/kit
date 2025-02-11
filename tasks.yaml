@@ -17,8 +17,9 @@ tasks:
       set -eux
       for i in {1..1000}; do
         echo "hello $i"
-        sleep 1
+        sleep 2
       done
+    stalledTimeout: 1s
   run-app:
     command:
     - ./demo/go/go

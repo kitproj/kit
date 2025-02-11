@@ -3,6 +3,20 @@
   "$id": "https://github.com/kitproj/kit/internal/types/workflow",
   "$ref": "#/$defs/Workflow",
   "$defs": {
+    "Duration": {
+      "properties": {
+        "Duration": {
+          "$ref": "#/$defs/Duration",
+          "title": "Duration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "Duration"
+      ],
+      "title": "Duration"
+    },
     "EnvVars": {
       "patternProperties": {
         ".*": {
@@ -269,6 +283,11 @@
           "type": "string",
           "title": "restartPolicy",
           "description": "The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type of task."
+        },
+        "stalledTimeout": {
+          "$ref": "#/$defs/Duration",
+          "title": "stalledTimeout",
+          "description": "The timeout for the task to be considered stalled. If omitted, the task will be considered stalled after 30 seconds of no activity."
         }
       },
       "additionalProperties": false,

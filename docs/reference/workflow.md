@@ -16,6 +16,36 @@ unknown
 
 # Untitled schema Definitions
 
+## Definitions group Duration
+
+Reference this group by using
+
+```json
+{"$ref":"https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration"}
+```
+
+| Property              | Type     | Required | Nullable       | Defined by                                                                                                                                |
+| :-------------------- | :------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| [Duration](#duration) | `object` | Required | cannot be null | [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration") |
+
+### Duration
+
+
+
+`Duration`
+
+*   is required
+
+*   Type: `object` ([Duration](workflow-defs-duration.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration")
+
+#### Duration Type
+
+`object` ([Duration](workflow-defs-duration.md))
+
 ## Definitions group EnvVars
 
 Reference this group by using
@@ -415,6 +445,7 @@ Reference this group by using
 | [dependencies](#dependencies)       | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/dependencies")                            |
 | [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")     |
+| [stalledTimeout](#stalledtimeout)   | `object`  | Optional | cannot be null | [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")                         |
 
 ### type
 
@@ -849,6 +880,24 @@ The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type 
 #### restartPolicy Type
 
 `string` ([restartPolicy](workflow-defs-task-properties-restartpolicy.md))
+
+### stalledTimeout
+
+The timeout for the task to be considered stalled. If omitted, the task will be considered stalled after 30 seconds of no activity.
+
+`stalledTimeout`
+
+*   is optional
+
+*   Type: `object` ([Duration](workflow-defs-duration.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")
+
+#### stalledTimeout Type
+
+`object` ([Duration](workflow-defs-duration.md))
 
 ## Definitions group Tasks
 

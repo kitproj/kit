@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (t *Task) HasMutex() bool {
@@ -62,6 +64,8 @@ type Task struct {
 	Targets Strings `json:"targets,omitempty"`
 	// The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type of task.
 	RestartPolicy string `json:"restartPolicy,omitempty"`
+	// The timeout for the task to be considered stalled. If omitted, the task will be considered stalled after 30 seconds of no activity.
+	StalledTimeout *metav1.Duration `json:"stalledTimeout,omitempty"`
 }
 
 func (t Task) IsBackground() bool {
@@ -188,4 +192,11 @@ func (t *Task) GetType() TaskType {
 	}
 	return TaskTypeJob
 
+}
+
+func (t *Task) GetStalledTimeout() time.Duration {
+	if t.StalledTimeout != nil {
+		return t.StalledTimeout.Duration
+	}
+	return 30 * time.Second
 }
