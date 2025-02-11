@@ -215,6 +215,19 @@ build:
   command: go build .
   watch: src/
 ```
+### Stalled Tasks
+
+Tasks are considered stalled if they do not output anything for 30s by default. You can change this with the `stalledTimeout` field:
+
+```yaml
+build:
+  command: go build .
+  stalledTimeout: 1m
+```
+
+You might wish to reduce this if the task waits for the user to do something.
+
+You might wish to increase this if the task does not output much.
 
 ### Targets
 
