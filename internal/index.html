@@ -77,6 +77,10 @@
             animation: pulse 2s infinite;
         }
 
+        .node.stalled rect {
+            fill: #Fcf;
+        }
+
         .node.skipped rect {
             fill: #eee;
         }
@@ -177,12 +181,14 @@
     const check = '<path d="M2 8l4 4 8-8" stroke="#FFF" fill="none" stroke-width="4"/>';
     const cross = '<path d="M3 3l10 10m0-10L3 13" stroke="#FFF" stroke-width="4"/>'
     const skip = '<path d="M5 2l6 6-6 6" stroke="#FFF" stroke-width="4" fill="none"/>'
+    const idle = '<path d="M3,8 L5,8 M7,8 L9,8 M11,8 L13,8" stroke="#fff" stroke-width="4"/>'
 
     const icons = {
         waiting: pause,
         pending: pause,
         starting: play,
         running: play,
+        stalled: idle,
         failed: cross,
         succeeded: check,
         skipped: skip,

@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -140,6 +141,21 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				return fmt.Errorf("failed to open browser: %v", err)
 			}
 		}
+	}
+
+	stallTimers := map[string]*time.Timer{}
+	for name, taskNode := range subgraph.Nodes {
+		stalledTime := taskNode.task.GetStalledTimeout()
+		stallTimers[name] = time.AfterFunc(stalledTime, func() {
+			if taskNode.Phase == "starting" || taskNode.Phase == "running" {
+				taskNode.Phase = "stalled"
+				// we suffix the message with "starting" so we can differentiate between a task that is starting and one that is running, later on we can change the message to "output received"
+				// and restore the phase to "running" or "starting"
+				taskNode.Message = fmt.Sprintf("no output for %s or more while %s", stalledTime, taskNode.Phase)
+				logger.Printf("[%s] %s\n", taskNode.Name, taskNode.Message)
+				statusEvents <- taskNode
+			}
+		})
 	}
 
 	for {
@@ -276,6 +292,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
 						node.Phase = phase
 						node.Message = message
+						stallTimers[node.Name].Reset(node.task.GetStalledTimeout())
 						logger.Println(node.Message)
 						statusEvents <- node
 					}
@@ -376,6 +393,14 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					// if the task has a log file, we will write to that file, we sync after each write
 					// so when we tail the log file, we see the output immediately
 					buf := funcWriter(func(p []byte) (int, error) {
+						stallTimers[node.Name].Reset(node.task.GetStalledTimeout())
+						if node.Phase == "stalled" {
+							if strings.HasSuffix(node.Message, "starting") {
+								setNodeStatus(node, "starting", "output received")
+							} else {
+								setNodeStatus(node, "running", "output received")
+							}
+						}
 						n, err := file.Write(p)
 						if err != nil {
 							return n, err

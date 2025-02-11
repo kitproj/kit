@@ -8,6 +8,8 @@
 
 ### Objects
 
+*   [Duration](./workflow-defs-duration.md) – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration`
+
 *   [EnvVars](./workflow-defs-envvars.md "A list of environment variables") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars`
 
 *   [HTTPGetAction](./workflow-defs-httpgetaction.md "HTTPGetAction describes an action based on HTTP Locks requests") – `https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction`
