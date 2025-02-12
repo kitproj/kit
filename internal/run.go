@@ -148,10 +148,10 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		stalledTime := taskNode.task.GetStalledTimeout()
 		stallTimers[name] = time.AfterFunc(stalledTime, func() {
 			if taskNode.Phase == "starting" || taskNode.Phase == "running" {
-				taskNode.Phase = "stalled"
 				// we suffix the message with "starting" so we can differentiate between a task that is starting and one that is running, later on we can change the message to "output received"
 				// and restore the phase to "running" or "starting"
 				taskNode.Message = fmt.Sprintf("no output for %s or more while %s", stalledTime, taskNode.Phase)
+				taskNode.Phase = "stalled"
 				logger.Printf("[%s] %s\n", taskNode.Name, taskNode.Message)
 				statusEvents <- taskNode
 			}
