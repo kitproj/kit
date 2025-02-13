@@ -19,7 +19,7 @@ tasks:
         echo "hello $i"
         sleep 2
       done
-    stalledTimeout: 1s
+    stalledTimeout: 5s
   run-app:
     command:
     - ./demo/go/go
