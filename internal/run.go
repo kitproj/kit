@@ -217,7 +217,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					}
 				}
 				if anyJobFailed {
-					logger.Println("exiting because a ob failed")
+					logger.Println("exiting because a job failed")
 					cancel()
 				}
 				if len(pending) == 0 {

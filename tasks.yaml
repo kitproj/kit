@@ -43,8 +43,8 @@ tasks:
     - 80:8080
   script:
     sh: |
-      set -eux
-      echo "hello world https://github.com"
+      set -eu
+      echo "\033[31;1;4mHello Colors\033[0m"
       sleep 5
   service:
     sh: |

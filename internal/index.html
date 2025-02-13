@@ -124,7 +124,7 @@
             text-decoration: none;
         }
 
-         a:hover {
+        a:hover {
             text-decoration: underline;
         }
     </style>
@@ -200,6 +200,46 @@
     var logSource; // EventSource for logs
     var lineNumber = 0; // line number for logs
 
+    // Function to convert ANSI escape codes to HTML
+    const ansiToHtml = (ansiString) => {
+        const ansiRegex = /\x1b\[((?:\d+;)*\d+)m/g;
+        return ansiString.replace(ansiRegex, (match, codes) => {
+            const codeArray = codes.split(';').map(Number);
+            let styles = '';
+
+            codeArray.forEach(code => {
+                if (code >= 30 && code <= 37) {
+                    styles += `color: ${ansiColor(code)}; `;
+                } else if (code >= 90 && code <= 97) {
+                    styles += `color: ${ansiBrightColor(code)}; `;
+                } else if (code >= 40 && code <= 47) {
+                    styles += `background-color: ${ansiColor(code - 10)}; `;
+                } else if (code >= 100 && code <= 107) {
+                    styles += `background-color: ${ansiBrightColor(code - 10)}; `;
+                } else if (code === 1) {
+                    styles += 'font-weight: bold; ';
+                } else if (code === 4) {
+                    styles += 'text-decoration: underline; ';
+                } else if (code === 0) {
+                    styles = ''; // Reset
+                }
+            });
+
+            return `<span style="${styles}">`;
+        }) + '</span>'; // Ensure closing span
+    }
+    // Function to map ANSI color codes to CSS colors
+    const ansiColor = (code) => {
+        const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'];
+        return colors[code - 30];
+    }
+
+    // Function to map ANSI bright color codes to CSS colors
+    const ansiBrightColor = (code) => {
+        const brightColors = ['gray', 'lightcoral', 'lightgreen', 'lightyellow', 'lightblue', 'violet', 'lightcyan', 'white'];
+        return brightColors[code - 90];
+    }
+
     // get the graph from the server at /dag
     fetch('/dag')
         .then(response => response.json())
@@ -244,7 +284,9 @@
 
                         logSource.onmessage = (event) => {
                             const logLine = document.createElement('div');
-                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>')}`;
+                            const coloredLog = ansiToHtml(event.data);
+                            const linkedLogLine = coloredLog.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
+                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${linkedLogLine}`;
                             logs.appendChild(logLine);
                             if (autoScroll)
                                 logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
@@ -313,7 +355,7 @@
         graphContainer.style.height = innerHeight * ratio + 'px';
         logsContainer.style.width = innerWidth + 'px';
         logsContainer.style.height = innerHeight * (1 - ratio) + 'px';
-        logs.style.height = (innerHeight * (1 - ratio) -32)+ 'px';
+        logs.style.height = (innerHeight * (1 - ratio) - 32) + 'px';
     }
 
     window.addEventListener('resize', layout);
