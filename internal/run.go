@@ -195,35 +195,33 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			// if we get the poison pill, we should see if any job tasks are failed, if so we must exist
 			// if all jobs are either succeeded or skipped, we can exit
 			case struct{}:
-				// check if any job failed, if so we must exit
 				// if all requests tasks are succeeded, we can exit
+				{
+					pendingTasks := map[string]bool{}
+					for _, x := range taskNames {
+						pendingTasks[x] = true
+					}
 
-				anyJobFailed := false
+					for _, node := range subgraph.Nodes {
+						if (node.Phase == "succeeded" || node.Phase == "skipped") && node.task.GetRestartPolicy() != "Always" {
+							delete(pendingTasks, node.Name)
+						}
+					}
 
-				pending := map[string]bool{}
-				for _, x := range taskNames {
-					pending[x] = true
+					if len(pendingTasks) == 0 {
+						logger.Println("exiting because all requested tasks completed and none should be restarted")
+						cancel()
+					}
 				}
 
+				// if a task that should not be restarted failed, we must exit
 				for _, node := range subgraph.Nodes {
-					if node.task.GetType() == types.TaskTypeService {
-						continue
-					}
-					switch node.Phase {
-					case "failed":
-						anyJobFailed = true
-					case "succeeded", "skipped":
-						delete(pending, node.Name)
+					if node.Phase == "failed" && node.task.GetRestartPolicy() == "Never" {
+						logger.Printf("exiting because task  %q should not be restarted, and it failed", node.Name)
+						cancel()
 					}
 				}
-				if anyJobFailed {
-					logger.Println("exiting because a job failed")
-					cancel()
-				}
-				if len(pending) == 0 {
-					logger.Println("exiting because all requested jobs completed")
-					cancel()
-				}
+
 			// if the event is a string, it is the name of the task to run
 			case string:
 				taskName := x

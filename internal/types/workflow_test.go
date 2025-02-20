@@ -18,7 +18,7 @@ func TestPod(t *testing.T) {
 	assert.Len(t, wf.Tasks, 2)
 	task := wf.Tasks["foo"]
 	assert.Equal(t, []uint16{8080}, task.GetHostPorts())
-	assert.Equal(t, "OnFailure", task.GetRestartPolicy())
+	assert.Equal(t, "Always", task.GetRestartPolicy())
 	probe := task.GetReadinessProbe()
 	assert.Equal(t, &Probe{TCPSocket: &TCPSocketAction{Port: 8080}}, probe)
 	assert.Equal(t, 5*time.Second, probe.GetPeriod())
