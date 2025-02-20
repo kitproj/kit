@@ -73,12 +73,25 @@ service:
 ```
 
 The ports will be forwarded from the host to the service. A service will be restarted if it does not start-up (i.e. it
-is listening on the port).
+is listening on the port), or it exits with an error (non-zero exit code).
+
+Jobs, on the other hand, are not restarted if they error.
+
+You can override this by setting `restartPolicy` to `Never`:
+
+```yaml
+job:
+  command: go run .
+  # Always, Never, OnFailure
+  # jobs default to Never
+  # services default to Always
+  restartPolicy: Never
+```
 
 Kit will exit if:
 
-- Any job fails.
-- If you requested a specify job, and that completes successfully (e.g. test suite).
+- Any task that cannot be restarted fails.
+- If all requested tasks complete successfully (e.g. test suite) and they should not be restarted.
 - You press `Ctrl+C`.
 
 ### Dependencies
@@ -107,7 +120,8 @@ build:
   command: go build .
 ```
 
-Once a job completes successfully, its downstream task will be started. Once a service is listing on its port, its downstream task are started.
+Once a job completes successfully, its downstream task will be started. Once a service is listing on its port, its
+downstream task are started.
 
 Unlike a plain task, if a service does not start-up (i.e. it is listening on the port), it will be restarted. You can
 specify a probe to determine if the service is running correctly:
@@ -191,7 +205,15 @@ up:
   dependencies: [ deploy ]
 ```
 
-No-op tasks are always succsessful.
+No-op tasks are always successful.
+
+It is common to want to keep kit running when this happens, you can do this by setting the type to `Service`:
+
+```yaml
+up:
+  type: Service
+  dependencies: [ deploy ]
+```
 
 ### Environment Variables
 
@@ -215,9 +237,11 @@ build:
   command: go build .
   watch: src/
 ```
+
 ### Stalled Tasks
 
-Tasks are considered stalled if they do not output anything for 30s by default. You can change this with the `stalledTimeout` field:
+Tasks are considered stalled if they do not output anything for 30s by default. You can change this with the
+`stalledTimeout` field:
 
 ```yaml
 build:

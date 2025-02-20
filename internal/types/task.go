@@ -68,10 +68,6 @@ type Task struct {
 	StalledTimeout *metav1.Duration `json:"stalledTimeout,omitempty"`
 }
 
-func (t Task) IsBackground() bool {
-	return t.GetReadinessProbe() != nil
-}
-
 func (t *Task) GetHostPorts() []uint16 {
 	var ports []uint16
 	for _, p := range t.Ports {
@@ -108,8 +104,8 @@ func (t *Task) GetRestartPolicy() string {
 	if t.RestartPolicy != "" {
 		return t.RestartPolicy
 	}
-	if t.IsBackground() {
-		return "OnFailure"
+	if t.GetType() == TaskTypeService {
+		return "Always"
 	}
 	return "Never"
 }
@@ -125,10 +121,6 @@ func (t *Task) String() string {
 		return t.Args.String()
 	}
 	return "noop"
-}
-
-func (t *Task) IsRestart() bool {
-	return t.IsBackground() && t.GetRestartPolicy() != "Always"
 }
 
 func (t *Task) Environ() ([]string, error) {
