@@ -7,8 +7,8 @@ import (
 )
 
 type TaskNode struct {
-	Name string `json:"name"`
-	task types.Task
+	Name string     `json:"name"`
+	Task types.Task `json:"task"`
 	// logFile is the log file path
 	logFile string
 	// the phase of the task, e.g. "pending", "waiting", "running", "stalled", "succeeded", "failed", "cancelled", "skipped"
@@ -24,7 +24,7 @@ type TaskNode struct {
 func (n TaskNode) blocked() bool {
 	switch n.Phase {
 	case "running", "stalled":
-		return n.task.GetType() == types.TaskTypeJob
+		return n.Task.GetType() == types.TaskTypeJob
 	case "succeeded", "skipped":
 		return false
 	default:
