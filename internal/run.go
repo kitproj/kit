@@ -65,7 +65,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		subgraph.AddNode(name, &TaskNode{
 			Name:    name,
 			logFile: logFile,
-			task:    task,
+			Task:    task,
 			Phase:   "pending",
 			cancel:  func() {},
 			mu:      &sync.Mutex{}})
@@ -101,8 +101,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		if err != nil {
 			return fmt.Errorf("failed to create watcher: %w", err)
 		}
-		for _, source := range node.task.Watch {
-			if err := watcher.Add(filepath.Join(node.task.WorkingDir, source)); err != nil {
+		for _, source := range node.Task.Watch {
+			if err := watcher.Add(filepath.Join(node.Task.WorkingDir, source)); err != nil {
 				return fmt.Errorf("failed to watch %q: %w", source, err)
 			}
 		}
@@ -145,7 +145,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 	stallTimers := map[string]*time.Timer{}
 	for name, taskNode := range subgraph.Nodes {
-		stalledTime := taskNode.task.GetStalledTimeout()
+		stalledTime := taskNode.Task.GetStalledTimeout()
 		stallTimers[name] = time.AfterFunc(stalledTime, func() {
 			if taskNode.Phase == "starting" || taskNode.Phase == "running" {
 				// we suffix the message with "starting" so we can differentiate between a task that is starting and one that is running, later on we can change the message to "output received"
@@ -203,7 +203,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					}
 
 					for _, node := range subgraph.Nodes {
-						if (node.Phase == "succeeded" || node.Phase == "skipped") && node.task.GetRestartPolicy() != "Always" {
+						if (node.Phase == "succeeded" || node.Phase == "skipped") && node.Task.GetRestartPolicy() != "Always" {
 							delete(pendingTasks, node.Name)
 						}
 					}
@@ -216,7 +216,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 				// if a task that should not be restarted failed, we must exit
 				for _, node := range subgraph.Nodes {
-					if node.Phase == "failed" && node.task.GetRestartPolicy() == "Never" {
+					if node.Phase == "failed" && node.Task.GetRestartPolicy() == "Never" {
 						logger.Printf("exiting because task  %q should not be restarted, and it failed", node.Name)
 						cancel()
 					}
@@ -263,7 +263,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					defer wg.Done()
 					defer node.mu.Unlock()
 
-					t := node.task
+					t := node.Task
 
 					var out io.Writer = funcWriter(func(p []byte) (int, error) {
 						prefix := fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase)
@@ -290,7 +290,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
 						node.Phase = phase
 						node.Message = message
-						stallTimers[node.Name].Reset(node.task.GetStalledTimeout())
+						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
 						logger.Println(node.Message)
 						statusEvents <- node
 					}
@@ -391,7 +391,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					// if the task has a log file, we will write to that file, we sync after each write
 					// so when we tail the log file, we see the output immediately
 					buf := funcWriter(func(p []byte) (int, error) {
-						stallTimers[node.Name].Reset(node.task.GetStalledTimeout())
+						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
 						if node.Phase == "stalled" {
 							if strings.HasSuffix(node.Message, "starting") {
 								setNodeStatus(node, "starting", "output received")
