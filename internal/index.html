@@ -281,9 +281,9 @@
 
                         logSource.onmessage = (event) => {
                             const logLine = document.createElement('div');
-                            const coloredLog = ansiToHtml(event.data);
-                            const linkedLogLine = coloredLog.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
-                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${linkedLogLine}`;
+                            const linkedLogLine = event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
+                            const coloredLog = ansiToHtml(linkedLogLine);
+                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${coloredLog}`;
                             logs.appendChild(logLine);
                             if (autoScroll)
                                 logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
