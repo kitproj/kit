@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -265,25 +264,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					t := node.Task
 
-					var out io.Writer = funcWriter(func(p []byte) (int, error) {
-						prefix := fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase)
-						// reset color and bold
-						suffix := "\033[0m"
-
-						lines := bytes.Split(p, []byte("\n"))
-						for i, line := range lines {
-							if len(line) == 0 {
-								continue
-							}
-							if i == len(lines)-1 {
-								logger.Printf("%s%s%s", prefix, string(line), suffix)
-							} else {
-								logger.Printf("%s%s%s\n", prefix, string(line), suffix)
-							}
-						}
-
-						return len(p), nil
-					})
+					var out io.Writer = &logWriter{
+						logger: logger,
+						prefix: fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase),
+						suffix: "\033[0m",
+					}
 
 					logger := log.New(out, "", 0)
 
