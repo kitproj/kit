@@ -266,8 +266,9 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					var out io.Writer = &logWriter{
 						logger: logger,
-						prefix: fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase),
-						suffix: "\033[0m",
+						fixes: func() (string, string) {
+							return fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase), "\033[0m"
+						},
 					}
 
 					logger := log.New(out, "", 0)
