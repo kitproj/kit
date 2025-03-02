@@ -6,14 +6,14 @@ import (
 )
 
 type logWriter struct {
-	//
-	fixes  func() (string, string)
-	buffer bytes.Buffer
-	logger *log.Logger
+	// prefixSuffixProvider returns the prefix and suffix to use when logging.
+	prefixSuffixProvider func() (string, string)
+	buffer               bytes.Buffer
+	logger               *log.Logger
 }
 
 func (lw *logWriter) Write(p []byte) (int, error) {
-	prefix, suffix := lw.fixes()
+	prefix, suffix := lw.prefixSuffixProvider()
 
 	for _, b := range p {
 		if b == '\n' {
