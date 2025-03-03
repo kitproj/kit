@@ -20,7 +20,7 @@ import (
 //go:embed index.html
 var indexHTML string
 
-func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*TaskNode], events chan *TaskNode) {
+func StartServer(ctx context.Context, portOffset int, wg *sync.WaitGroup, dag DAG[*TaskNode], events chan *TaskNode) {
 
 	streams := &sync.Map{}
 
@@ -93,7 +93,6 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 		}
 	})
 	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
-		//ctx := r.Context()
 		task := r.PathValue("task")
 		node, ok := dag.Nodes[task]
 		if !ok {
@@ -137,6 +136,17 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 			}
 		}
 	})
+
+	// find the first free port
+	port := portOffset
+	for ; port < portOffset+10; port++ {
+		x, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+		if err != nil {
+			continue
+		}
+		x.Close()
+		break
+	}
 
 	server := &http.Server{
 		// only allow local connections
