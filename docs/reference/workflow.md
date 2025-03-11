@@ -446,6 +446,7 @@ Reference this group by using
 | [targets](#targets)                 | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/targets")                                 |
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")     |
 | [stalledTimeout](#stalledtimeout)   | `object`  | Optional | cannot be null | [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")                         |
+| [group](#group)                     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-group.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/group")                     |
 
 ### type
 
@@ -898,6 +899,24 @@ The timeout for the task to be considered stalled. If omitted, the task will be 
 #### stalledTimeout Type
 
 `object` ([Duration](workflow-defs-duration.md))
+
+### group
+
+The group this task belongs to. Tasks in the same group will be visually grouped together in the UI.
+
+`group`
+
+*   is optional
+
+*   Type: `string` ([group](workflow-defs-task-properties-group.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-task-properties-group.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/group")
+
+#### group Type
+
+`string` ([group](workflow-defs-task-properties-group.md))
 
 ## Definitions group Tasks
 

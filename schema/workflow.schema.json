@@ -288,6 +288,11 @@
           "$ref": "#/$defs/Duration",
           "title": "stalledTimeout",
           "description": "The timeout for the task to be considered stalled. If omitted, the task will be considered stalled after 30 seconds of no activity."
+        },
+        "group": {
+          "type": "string",
+          "title": "group",
+          "description": "The group this task belongs to. Tasks in the same group will be visually grouped together in the UI."
         }
       },
       "additionalProperties": false,
