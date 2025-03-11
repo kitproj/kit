@@ -33,6 +33,7 @@
             margin: 16px;
             background-color: #fff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12); /* Subtle shadow for depth */
+            overflow: hidden;
         }
 
         /* Graph container styles */
@@ -75,7 +76,7 @@
 
         /* Resizer element between graph and logs */
         #resizer {
-            height: 8px;
+            height: 4px;
             cursor: row-resize;
             margin: 0;
             background-color: #f6f8fa;
@@ -161,7 +162,7 @@
             <b id="name">Click on a task to see logs</b>
             <span id="message"></span>
         </div>
-        <div id="follow" style="cursor:pointer">Auto-scroll</div>
+        <div id="follow" style="cursor:pointer">Auto-scrolling</div>
     </div>
     <div id="logs"></div>
     <div id="status" style="position: absolute; top: 20px; left: 20px; font-size: 14px; color: #8b949e;">...</div>
@@ -248,7 +249,7 @@
                 selector: 'node.group',
                 style: {
                     'shape': 'round-rectangle',
-                    'background-color': '#f6f8fa',
+                    'background-color': '#fbfcfd',
                     'border-width': 1,
                     'border-color': '#d0d7de',
                     'text-valign': 'top',
@@ -715,10 +716,19 @@
         autoScroll = false;
     });
 
+    // Also detect scroll wheel and trackpad scrolling
+    logs.addEventListener('scroll', () => {
+        // If user scrolls up and we're at auto-scroll, switch to manual
+        if (autoScroll && logs.scrollTop < logs.scrollHeight - logs.clientHeight - 10) {
+            autoScroll = false;
+            follow.innerHTML = 'Manual scrolling';
+        }
+    });
+
     // Toggle auto-scroll when clicking the follow button
     follow.addEventListener('click', () => {
         autoScroll = !autoScroll;
-        follow.innerHTML = autoScroll ? 'Auto-scroll' : 'Manual scroll';
+        follow.innerHTML = autoScroll ? 'Auto-scrolling' : 'Manual scrolling';
         if (autoScroll) {
             logs.scrollTop = logs.scrollHeight;
         }
@@ -727,8 +737,8 @@
     // Function to adjust layout based on window size
     const layout = () => {
         const height = window.innerHeight;
-        const graphHeight = height * 0.6;
-        const logsHeight = height - graphHeight - 48;
+        const graphHeight = height * 0.5; 
+        const logsHeight = height - graphHeight - 72; 
         graphContainer.style.height = `${graphHeight}px`;
         logsContainer.style.height = `${logsHeight}px`;
         logs.style.height = `${logsHeight - 40}px`;
@@ -750,7 +760,7 @@
     document.addEventListener('mousemove', (e) => {
         if (resizing) {
             const graphHeight = e.clientY;
-            const logsHeight = window.innerHeight - graphHeight - 48;
+            const logsHeight = window.innerHeight - graphHeight - 20; 
             if (graphHeight > 100 && logsHeight > 100) {
                 graphContainer.style.height = `${graphHeight}px`;
                 logsContainer.style.height = `${logsHeight}px`;
