@@ -4,136 +4,157 @@
     <meta charset="utf-8">
     <title>...</title>
 
-    <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
-    <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
+    <!-- Load required libraries for graph visualization -->
+    <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 
     <style id="css">
+        /* Base styles for the page */
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: linear-gradient(to bottom, #fbfbfb, #ebebeb);
-            font-family: "Roboto Light", Helvetica, sans-serif;
+            background: #f6f8fa; /* GitHub-style light gray background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; /* GitHub font stack */
+            color: #24292f;
         }
 
+        /* Flexbox layout for containers */
         .flex {
             display: flex;
             justify-content: space-between;
         }
 
+        /* Common styles for container boxes */
         .box {
             border: 0;
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 6px;
             margin: 16px;
             background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12); /* Subtle shadow for depth */
         }
 
-        #graph-container {
-            text-align: center;
-            overflow: scroll;
+        /* Graph container styles */
+        #cy {
+            height: 50vh; /* Take half of the viewport height */
+            background-color: #f6f8fa; /* Match GitHub's background color */
         }
 
-        .node {
-            cursor: pointer;
-        }
-
-
+        /* Animation for pulsing elements (used for running/starting nodes) */
         @keyframes pulse {
             0%, 100% {
                 opacity: 1;
             }
             50% {
-                opacity: 0.2;
+                opacity: 0.5;
             }
         }
 
-        .node.succeeded rect {
-            fill: #AEC;
+        /* Animation for spinning elements (used in running/starting icons) */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
-        .node.failed rect {
-            fill: #F9a;
+        /* Animation for pulsing nodes */
+        .node.running, .node.starting {
+            animation: pulse 2s infinite ease-in-out;
         }
 
-        .node.waiting rect {
-            fill: #eee;
+        /* Apply spin animation to elements with this class */
+        .spin-animation {
+            animation: spin 1.5s linear infinite;
+            transform-origin: center;
+            transform-box: fill-box;
         }
 
-        .node.pending rect {
-            fill: #eee;
-        }
-
-        .node.starting rect {
-            fill: #Fe7;
-            animation: pulse 2s infinite;
-        }
-
-        .node.running rect {
-            fill: #BEF;
-            animation: pulse 2s infinite;
-        }
-
-        .node.stalled rect {
-            fill: #Fcf;
-        }
-
-        .node.skipped rect {
-            fill: #eee;
-        }
-
-        .node.cancelled rect {
-            fill: #eee;
-        }
-
-        .edgePath path {
-            stroke: #ccc;
-        }
-
+        /* Resizer element between graph and logs */
         #resizer {
-            height: 16px;
+            height: 8px;
             cursor: row-resize;
             margin: 0;
+            background-color: #f6f8fa;
         }
 
+        /* Log container styles - dark theme for better readability */
         #log-container {
-            background-color: #333;
-            color: #fff;
+            background-color: #0d1117; /* GitHub dark theme background */
+            color: #c9d1d9; /* GitHub dark theme text color */
+            border: 1px solid #30363d; /* GitHub dark theme border */
+            border-radius: 6px;
         }
 
+        /* Header area of log container */
         #log-container > div.flex {
-            padding-bottom: 8px;
-            border-bottom: 1px solid #666;
+            padding: 8px 16px;
+            border-bottom: 1px solid #30363d;
+            background-color: #161b22; /* Slightly lighter than main background */
         }
 
+        /* Log content area */
         #logs {
             margin-top: 8px;
             overflow: auto;
-            font-family: monospace;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; /* Monospace font for logs */
+            padding: 16px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #c9d1d9;
         }
 
+        /* Line numbers in logs */
         .lineNumber {
-            color: #666;
+            color: #8b949e; /* Muted color for line numbers */
+            margin-right: 16px;
+            user-select: none; /* Prevent selection of line numbers */
         }
 
+        /* Link styling */
         a {
-            color: #BEF;
+            color: #58a6ff; /* GitHub dark theme link color */
             text-decoration: none;
         }
 
         a:hover {
             text-decoration: underline;
         }
+
+        /* Auto-scroll toggle button */
+        #follow {
+            color: #58a6ff;
+            font-weight: 500;
+        }
+
+        /* Task name in log header */
+        #name {
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        /* Task message in log header */
+        #message {
+            color: #8b949e;
+        }
+
+        /* Status message */
+        #status {
+            color: #8b949e;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-
-<div id="graph-container" class="box">
-    <svg>
-        <text id="status" x="4" y="14" font-size="16" fill="#bbb">...</text>
-    </svg>
+<!-- Main graph container -->
+<div id="cy" class="box">
 </div>
+<!-- Resizable divider between graph and logs -->
 <div id="resizer"></div>
+<!-- Log container with header and content area -->
 <div class="box" id="log-container">
     <div class="flex">
         <div>
@@ -143,81 +164,238 @@
         <div id="follow" style="cursor:pointer">Auto-scroll</div>
     </div>
     <div id="logs"></div>
+    <div id="status" style="position: absolute; top: 20px; left: 20px; font-size: 14px; color: #8b949e;">...</div>
 </div>
 
 
 <script id="js">
-    // Create a new directed graph
-    const g = new dagreD3.graphlib.Graph()
-        .setGraph({rankdir: "LR", nodesep: 20, ranksep: 32})
-        .setDefaultEdgeLabel(() => ({arrowhead: 'undirected'}));
+    // Define SVG icons for each task state
+    // Each icon is a 16x16 SVG with a colored circle and a distinctive symbol
+    const icons = {
+        // Waiting/Pending: Yellow circle with two vertical pause bars
+        waiting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#dbab0a" stroke="#dbab0a" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
+        pending: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#dbab0a" stroke="#dbab0a" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
+        
+        // Starting/Running: Blue circles with white inner circle
+        starting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3.5" fill="#fff" stroke="#fff" stroke-width="0"/></svg>',
+        running: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3.5" fill="#fff" stroke="#fff" stroke-width="0"/></svg>',
+        
+        // Stalled: Purple circle with three horizontal dots
+        stalled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8250df" stroke="#8250df" stroke-width="0"/><circle cx="4" cy="8" r="1.5" fill="#fff"/><circle cx="8" cy="8" r="1.5" fill="#fff"/><circle cx="12" cy="8" r="1.5" fill="#fff"/></svg>',
+        
+        // Failed: Red circle with X
+        failed: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#cf222e" stroke="#cf222e" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>',
+        
+        // Succeeded: Green circle with checkmark
+        succeeded: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#2da44e" stroke="#2da44e" stroke-width="0"/><path fill="#fff" d="M11.28 6.78a.75.75 0 00-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 00-1.06 1.06l2 2a.75.75 0 001.06 0l3.5-3.5z" stroke="#fff" stroke-width="0.5"/></svg>',
+        
+        // Skipped: Gray circle with fast-forward symbol (two triangles)
+        skipped: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#6e7781" stroke="#6e7781" stroke-width="0"/><path d="M4 4l4 4-4 4V4z" fill="#fff"/><path d="M9 4l4 4-4 4V4z" fill="#fff"/></svg>',
+        
+        // Cancelled: Gray circle with X
+        cancelled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#6e7781" stroke="#6e7781" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>'
+    };
 
-    // Create the renderer
-    const render = new dagreD3.render();
+    // Initialize Cytoscape with the dagre layout for directed graph visualization
+    const cy = cytoscape({
+        container: document.getElementById('cy'),
+        // Disable user interaction with nodes
+        userZoomingEnabled: true,    // Allow zooming
+        userPanningEnabled: true,    // Allow panning
+        boxSelectionEnabled: false,  // Disable box selection
+        autounselectify: true,       // Prevent node selection
+        autoungrabify: true,         // Prevent node grabbing/moving
+        style: [
+            // Base node styling - applies to all nodes
+            {
+                selector: 'node',
+                style: {
+                    'label': 'data(label)', // Use the label data property for node text
+                    'text-valign': 'center', // Vertically center the text
+                    'color': '#24292f', // GitHub text color
+                    'background-color': '#ffffff', // White background for nodes
+                    'border-width': 1,
+                    'border-color': '#d0d7de', // Light gray border
+                    'border-opacity': 1,
+                    'shape': 'round-rectangle', // Rounded rectangle shape for nodes
+                    'width': 160, // Fixed width for consistent layout
+                    'height': 18, // Compact height
+                    'font-size': 13,
+                    'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+                    'text-wrap': 'ellipsis', // Truncate text that's too long
+                    'text-max-width': '120px', // Maximum text width before truncation
+                    'padding': 8, // Padding inside nodes
+                    'background-image': 'data(icon)', // Use the icon data property for status icons
+                    'background-position-x': '8px', // Position icon on the left
+                    'background-position-y': '50%', // Center icon vertically
+                    'background-width': '14px', // Icon dimensions
+                    'background-height': '14px',
+                    'background-fit': 'none', // Don't resize the icon
+                    'background-clip': 'none', // Don't clip the icon
+                    'background-image-opacity': 1, // Full opacity for icons
+                    'border-radius': 4, // Rounded corners
+                    'shadow-blur': 1, // Subtle shadow
+                    'shadow-color': 'rgba(0,0,0,0.1)',
+                    'shadow-opacity': 0.3,
+                    'shadow-offset-x': 0,
+                    'shadow-offset-y': 1,
+                    'text-background-shape': 'rectangle',
+                    'text-background-opacity': 0 // Transparent text background
+                }
+            },
+            // Edge styling - connects nodes with light gray lines
+            {
+                selector: 'edge',
+                style: {
+                    'width': 1, // Thin lines
+                    'line-color': '#d0d7de', // Light gray color
+                    'target-arrow-color': '#d0d7de',
+                    'target-arrow-shape': 'none', // No arrowheads
+                    'curve-style': 'straight', // Straight lines instead of curved
+                }
+            },
+            // Status-specific styling for nodes
+            // Each node type maintains the same border color but different background colors
+            {
+                selector: 'node.succeeded',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.failed',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.waiting',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.pending',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.starting',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1,
+                    'animation-name': 'pulse',
+                    'animation-duration': '2s',
+                    'animation-timing-function': 'ease-in-out',
+                    'animation-iteration-count': 'infinite'
+                }
+            },
+            {
+                selector: 'node.running',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1,
+                    'animation-name': 'pulse',
+                    'animation-duration': '2s',
+                    'animation-timing-function': 'ease-in-out',
+                    'animation-iteration-count': 'infinite'
+                }
+            },
+            {
+                selector: 'node.stalled',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.skipped',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            },
+            {
+                selector: 'node.cancelled',
+                style: {
+                    'border-color': '#d0d7de',
+                    'border-width': 1
+                }
+            }
+        ]
+    });
 
-    // Set up an SVG group so that we can translate the final graph.
-    const svg = d3.select("svg"),
-        inner = svg.append("g");
-
-    const resizer = document.getElementById('resizer');
-    const graphContainer = document.getElementById('graph-container');
+    // Get references to DOM elements
     const status = document.getElementById('status');
     const name = document.getElementById('name');
     const message = document.getElementById('message');
     const logs = document.getElementById("logs");
     const logsContainer = document.getElementById("log-container");
     const follow = document.getElementById("follow");
+    const resizer = document.getElementById('resizer');
+    const graphContainer = document.getElementById('cy');
 
+    // Auto-scroll flag for logs
     let autoScroll = true;
 
-    // icons are svgs, keyed by phase
-    // all have a 16x circle behind the icon  with a suitable color (e.g. red for failed)
-    // the icon is centered in the circle, and is a <path/>
-    const pause = '<path d="M4 3v10h2V3H4zm6 0v10h2V3h-2z" fill="#FFF" stroke-width="2" stroke="#FFF"/>'
-    const play = '<path d="M5 4l8 4-8 4z" fill="#FFF" stroke-width="2" stroke="#FFF"/>';
-    const check = '<path d="M2 8l4 4 8-8" stroke="#FFF" fill="none" stroke-width="4"/>';
-    const cross = '<path d="M3 3l10 10m0-10L3 13" stroke="#FFF" stroke-width="4"/>'
-    const skip = '<path d="M5 2l6 6-6 6" stroke="#FFF" stroke-width="4" fill="none"/>'
-    const idle = '<path d="M3,8 L5,8 M7,8 L9,8 M11,8 L13,8" stroke="#fff" stroke-width="4"/>'
-
-    const icons = {
-        waiting: pause,
-        pending: pause,
-        starting: play,
-        running: play,
-        stalled: idle,
-        failed: cross,
-        succeeded: check,
-        skipped: skip,
-        cancelled: cross
+    // Map of phase names to human-readable descriptions (for tooltips)
+    const phaseDescriptions = {
+        waiting: 'Waiting',
+        pending: 'Pending',
+        starting: 'Starting',
+        running: 'Running',
+        stalled: 'Stalled',
+        failed: 'Failed',
+        succeeded: 'Succeeded',
+        skipped: 'Skipped',
+        cancelled: 'Cancelled'
     };
 
-    const renderGraph = () => render(inner, g);
-
+    // Variables for log streaming
     var logSource; // EventSource for logs
     var lineNumber = 0; // line number for logs
 
-    // Function to convert ANSI escape codes to HTML
+    // Function to convert ANSI escape codes to HTML for colorized logs
     const ansiToHtml = (ansiString) => {
-        const ansiRegex = /\x1b\[((?:\d+;)*\d+)m/g;
-        return ansiString.replace(ansiRegex, (match, codes) => {
-            const codeArray = codes.split(';').map(Number);
+        if (!ansiString) return '';
+        
+        // Replace ANSI escape sequences with HTML spans
+        return ansiString.replace(/\u001b\[((?:\d{1,3};?)+)m/g, (match, codes) => {
             let styles = '';
-
-            codeArray.forEach(code => {
-                if (code >= 30 && code <= 37) {
-                    styles += `color: ${ansiColor(code)}; `;
-                } else if (code >= 90 && code <= 97) {
-                    styles += `color: ${ansiBrightColor(code)}; `;
-                } else if (code >= 40 && code <= 47) {
-                    styles += `background-color: ${ansiColor(code - 10)}; `;
-                } else if (code >= 100 && code <= 107) {
-                    styles += `background-color: ${ansiBrightColor(code - 10)}; `;
+            
+            codes.split(';').forEach(code => {
+                code = parseInt(code, 10);
+                
+                if (code === 0) {
+                    // Reset all styles
+                    styles = '';
                 } else if (code === 1) {
-                    styles += 'font-weight: bold; ';
+                    // Bold
+                    styles += 'font-weight: bold;';
+                } else if (code === 3) {
+                    // Italic
+                    styles += 'font-style: italic;';
                 } else if (code === 4) {
-                    styles += 'text-decoration: underline; ';
-                } else if (code === 0) {
+                    // Underline
+                    styles += 'text-decoration: underline;';
+                } else if (code >= 30 && code <= 37) {
+                    // Foreground color
+                    styles += `color: ${ansiColor(code)};`;
+                } else if (code >= 90 && code <= 97) {
+                    // Bright foreground color
+                    styles += `color: ${ansiBrightColor(code)};`;
+                } else if (code >= 40 && code <= 47) {
+                    // Background color
+                    styles += `background-color: ${ansiColor(code - 10)};`;
+                } else if (code >= 100 && code <= 107) {
+                    // Bright background color
+                    styles += `background-color: ${ansiBrightColor(code - 10)};`;
+                } else {
                     styles = ''; // Reset
                 }
             });
@@ -225,6 +403,7 @@
             return `<span style="${styles}">`;
         }) + '</span>'; // Ensure closing span
     }
+    
     // Function to map ANSI color codes to CSS colors
     const ansiColor = (code) => {
         const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'];
@@ -237,144 +416,247 @@
         return brightColors[code - 90];
     }
 
-    // get the graph from the server at /dag
+    // Fetch the initial graph data from the server
     fetch('/dag')
         .then(response => response.json())
         .then(data => {
-                // set the title of the page to the name of the graph
-                document.title = data.name;
+            // set the title of the page to the name of the graph
+            document.title = data.name;
 
-                // data.nodes is a map of node names to node objects
-                const radius = 8;
-                Object.values(data.nodes).forEach(node => {
-                    g.setNode(node.name, {
-                        labelType: "html",
-                        label: `<svg width="200" height="16">
-            </>`,
-                        rx: radius, ry: radius
+            // Create nodes with icons
+            Object.values(data.nodes).forEach(node => {
+                const nodePhase = node.phase || 'pending';
+                // Ensure the icon is properly encoded for use as a data URL
+                const iconSvg = icons[nodePhase];
+                const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+                
+                // Add the node to the graph
+                cy.add({
+                    group: 'nodes',
+                    data: {
+                        id: node.name,
+                        label: node.name,
+                        phase: nodePhase,
+                        message: node.message || '',
+                        ports: node.task?.ports || '',
+                        icon: iconDataUrl
+                    },
+                    classes: nodePhase
+                });
+            });
+
+            // Create edges between nodes based on parent-child relationships
+            Object.keys(data.children).forEach(parent => {
+                data.children[parent].forEach(child => {
+                    cy.add({
+                        group: 'edges',
+                        data: {
+                            id: `${parent}-${child}`,
+                            source: parent,
+                            target: child
+                        }
                     });
                 });
-                // data.children is a map from node name to children name
-                Object.keys(data.children).forEach(parent => {
-                    data.children[parent].forEach(child => {
-                        g.setEdge(parent, child);
+            });
+
+            // Run the layout algorithm to position nodes and edges
+            const layout = cy.layout({
+                name: 'dagre', // Use dagre layout for directed graphs
+                rankDir: 'LR', // Left to right direction
+                nodeSep: 40, // Horizontal spacing between nodes
+                rankSep: 80, // Vertical spacing between ranks
+                padding: 30, // Padding around the entire graph
+                fit: true, // Fit the graph to the container
+                spacingFactor: 0.9, // Spacing factor for the layout
+                animate: false, // Don't animate the layout
+                edgeSep: 10, // Edge separation
+                ranker: 'network-simplex', // Layout algorithm
+                align: 'UL' // Align nodes to upper left
+            });
+            
+            layout.run();
+            
+            // Ensure the graph is centered and fits in the viewport
+            setTimeout(() => {
+                cy.center();
+                cy.fit(undefined, 50); // Add padding of 50px
+            }, 100);
+            
+            // Add click event to nodes to show logs
+            cy.on('tap', 'node', function(evt) {
+                const node = evt.target;
+                const nodeId = node.id();
+                const nodeData = node.data();
+                
+                // Update the log header with node information
+                name.textContent = nodeId;
+                message.textContent = nodeData.message ? ` - ${nodeData.message}` : '';
+                
+                // Clear previous logs
+                logs.innerHTML = '';
+                lineNumber = 0;
+                
+                // Close previous EventSource if it exists
+                if (logSource) {
+                    logSource.close();
+                }
+                
+                // Create a new EventSource for logs
+                logSource = new EventSource(`/logs/${nodeId}`);
+                
+                // Handle incoming log messages
+                logSource.onmessage = (event) => {
+                    const logLine = document.createElement('div');
+                    // Convert URLs in logs to clickable links
+                    const linkedLogLine = event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
+                    // Convert ANSI color codes to HTML
+                    const coloredLog = ansiToHtml(linkedLogLine);
+                    // Add line number and formatted log content
+                    logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${coloredLog}`;
+                    logs.appendChild(logLine);
+                    // Auto-scroll to the bottom if enabled
+                    if (autoScroll)
+                        logs.scrollTop = logs.scrollHeight;
+                };
+                
+                // Handle errors in log streaming
+                logSource.onerror = () => {
+                    logSource.close();
+                    follow.innerHTML = 'Disconnected';
+                };
+            });
+
+            // Start the event stream for real-time updates
+            const eventSource = new EventSource('/events');
+
+            // Event handlers for the event stream
+            eventSource.onopen = () => status.textContent = '';
+            eventSource.onerror = () => status.textContent = 'disconnected';
+
+            // Handle incoming events (node status updates)
+            eventSource.onmessage = (event) => {
+                const node = JSON.parse(event.data);
+                
+                // Check if the node already exists
+                const existingNode = cy.getElementById(node.name);
+                
+                if (existingNode.length > 0) {
+                    // Ensure the icon is properly encoded for use as a data URL
+                    const iconSvg = icons[node.phase];
+                    const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+                    
+                    // Only update if there's a change (optimization)
+                    if (existingNode.data('phase') !== node.phase || existingNode.data('message') !== node.message) {
+                        // Update node data
+                        existingNode.data('phase', node.phase);
+                        existingNode.data('message', node.message);
+                        existingNode.data('ports', node.task?.ports || '');
+                        existingNode.data('icon', iconDataUrl);
+                        
+                        // Update node class for styling
+                        existingNode.removeClass();
+                        existingNode.addClass(node.phase);
+                    }
+                } else {
+                    // Ensure the icon is properly encoded for use as a data URL
+                    const iconSvg = icons[node.phase];
+                    const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+                    
+                    // Add new node
+                    cy.add({
+                        group: 'nodes',
+                        data: {
+                            id: node.name,
+                            label: node.name,
+                            phase: node.phase,
+                            message: node.message || '',
+                            ports: node.task?.ports || '',
+                            icon: iconDataUrl
+                        },
+                        classes: node.phase
                     });
-                });
-
-                renderGraph()
-
-                // Set up the click event
-                svg.selectAll("g.node")
-                    .on("click", (n) => {
-
-                        if (logSource) logSource.close();
-
-                        name.textContent = n;
-                        message.textContent = g.node(n).message;
-                        autoScroll = true;
-                        follow.innerHTML = 'Auto-scroll';
-
-                        // Start the event stream for logs
-                        logSource = new EventSource(`/logs/${n}`);
-                        lineNumber = 0;
-                        logs.innerHTML = ''; // Clear previous logs
-
-                        logSource.onmessage = (event) => {
-                            const logLine = document.createElement('div');
-                            const linkedLogLine = event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
-                            const coloredLog = ansiToHtml(linkedLogLine);
-                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${coloredLog}`;
-                            logs.appendChild(logLine);
-                            if (autoScroll)
-                                logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
-                        };
-
-                        logSource.onerror = () => {
-                            logSource.close();
-                            follow.innerHTML = 'Disconnected';
-                        };
-                    });
-
-                // set the width and height of the svg to that of the graph
-                const bbox = svg.node().getBBox();
-                svg.attr("width", bbox.width + 40);
-                svg.attr("height", bbox.height + 60);
-
-                // Center the graph
-                const xCenterOffset = (svg.attr("width") - bbox.width) / 2;
-                const yCenterOffset = (svg.attr("height") - bbox.height) / 2;
-                inner.attr("transform", `translate(${xCenterOffset}, ${yCenterOffset})`);
-
-                // start the event stream
-                const eventSource = new EventSource('/events');
-
-                eventSource.onopen = () => status.textContent = '';
-                eventSource.onerror = () => status.textContent = 'disconnected';
-
-                eventSource.onmessage = (event) => {
-                    const node = JSON.parse(event.data);
-                    g.setNode(node.name, {
-                        labelType: "html",
-                        label: `<svg width="200" height="20">
-    <title>${node.name}\n${node.message || ''}</title>
-    <circle cx="10" cy="10" r="10" fill="#000" opacity="0.2"/>
-    <g transform="translate(2, 2)">
-        ${icons[node.phase]}
-    </g>
-    <text x="34" y="16" font-size="16" fill="#000" opacity="0.6">${node.name} <tspan font-size="10">${node.task.ports ?? ''}</tspan></text>
-</svg>`,
-                        rx: radius, ry: radius, message: node.message, class: node.phase
-                    });
-                    renderGraph()
+                    
+                    // Re-run layout if a new node was added
+                    cy.layout({
+                        name: 'dagre',
+                        rankDir: 'LR',
+                        nodeSep: 40,
+                        rankSep: 80,
+                        padding: 30,
+                        fit: true,
+                        spacingFactor: 0.9,
+                        animate: false,
+                        edgeSep: 10,
+                        ranker: 'network-simplex',
+                        align: 'UL'
+                    }).run();
+                    
+                    // Ensure the graph is centered after adding a new node
+                    setTimeout(() => {
+                        cy.center();
+                        cy.fit(undefined, 50); // Add padding of 50px
+                    }, 100);
                 }
             }
-        );
+        });
 
+    // Event listener for disabling auto-scroll when user manually scrolls
     logs.addEventListener('mousedown', () => {
         follow.innerHTML = 'Manual scroll';
         autoScroll = false;
     });
 
+    // Toggle auto-scroll when clicking the follow button
     follow.addEventListener('click', () => {
         autoScroll = !autoScroll;
         follow.innerHTML = autoScroll ? 'Auto-scroll' : 'Manual scroll';
-        if (autoScroll)
-            logs.scrollTop = logs.scrollHeight; // Auto-scroll to the bottom
-    });
-
-    // the ratio of the graph height to the logs height
-    let ratio = 0.5;
-
-    const layout = () => {
-        const innerWidth = window.innerWidth - 64;
-        const innerHeight = window.innerHeight - 128 - 24;
-        graphContainer.style.width = innerWidth + 'px';
-        graphContainer.style.height = innerHeight * ratio + 'px';
-        logsContainer.style.width = innerWidth + 'px';
-        logsContainer.style.height = innerHeight * (1 - ratio) + 'px';
-        logs.style.height = (innerHeight * (1 - ratio) - 32) + 'px';
-    }
-
-    window.addEventListener('resize', layout);
-
-    let resizing = false;
-
-    resizer.addEventListener('mousedown', (e) => {
-        e.preventDefault()
-        resizing = true;
-    })
-    window.addEventListener('mouseup', () => resizing = false);
-
-    window.addEventListener('mousemove', (e) => {
-        if (resizing) {
-            ratio = Math.max(Math.min((e.clientY - 64) / (window.innerHeight - 128 - 24), 0.95), 0.05);
-            layout();
+        if (autoScroll) {
+            logs.scrollTop = logs.scrollHeight;
         }
     });
 
+    // Function to adjust layout based on window size
+    const layout = () => {
+        const height = window.innerHeight;
+        const graphHeight = height * 0.6;
+        const logsHeight = height - graphHeight - 48;
+        graphContainer.style.height = `${graphHeight}px`;
+        logsContainer.style.height = `${logsHeight}px`;
+        logs.style.height = `${logsHeight - 40}px`;
+    };
 
+    // Adjust layout on window resize
+    window.addEventListener('resize', layout);
+
+    // Variable to track resizing state
+    let resizing = false;
+
+    // Event listeners for resizing the panels
+    resizer.addEventListener('mousedown', (e) => {
+        resizing = true;
+        document.body.style.cursor = 'row-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (resizing) {
+            const graphHeight = e.clientY;
+            const logsHeight = window.innerHeight - graphHeight - 48;
+            if (graphHeight > 100 && logsHeight > 100) {
+                graphContainer.style.height = `${graphHeight}px`;
+                logsContainer.style.height = `${logsHeight}px`;
+                logs.style.height = `${logsHeight - 40}px`;
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        resizing = false;
+        document.body.style.cursor = '';
+    });
+
+    // Initial layout setup
     layout();
 </script>
-
 </body>
 </html>
