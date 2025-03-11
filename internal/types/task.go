@@ -66,6 +66,8 @@ type Task struct {
 	RestartPolicy string `json:"restartPolicy,omitempty"`
 	// The timeout for the task to be considered stalled. If omitted, the task will be considered stalled after 30 seconds of no activity.
 	StalledTimeout *metav1.Duration `json:"stalledTimeout,omitempty"`
+	// The group this task belongs to. Tasks in the same group will be visually grouped together in the UI.
+	Group string `json:"group,omitempty"`
 }
 
 func (t *Task) GetHostPorts() []uint16 {

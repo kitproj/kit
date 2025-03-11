@@ -319,8 +319,37 @@ The user interface runs on port 3000 by default. The UI provides the following f
 - Updates the graph as each task change status (e.g. starts or finishes).
 - Read and follows logs.
 
+### Task Grouping
+
+Tasks can be organized into groups for better visualization in the UI. This helps to logically organize related tasks together:
+
+```yaml
+tasks:
+  build-app:
+    command: go build -v .
+    watch:
+    - main.go
+    group: app
+  run-app:
+    command: ./app
+    dependencies: [ build-app ]
+    ports: [ 8080 ]
+    group: app
+  database:
+    image: postgres
+    ports: [ 5432 ]
+    group: infrastructure
+  redis:
+    image: redis
+    ports: [ 6379 ]
+    group: infrastructure
+```
+
+In this example, tasks are organized into two groups: `app` and `infrastructure`. In the UI, tasks within the same group will be visually grouped together, making it easier to understand the structure of your workflow.
+
+Groups are purely visual and do not affect task execution or dependencies. They simply provide a way to organize your workflow diagram for better readability.
+
 ## Documentation
 
 - [Examples](docs/examples) - examples of how to use kit, e.g. with MySQL, or Kafka
 - [Reference](docs/reference) - reference documentation for the various types in kit
-

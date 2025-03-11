@@ -8,6 +8,7 @@ tasks:
     watch:
     - main.go
     workingDir: demo/go
+    group: app
   error:
     sh: |
       set -ex
@@ -30,6 +31,7 @@ tasks:
       PORT: "9090"
     ports:
     - "9090"
+    group: app
   run-container:
     image: httpd
     log: baz.log

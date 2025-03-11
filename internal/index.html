@@ -243,6 +243,23 @@
                     'text-background-opacity': 0 // Transparent text background
                 }
             },
+            // Group node styling
+            {
+                selector: 'node.group',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#f6f8fa',
+                    'border-width': 1,
+                    'border-color': '#d0d7de',
+                    'text-valign': 'top',
+                    'text-halign': 'center',
+                    'text-margin-y': 5,
+                    'font-weight': 'bold',
+                    'padding': 10,
+                    'compound-sizing-wrt-labels': 'include',
+                    'text-background-opacity': 0
+                }
+            },
             // Edge styling - connects nodes with light gray lines
             {
                 selector: 'edge',
@@ -423,6 +440,34 @@
             // set the title of the page to the name of the graph
             document.title = data.name;
 
+            // Group nodes by their group property
+            const nodeGroups = {};
+            const ungroupedNodes = [];
+            
+            // First pass: identify all groups and ungrouped nodes
+            Object.values(data.nodes).forEach(node => {
+                if (node.task && node.task.group) {
+                    if (!nodeGroups[node.task.group]) {
+                        nodeGroups[node.task.group] = [];
+                    }
+                    nodeGroups[node.task.group].push(node);
+                } else {
+                    ungroupedNodes.push(node);
+                }
+            });
+            
+            // Create group parent nodes first
+            Object.keys(nodeGroups).forEach(groupName => {
+                cy.add({
+                    group: 'nodes',
+                    data: {
+                        id: `group:${groupName}`,
+                        label: groupName
+                    },
+                    classes: 'group'
+                });
+            });
+
             // Create nodes with icons
             Object.values(data.nodes).forEach(node => {
                 const nodePhase = node.phase || 'pending';
@@ -431,7 +476,7 @@
                 const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
                 
                 // Add the node to the graph
-                cy.add({
+                const nodeData = {
                     group: 'nodes',
                     data: {
                         id: node.name,
@@ -442,7 +487,14 @@
                         icon: iconDataUrl
                     },
                     classes: nodePhase
-                });
+                };
+                
+                // If node belongs to a group, set the parent
+                if (node.task && node.task.group) {
+                    nodeData.data.parent = `group:${node.task.group}`;
+                }
+                
+                cy.add(nodeData);
             });
 
             // Create edges between nodes based on parent-child relationships
@@ -471,7 +523,14 @@
                 animate: false, // Don't animate the layout
                 edgeSep: 10, // Edge separation
                 ranker: 'network-simplex', // Layout algorithm
-                align: 'UL' // Align nodes to upper left
+                align: 'UL', // Align nodes to upper left
+                // Compound graph options
+                nestingFactor: 1.2, // Nesting padding factor
+                minLen: function(edge) { return 1; }, // Minimum edge length
+                edgeWeight: function(edge) { return 1; }, // Edge weight
+                // Handle compound nodes (groups)
+                rankCompound: true, // Whether to include compounds in the rank
+                nodeDimensionsIncludeLabels: true // Whether to include node labels in node dimensions
             });
             
             layout.run();
@@ -546,12 +605,35 @@
                     const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
                     
                     // Only update if there's a change (optimization)
-                    if (existingNode.data('phase') !== node.phase || existingNode.data('message') !== node.message) {
+                    if (existingNode.data('phase') !== node.phase || 
+                        existingNode.data('message') !== node.message ||
+                        existingNode.data('parent') !== (node.task && node.task.group ? `group:${node.task.group}` : undefined)) {
+                        
                         // Update node data
                         existingNode.data('phase', node.phase);
                         existingNode.data('message', node.message);
                         existingNode.data('ports', node.task?.ports || '');
                         existingNode.data('icon', iconDataUrl);
+                        
+                        // Update parent if group changed
+                        if (node.task && node.task.group) {
+                            // Check if the group exists, if not create it
+                            const groupNode = cy.getElementById(`group:${node.task.group}`);
+                            if (groupNode.length === 0) {
+                                cy.add({
+                                    group: 'nodes',
+                                    data: {
+                                        id: `group:${node.task.group}`,
+                                        label: node.task.group
+                                    },
+                                    classes: 'group'
+                                });
+                            }
+                            existingNode.move({ parent: `group:${node.task.group}` });
+                        } else if (existingNode.data('parent')) {
+                            // Remove from group if no longer in one
+                            existingNode.move({ parent: null });
+                        }
                         
                         // Update node class for styling
                         existingNode.removeClass();
@@ -562,8 +644,8 @@
                     const iconSvg = icons[node.phase];
                     const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
                     
-                    // Add new node
-                    cy.add({
+                    // Create node data
+                    const nodeData = {
                         group: 'nodes',
                         data: {
                             id: node.name,
@@ -574,7 +656,27 @@
                             icon: iconDataUrl
                         },
                         classes: node.phase
-                    });
+                    };
+                    
+                    // If node belongs to a group, set the parent
+                    if (node.task && node.task.group) {
+                        // Check if the group exists, if not create it
+                        const groupNode = cy.getElementById(`group:${node.task.group}`);
+                        if (groupNode.length === 0) {
+                            cy.add({
+                                group: 'nodes',
+                                data: {
+                                    id: `group:${node.task.group}`,
+                                    label: node.task.group
+                                },
+                                classes: 'group'
+                            });
+                        }
+                        nodeData.data.parent = `group:${node.task.group}`;
+                    }
+                    
+                    // Add new node
+                    cy.add(nodeData);
                     
                     // Re-run layout if a new node was added
                     cy.layout({
@@ -588,7 +690,14 @@
                         animate: false,
                         edgeSep: 10,
                         ranker: 'network-simplex',
-                        align: 'UL'
+                        align: 'UL',
+                        // Compound graph options
+                        nestingFactor: 1.2, // Nesting padding factor
+                        minLen: function(edge) { return 1; }, // Minimum edge length
+                        edgeWeight: function(edge) { return 1; }, // Edge weight
+                        // Handle compound nodes (groups)
+                        rankCompound: true, // Whether to include compounds in the rank
+                        nodeDimensionsIncludeLabels: true // Whether to include node labels in node dimensions
                     }).run();
                     
                     // Ensure the graph is centered after adding a new node
