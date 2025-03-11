@@ -99,7 +99,7 @@
 
         /* Log content area */
         #logs {
-            margin-top: 8px;
+            margin-top: 0 8px;
             overflow: auto;
             font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; /* Monospace font for logs */
             padding: 16px;
@@ -741,7 +741,7 @@
         const logsHeight = height - graphHeight - 72; 
         graphContainer.style.height = `${graphHeight}px`;
         logsContainer.style.height = `${logsHeight}px`;
-        logs.style.height = `${logsHeight - 40}px`;
+        logs.style.height = `${logsHeight - 64}px`;
     };
 
     // Adjust layout on window resize
@@ -759,9 +759,17 @@
 
     document.addEventListener('mousemove', (e) => {
         if (resizing) {
-            const graphHeight = e.clientY;
-            const logsHeight = window.innerHeight - graphHeight - 20; 
-            if (graphHeight > 100 && logsHeight > 100) {
+            const windowHeight = window.innerHeight;
+            // Adjust the graphHeight calculation by subtracting 16px to fix the offset
+            const graphHeight = e.clientY - 32;
+            const logsHeight = windowHeight - graphHeight - 72;
+            
+            // Add constraints to maintain reasonable proportions
+            // Ensure graph takes between 30% and 70% of the window height
+            const minGraphHeight = windowHeight * 0.3;
+            const maxGraphHeight = windowHeight * 0.7;
+            
+            if (graphHeight >= minGraphHeight && graphHeight <= maxGraphHeight) {
                 graphContainer.style.height = `${graphHeight}px`;
                 logsContainer.style.height = `${logsHeight}px`;
                 logs.style.height = `${logsHeight - 40}px`;
