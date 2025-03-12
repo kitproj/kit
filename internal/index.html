@@ -210,7 +210,7 @@
         userPanningEnabled: true,    // Allow panning
         boxSelectionEnabled: false,  // Disable box selection
         autounselectify: true,       // Prevent node selection
-        autoungrabify: false,        // Allow node grabbing for panning (grab and drag to pan)
+        autoungrabify: true,         // Prevent node grabbing/moving
         style: [
             // Base node styling - applies to all nodes
             {
@@ -577,6 +577,15 @@
                 
                 // Create a new EventSource for logs
                 logSource = new EventSource(`/logs/${nodeId}`);
+
+                logSource.onopen = () => {
+                    if (autoScroll) {
+                        follow.textContent = 'Auto-scrolling';
+                    } else {
+                        follow.textContent = 'Manual scrolling';
+                    }
+
+                }
                 
                 // Handle incoming log messages
                 logSource.onmessage = (event) => {
