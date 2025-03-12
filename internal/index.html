@@ -40,38 +40,11 @@
         #cy {
             height: 50vh; /* Take half of the viewport height */
             background-color: #f6f8fa; /* Match GitHub's background color */
+            cursor: grab; /* Show grab cursor to indicate users can grab to pan */
         }
 
-        /* Animation for pulsing elements (used for running/starting nodes) */
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        /* Animation for spinning elements (used in running/starting icons) */
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Animation for pulsing nodes */
-        .node.running, .node.starting {
-            animation: pulse 2s infinite ease-in-out;
-        }
-
-        /* Apply spin animation to elements with this class */
-        .spin-animation {
-            animation: spin 1.5s linear infinite;
-            transform-origin: center;
-            transform-box: fill-box;
+        #cy:active {
+            cursor: grabbing; /* Show grabbing cursor when actively panning */
         }
 
         /* Resizer element between graph and logs */
@@ -147,6 +120,38 @@
             color: #8b949e;
             font-size: 14px;
         }
+
+        /* Animation for pulsing elements (used for running/starting nodes) */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Animation for spinning elements (used in running/starting icons) */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Animation for pulsing nodes */
+        .node.running, .node.starting {
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        /* Apply spin animation to elements with this class */
+        .spin-animation {
+            animation: spin 1.5s linear infinite;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
     </style>
 </head>
 <body>
@@ -205,7 +210,7 @@
         userPanningEnabled: true,    // Allow panning
         boxSelectionEnabled: false,  // Disable box selection
         autounselectify: true,       // Prevent node selection
-        autoungrabify: true,         // Prevent node grabbing/moving
+        autoungrabify: false,        // Allow node grabbing for panning (grab and drag to pan)
         style: [
             // Base node styling - applies to all nodes
             {
@@ -214,6 +219,7 @@
                     'label': 'data(label)', // Use the label data property for node text
                     'text-valign': 'center', // Vertically center the text
                     'color': '#24292f', // GitHub text color
+                    'cursor': 'pointer',
                     'background-color': '#ffffff', // White background for nodes
                     'border-width': 1,
                     'border-color': '#d0d7de', // Light gray border
@@ -240,8 +246,7 @@
                     'shadow-opacity': 0.3,
                     'shadow-offset-x': 0,
                     'shadow-offset-y': 1,
-                    'text-background-shape': 'rectangle',
-                    'text-background-opacity': 0 // Transparent text background
+                    'text-background-shape': 'rectangle'
                 }
             },
             // Group node styling
@@ -346,6 +351,15 @@
                 }
             }
         ]
+    });
+
+    // Add event listeners to handle cursor changes
+    cy.on('mouseover', 'node', function(e) {
+        document.getElementById('cy').style.cursor = 'pointer';
+    });
+    
+    cy.on('mouseout', 'node', function(e) {
+        document.getElementById('cy').style.cursor = 'grab';
     });
 
     // Get references to DOM elements
