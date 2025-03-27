@@ -11,7 +11,16 @@ type TaskNode struct {
 	Task types.Task `json:"task"`
 	// logFile is the log file path
 	logFile string
-	// the phase of the task, e.g. "pending", "waiting", "running", "stalled", "succeeded", "failed", "cancelled", "skipped"
+	// Phase represents the current execution state of the task:
+	// - "pending": Task is registered but waiting for dependencies to complete
+	// - "waiting": Task's dependencies are satisfied and is ready to execute
+	// - "starting": Task is initializing but not yet fully running
+	// - "running": Task is actively executing
+	// - "stalled": Task is running but not making progress
+	// - "succeeded": Task completed successfully
+	// - "failed": Task completed with errors
+	// - "cancelled": Task was manually stopped
+	// - "skipped": Task was intentionally not executed
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
 	Message string `json:"message,omitempty"`

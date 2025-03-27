@@ -178,28 +178,32 @@
     // Define SVG icons for each task state
     // Each icon is a 16x16 SVG with a colored circle and a distinctive symbol
     const icons = {
-        // Waiting/Pending: Yellow circle with two vertical pause bars
-        waiting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#dbab0a" stroke="#dbab0a" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
-        pending: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#dbab0a" stroke="#dbab0a" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
+        // Waiting: Yellow circle with pause symbol (ready to execute)
+        waiting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFEB3B" stroke="#FFEB3B" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
         
-        // Starting/Running: Blue circles with white inner circle
-        starting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3.5" fill="#fff" stroke="#fff" stroke-width="0"/></svg>',
-        running: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3.5" fill="#fff" stroke="#fff" stroke-width="0"/></svg>',
+        // Pending: Orange circle with clock symbol (waiting for dependencies)
+        pending: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFA726" stroke="#FFA726" stroke-width="0"/><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>',
         
-        // Stalled: Purple circle with three horizontal dots
+        // Starting: Amber circle with hourglass symbol (initialization)
+        starting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#f59e0b" stroke-width="0"/><path d="M5 4h6v1l-3 3-3-3z M5 12h6v-1l-3-3-3 3z" fill="#fff"/></svg>',
+        
+        // Running: Blue circle with white dot (active execution)
+        running: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3" fill="#fff"/></svg>',
+        
+        // Stalled: Purple circle with three dots (not making progress)
         stalled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8250df" stroke="#8250df" stroke-width="0"/><circle cx="4" cy="8" r="1.5" fill="#fff"/><circle cx="8" cy="8" r="1.5" fill="#fff"/><circle cx="12" cy="8" r="1.5" fill="#fff"/></svg>',
         
-        // Failed: Red circle with X
+        // Failed: Red circle with X (error)
         failed: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#cf222e" stroke="#cf222e" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>',
         
-        // Succeeded: Green circle with checkmark
+        // Succeeded: Green circle with checkmark (completed successfully)
         succeeded: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#2da44e" stroke="#2da44e" stroke-width="0"/><path fill="#fff" d="M11.28 6.78a.75.75 0 00-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 00-1.06 1.06l2 2a.75.75 0 001.06 0l3.5-3.5z" stroke="#fff" stroke-width="0.5"/></svg>',
         
-        // Skipped: Gray circle with fast-forward symbol (two triangles)
-        skipped: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#6e7781" stroke="#6e7781" stroke-width="0"/><path d="M4 4l4 4-4 4V4z" fill="#fff"/><path d="M9 4l4 4-4 4V4z" fill="#fff"/></svg>',
+        // Skipped: Light gray circle with skip-forward symbol
+        skipped: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8c959f" stroke="#8c959f" stroke-width="0"/><path d="M4 4l4 4-4 4V4z M9 4l4 4-4 4V4z" fill="#fff"/></svg>',
         
-        // Cancelled: Gray circle with X
-        cancelled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#6e7781" stroke="#6e7781" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>'
+        // Cancelled: Dark gray circle with stop symbol (square)
+        cancelled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#57606a" stroke="#57606a" stroke-width="0"/><rect x="5" y="5" width="6" height="6" fill="#fff"/></svg>'
     };
 
     // Initialize Cytoscape with the dagre layout for directed graph visualization
@@ -297,36 +301,32 @@
                 selector: 'node.waiting',
                 style: {
                     'border-color': '#d0d7de',
-                    'border-width': 1
+                    'border-width': 1,
+                    'border-style': 'solid',
+                    'opacity': 0.9
                 }
             },
             {
                 selector: 'node.pending',
                 style: {
                     'border-color': '#d0d7de',
-                    'border-width': 1
+                    'border-width': 1,
+                    'border-style': 'dotted',
+                    'opacity': 0.7
                 }
             },
             {
                 selector: 'node.starting',
                 style: {
                     'border-color': '#d0d7de',
-                    'border-width': 1,
-                    'animation-name': 'pulse',
-                    'animation-duration': '2s',
-                    'animation-timing-function': 'ease-in-out',
-                    'animation-iteration-count': 'infinite'
+                    'border-width': 1
                 }
             },
             {
                 selector: 'node.running',
                 style: {
                     'border-color': '#d0d7de',
-                    'border-width': 1,
-                    'animation-name': 'pulse',
-                    'animation-duration': '2s',
-                    'animation-timing-function': 'ease-in-out',
-                    'animation-iteration-count': 'infinite'
+                    'border-width': 1
                 }
             },
             {

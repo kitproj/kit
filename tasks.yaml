@@ -26,7 +26,6 @@ tasks:
     - ./demo/go/go
     dependencies:
     - build-app
-    - run-k8s
     env:
       PORT: "9090"
     ports:
