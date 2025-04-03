@@ -1,355 +1,202 @@
-# Kit
+# Kit - Unified Workflow Engine for Software Development
 
 [![CodeQL](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml)
 [![Go](https://github.com/kitproj/kit/actions/workflows/go.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/go.yml)
 
-Kit is a workflow engine for software development.
+## What is Kit?
 
-Kit combines task execution (like Makefile or Taskfile), service orchestration (like Foreman), container management (
-like Docker Compose), Kubernetes resource
-management (like Tilt, Skaffold), and a focus on local development (like Garden) in one binary.
+Kit is a powerful workflow engine that simplifies complex software development environments by combining multiple tools into a single binary:
 
-For example, a `tasks.yaml` file can describe a Go project. It could start out by downloading a Helm chart, applying
-that to a cluster and at the same time starting a local MySQL database, automatically starting port-forwards for both.
-It could then generate some souce code, build the Go service, and
-start the service. If a file changes, it could rebuild the project and restart the service. Meanwhile, it is
-downloading, building and serving a Yarn project, configuring a Kubernetes cluster, and setting up secrets.
+- **Task execution** (like Makefile or Taskfile)
+- **Service orchestration** (like Foreman)
+- **Container management** (like Docker Compose)
+- **Kubernetes resource management** (like Tilt, Skaffold)
+- **Local development focus** (like Garden)
 
-It's aimed at supporting more complex development use cases, where you need to run several software components at the
-same time.
+With Kit, you can define and manage complex workflows in a single `tasks.yaml` file, making it ideal for projects that require running multiple components simultaneously.
 
-![img.png](img.png)
+![Kit UI Screenshot](img.png)
 
-## Install
+## Key Features
 
-Like `jq`, `kit` is a small standalone binary. You can download it from
-the [releases page](https://github.com/kitproj/kit/releases/latest).
+- **Single binary** - Easy to install and use
+- **Dependency management** - Define task dependencies in a DAG
+- **Multiple task types** - Run commands, containers, Kubernetes resources
+- **Auto-restart** - Automatically restart services on failure
+- **File watching** - Re-run tasks when files change
+- **Port forwarding** - Forward ports from services to host
+- **Web UI** - Visualize your workflow and monitor task status
 
-The recommended way to install is to download the binary and put it in your `PATH`:
+## Quick Start
+
+### Installation
+
+Download the standalone binary from the [releases page](https://github.com/kitproj/kit/releases/latest):
 
 ```bash
+# For Linux
 sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.101/kit_v0.1.101_linux_386
 sudo chmod +x /usr/local/bin/kit
-```
 
-For Go users, you can install it with:
-
-```bash
+# For Go users
 go install github.com/kitproj/kit@v0.1.101
 ```
 
-## Usage
+### Basic Usage
 
-Workflows are described by a directed acyclic graph (DAG) of tasks.
-
-Create a [`tasks.yaml`](tasks.yaml) file, e.g.:
+1. Create a `tasks.yaml` file in your project:
 
 ```yaml
 tasks:
   build:
     command: go build .
+    watch: .  # Auto-rebuild when files change
   run:
-    dependencies: [ build ]
-    command: go run .
+    dependencies: [build]
+    command: ./myapp
+    ports: [8080]  # Define as a service that listens on port 8080
 ```
 
-Start:
+2. Start your workflow:
 
 ```bash
-kit build
+kit run  # Run the 'run' task and its dependencies
 ```
 
-### Jobs vs Service
+## Core Concepts
 
-Every task is either a **job** or a **service**. A job is a task that runs once and exits, a service is a task that runs
-indefinitely and listens on a port.
+### Jobs vs Services
 
-By default, a task is a job. To make a task a service, add a `ports` field:
-
-```yaml
-service:
-  command: go run .
-  ports: [ 8080 ]
-```
-
-The ports will be forwarded from the host to the service. A service will be restarted if it does not start-up (i.e. it
-is listening on the port), or it exits with an error (non-zero exit code).
-
-Jobs, on the other hand, are not restarted if they error.
-
-You can override this by setting `restartPolicy` to `Never`:
+- **Jobs**: Run once and exit (default)
+- **Services**: Run indefinitely and listen on ports
 
 ```yaml
-job:
-  command: go run .
-  # Always, Never, OnFailure
-  # jobs default to Never
-  # services default to Always
-  restartPolicy: Never
-```
-
-Kit will exit if:
-
-- Any task that cannot be restarted fails.
-- If all requested tasks complete successfully (e.g. test suite) and they should not be restarted.
-- You press `Ctrl+C`.
-
-### Dependencies
-
-Tasks can depend on other tasks:
-
-```yaml
+# Job example
 build:
   command: go build .
-test:
-  command: go test .
-  dependencies: [ build ]
+
+# Service example
+api:
+  command: ./api-server
+  ports: [8080]
 ```
 
-Tasks will only be started if the dependencies have completed successfully, or if the task is a service, it is running
-and listening on its port.
+Services automatically restart on failure. Configure restart behavior with `restartPolicy` (Always, Never, OnFailure).
 
-### Tasks
+### Task Types
 
-#### Host Task
+#### Host Tasks
 
-A **host task** runs on the host machine. It is defined by a `command`:
+Run commands on your local machine:
 
 ```yaml
 build:
   command: go build .
 ```
 
-Once a job completes successfully, its downstream task will be started. Once a service is listing on its port, its
-downstream task are started.
+#### Shell Tasks
 
-Unlike a plain task, if a service does not start-up (i.e. it is listening on the port), it will be restarted. You can
-specify a probe to determine if the service is running correctly:
+Run shell scripts:
 
 ```yaml
-service:
-  command: go run .
-  ports: [ 8080 ]
-  readinessProbe:
-    httpGet:
-      path: /healthz 
-```
-
-Sometimes a task is a service, but you don't know what port it'll listen on. You can explicitly set the type as a
-service:
-
-```yaml
-service:
-  command: go run .
-  type: Service  
-```
-
-Sometimes you just want a task to block indefinitely, often you'll have a task named `up` that does this:
-
-```yaml
-up:
-  command: cat
-```
-
-#### Shell Task
-
-A **shell task** is just a host task that runs in a shell:
-
-```yaml
-shell:
+setup:
   sh: |
     set -eux
-    echo "Hello, world!"
+    echo "Setting up environment..."
+    mkdir -p ./data
 ```
 
-#### Container Task
+#### Container Tasks
 
-A **container task** runs in a container. It is defined by an `image`:
+Run Docker containers:
 
 ```yaml
-mysql:
-  image: mysql
-  ports: [ 3306:3306 ]
+database:
+  image: postgres:14
+  ports: [5432:5432]
+  env:
+    - POSTGRES_PASSWORD=password
 ```
 
-The ports will be forwarded from the host to the container.
-
-If the image is a path to a directory containing Dockerfile, it will be built and run automatically:
+Kit can also build and run containers from a Dockerfile:
 
 ```yaml
-kafka:
-  image: ./src/images/kafka
+api:
+  image: ./src/api  # Directory with Dockerfile
+  ports: [8080]
 ```
 
-#### Kubernetes Task
+#### Kubernetes Tasks
 
-A **Kubernetes task** deploys manifests to a Kubernetes cluster, it is defined by `manifests`:
+Deploy and manage Kubernetes resources:
 
 ```yaml
 deploy:
   namespace: default
   manifests:
-    - manifests/
+    - k8s/
     - service.yaml
-  ports: [ 80:8080 ]
+  ports: [80:8080]  # Forward cluster port 80 to local port 8080
 ```
 
-The ports will be forwarded from the Kubernetes cluster to the host.
+### Advanced Features
 
-#### No-op Task
-
-A **no-op task** is a task that does nothing, depends on all other tasks:
+#### Task Dependencies
 
 ```yaml
-up:
-  dependencies: [ deploy ]
+test:
+  dependencies: [build, database]
+  command: go test ./...
 ```
 
-No-op tasks are always successful.
-
-It is common to want to keep kit running when this happens, you can do this by setting the type to `Service`:
+#### Environment Variables
 
 ```yaml
-up:
-  type: Service
-  dependencies: [ deploy ]
-```
-
-### Environment Variables
-
-A task can have **environment variables**:
-
-```yaml
-foo:
-  command: go run .
+server:
+  command: ./server
   env:
-    - FOO=1
-  # environment variables from a file
-  envfile: .env
+    - PORT=8080
+    - DEBUG=true
+  envfile: .env  # Load from file
 ```
 
-### Watches
-
-A task can be **automatically re-run** when a file changes:
+#### File Watching
 
 ```yaml
 build:
   command: go build .
-  watch: src/
+  watch: src/  # Rebuild when files in src/ change
 ```
 
-### Stalled Tasks
+#### Task Grouping
 
-Tasks are considered stalled if they do not output anything for 30s by default. You can change this with the
-`stalledTimeout` field:
-
-```yaml
-build:
-  command: go build .
-  stalledTimeout: 1m
-```
-
-You might wish to reduce this if the task waits for the user to do something.
-
-You might wish to increase this if the task does not output much.
-
-### Targets
-
-If a task produces an output, you can avoid repeating work by specifying the **task target**:
-
-```yaml
-build:
-  command: go build .
-  target: bin/app
-```
-
-The task will be skipped if the target is newer that the sources (just like Make).
-
-### Mutexes and Semaphores
-
-Use **mutexes** and **semaphores** to control concurrency:
-
-If you want to prevent two tasks from running at the same time, use a mutex:
+Organize tasks visually in the UI:
 
 ```yaml
 tasks:
-  foo:
-    mutex: my-mutex
-  bar:
-    mutex: my-mutex
-```
-
-If you want to limit the number of tasks that can run at the same time, use a semaphore:
-
-```yaml
-# only two can run at the same time
-semaphores:
-  my-semaphore: 2
-tasks:
-  foo:
-    semaphore: my-semaphore
-  bar:
-    semaphore: my-semaphore
-```
-
-### Logging
-
-Sometimes a task logs too much, you can send logs to a file:
-
-```yaml 
-build:
-  command: go build .
-  log: logs/build.log
-```
-
-### Skipping Tasks
-
-You can skip tasks by using the `-s` flag. This is useful if you want to run that task elsewhere (e.g. in IDE with
-debugger connected to it):
-
-```bash
-kit -s foo,bar up
-```
-
-### User Interface
-
-The user interface runs on port 3000 by default. The UI provides the following features:
-
-- Displays the graph of the workflow, showing dependencies between tasks.
-- Updates the graph as each task change status (e.g. starts or finishes).
-- Read and follows logs.
-
-### Task Grouping
-
-Tasks can be organized into groups for better visualization in the UI. This helps to logically organize related tasks together:
-
-```yaml
-tasks:
-  build-app:
-    command: go build -v .
-    watch:
-    - main.go
-    group: app
-  run-app:
-    command: ./app
-    dependencies: [ build-app ]
-    ports: [ 8080 ]
-    group: app
-  database:
+  api:
+    command: ./api
+    ports: [8080]
+    group: backend
+  db:
     image: postgres
-    ports: [ 5432 ]
-    group: infrastructure
-  redis:
-    image: redis
-    ports: [ 6379 ]
-    group: infrastructure
+    ports: [5432]
+    group: backend
+  ui:
+    command: npm start
+    ports: [3000]
+    group: frontend
 ```
-
-In this example, tasks are organized into two groups: `app` and `infrastructure`. In the UI, tasks within the same group will be visually grouped together, making it easier to understand the structure of your workflow.
-
-Groups are purely visual and do not affect task execution or dependencies. They simply provide a way to organize your workflow diagram for better readability.
 
 ## Documentation
 
-- [Examples](docs/examples) - examples of how to use kit, e.g. with MySQL, or Kafka
-- [Reference](docs/reference) - reference documentation for the various types in kit
+- [Examples](docs/examples) - Practical examples (MySQL, Kafka, etc.)
+- [Reference](docs/reference) - Detailed configuration options
+
+## Contributing
+
+Contributions are welcome! Please see our [contributing guidelines](CONTRIBUTING.md) for more information.
+
+## License
+
+[MIT License](LICENSE)
