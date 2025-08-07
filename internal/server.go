@@ -20,7 +20,7 @@ import (
 //go:embed index.html
 var indexHTML string
 
-func StartServer(ctx context.Context, portOffset int, wg *sync.WaitGroup, dag DAG[*TaskNode], events chan *TaskNode) {
+func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*TaskNode], events chan *TaskNode) {
 
 	streams := &sync.Map{}
 
@@ -137,19 +137,7 @@ func StartServer(ctx context.Context, portOffset int, wg *sync.WaitGroup, dag DA
 		}
 	})
 
-	// find the first free port
-	port := portOffset
-	for ; port < portOffset+10; port++ {
-		x, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
-		if err != nil {
-			continue
-		}
-		x.Close()
-		break
-	}
-
 	server := &http.Server{
-		// only allow local connections
 		Addr:    fmt.Sprintf("localhost:%d", port),
 		Handler: mux,
 		BaseContext: func(listener net.Listener) context.Context {
@@ -157,6 +145,7 @@ func StartServer(ctx context.Context, portOffset int, wg *sync.WaitGroup, dag DA
 		},
 	}
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
@@ -167,9 +156,7 @@ func StartServer(ctx context.Context, portOffset int, wg *sync.WaitGroup, dag DA
 
 	log.Printf("UI available on http://%s", server.Addr)
 
-	wg.Add(1)
-	err := server.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic(err)
 	}
 }
