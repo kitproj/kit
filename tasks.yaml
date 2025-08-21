@@ -1,12 +1,13 @@
+port: 3001
 tasks:
   build-app:
     command:
-    - go
-    - build
-    - -v
-    - .
+      - go
+      - build
+      - -v
+      - .
     watch:
-    - main.go
+      - main.go
     workingDir: demo/go
     group: app
   error:
@@ -23,25 +24,25 @@ tasks:
     stalledTimeout: 5s
   run-app:
     command:
-    - ./demo/go/go
+      - ./demo/go/go
     dependencies:
-    - build-app
+      - build-app
     env:
       PORT: "9090"
     ports:
-    - "9090"
+      - "9090"
     group: app
   run-container:
     image: httpd
     log: baz.log
     ports:
-    - 80:10080
+      - 80:10080
     readinessProbe: http://localhost:10080?failureThreshold=20&initialDelay=3s&period=5s&successThreshold=1
   run-k8s:
     manifests:
-    - testdata
+      - testdata
     ports:
-    - 80:8080
+      - 80:8080
   script:
     sh: |
       set -eu
@@ -55,18 +56,18 @@ tasks:
     type: Service
   skipped:
     targets:
-    - go.mod
+      - go.mod
   up:
     dependencies:
-    - run-app
-    - script
-    - run-container
-    - run-k8s
-    - service
-    - logs
-    - skipped
+      - run-app
+      - script
+      - run-container
+      - run-k8s
+      - service
+      - logs
+      - skipped
 terminationGracePeriodSeconds: 3
 volumes:
-- hostPath:
-    path: .
-  name: work
+  - hostPath:
+      path: .
+    name: work

@@ -27,7 +27,7 @@ func main() {
 	printVersion := false
 	configFile := ""
 	tasksToSkip := ""
-	port := 0
+	port := -1 // -1 means unspecified, 0 means disabled, >0 means specified
 	openBrowser := false
 	rewrite := false
 
@@ -35,7 +35,7 @@ func main() {
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
 	flag.StringVar(&configFile, "f", "tasks.yaml", "config file (default tasks.yaml)")
 	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
-	flag.IntVar(&port, "p", 3000, "port to start UI on (default 3000, zero disables)")
+	flag.IntVar(&port, "p", port, "port to start UI on (default 3000, zero disables)")
 	flag.BoolVar(&openBrowser, "b", false, "open the UI in the browser (default false)")
 	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
 	flag.Parse()
@@ -73,6 +73,15 @@ func main() {
 				return fmt.Errorf("failed to marshal %s: %w", configFile, err)
 			}
 			return os.WriteFile(configFile, out, 0644)
+		}
+
+		// if wf.Port is specified, use that, unless the user has specified a port on the command line
+		if port == -1 {
+			if wf.Port != nil {
+				port = int(*wf.Port)
+			} else {
+				port = 3000 // default port
+			}
 		}
 
 		// split the tasks on comma, but don't end up with a single entry of ""
