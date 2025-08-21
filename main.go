@@ -77,8 +77,8 @@ func main() {
 
 		// if wf.Port is specified, use that, unless the user has specified a port on the command line
 		if port == -1 {
-			if wf.Port > 0 {
-				port = wf.Port
+			if wf.Port != nil {
+				port = *wf.Port
 			} else {
 				port = 3000 // default port
 			}
