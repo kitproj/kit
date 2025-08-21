@@ -4,6 +4,8 @@ import "time"
 
 // Task is a unit of work that should be run.
 type Spec struct {
+	// Port is the port that should be used for the user interface.
+	Port int `json:"port,omitempty"`
 	// TerminationGracePeriodSeconds is the grace period for terminating the workflow.
 	TerminationGracePeriodSeconds *int32 `json:"terminationGracePeriodSeconds,omitempty"`
 	// Tasks is a list of tasks that should be run.
