@@ -354,6 +354,10 @@
     },
     "Workflow": {
       "properties": {
+        "port": {
+          "type": "integer",
+          "title": "port"
+        },
         "terminationGracePeriodSeconds": {
           "type": "integer",
           "title": "terminationGracePeriodSeconds"
