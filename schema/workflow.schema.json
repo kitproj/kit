@@ -293,6 +293,11 @@
           "type": "string",
           "title": "group",
           "description": "The group this task belongs to. Tasks in the same group will be visually grouped together in the UI."
+        },
+        "default": {
+          "type": "boolean",
+          "title": "default",
+          "description": "Whether this is the default task to run if no task is specified."
         }
       },
       "additionalProperties": false,

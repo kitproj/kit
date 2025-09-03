@@ -90,6 +90,15 @@ func main() {
 			split = []string{}
 		}
 
+		if len(taskNames) == 0 {
+			for taskName, task := range wf.Tasks {
+				if task.Default {
+					taskNames = []string{taskName}
+					break
+				}
+			}
+		}
+
 		return internal.RunSubgraph(
 			ctx,
 			cancel,

@@ -68,6 +68,8 @@ type Task struct {
 	StalledTimeout *metav1.Duration `json:"stalledTimeout,omitempty"`
 	// The group this task belongs to. Tasks in the same group will be visually grouped together in the UI.
 	Group string `json:"group,omitempty"`
+	// Whether this is the default task to run if no task is specified.
+	Default bool `json:"default,omitempty"`
 }
 
 func (t *Task) GetHostPorts() []uint16 {

@@ -44,6 +44,7 @@ A task is a container or a command to run.
 | [restartPolicy](#restartpolicy)     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")     |
 | [stalledTimeout](#stalledtimeout)   | `object`  | Optional | cannot be null | [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")                         |
 | [group](#group)                     | `string`  | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-group.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/group")                     |
+| [default](#default)                 | `boolean` | Optional | cannot be null | [Untitled schema](workflow-defs-task-properties-default.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/default")                 |
 
 ## type
 
@@ -514,3 +515,21 @@ The group this task belongs to. Tasks in the same group will be visually grouped
 ### group Type
 
 `string` ([group](workflow-defs-task-properties-group.md))
+
+## default
+
+Whether this is the default task to run if no task is specified.
+
+`default`
+
+*   is optional
+
+*   Type: `boolean` ([default](workflow-defs-task-properties-default.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-task-properties-default.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/default")
+
+### default Type
+
+`boolean` ([default](workflow-defs-task-properties-default.md))
