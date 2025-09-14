@@ -491,7 +491,7 @@ func (k *k8s) parseCPUValue(cpuStr string) (float64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return milli / 10, nil // Convert millicores to percentage (assuming 1 core = 100%)
+		return milli / 10, nil // Convert millicores to percentage (1000m = 100%)
 	}
 
 	cores, err := strconv.ParseFloat(cpuStr, 64)
