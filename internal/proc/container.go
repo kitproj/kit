@@ -333,16 +333,26 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	}
 
 	// Calculate memory usage (subtract cache if available)
-	memoryUsage := dockerStats.MemoryStats.Usage
+	memoryBytes := dockerStats.MemoryStats.Usage
 	if dockerStats.MemoryStats.Stats["cache"] != 0 {
-		memoryUsage -= dockerStats.MemoryStats.Stats["cache"]
+		memoryBytes -= dockerStats.MemoryStats.Stats["cache"]
 	}
 
-	// For CPU, we'd need previous stats to calculate percentage
-	// For now, return 0 for simplicity
+	// Calculate CPU usage in millicores
+	var cpuMillicores uint64
+	if dockerStats.PreCPUStats.CPUUsage.TotalUsage != 0 {
+		cpuDelta := dockerStats.CPUStats.CPUUsage.TotalUsage - dockerStats.PreCPUStats.CPUUsage.TotalUsage
+		systemDelta := dockerStats.CPUStats.SystemUsage - dockerStats.PreCPUStats.SystemUsage
+
+		if systemDelta > 0 {
+			cpuPercent := (float64(cpuDelta) / float64(systemDelta)) * float64(len(dockerStats.CPUStats.CPUUsage.PercpuUsage))
+			cpuMillicores = uint64(cpuPercent * 1000) // Convert to millicores
+		}
+	}
+
 	return &types.Metrics{
-		CPU: 0, // Simplified - would need time tracking for accurate CPU %
-		Mem: memoryUsage,
+		CPU: cpuMillicores,
+		Mem: memoryBytes,
 	}, nil
 }
 

@@ -119,19 +119,21 @@ func (h *host) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	}
 
 	// Parse the CPU usage from the first field.
-	cpu, err := strconv.ParseFloat(fields[0], 64)
+	cpuPercentage, err := strconv.ParseFloat(fields[0], 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse CPU usage '%s': %w", fields[0], err)
 	}
+
+	cpuMillicores := cpuPercentage * 10 // Convert percentage to millicores (1% = 10 millicores)
 
 	rssMemoryKB, err := strconv.ParseInt(fields[1], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse RSS memory '%s': %w", fields[1], err)
 	}
 
-	// Convert RSS memory from KB to bytes.
-	memory := uint64(rssMemoryKB * 1024)
+	// Convert RSS memoryBytes from KB to bytes.
+	memoryBytes := uint64(rssMemoryKB * 1024)
 
-	return &types.Metrics{CPU: cpu, Mem: memory}, nil
+	return &types.Metrics{CPU: uint64(cpuMillicores), Mem: memoryBytes}, nil
 
 }

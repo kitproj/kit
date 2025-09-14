@@ -467,7 +467,7 @@ func (k *k8s) parseKubectlTopOutput(output string) (*types.Metrics, error) {
 	cpuStr := fields[1]
 	memoryStr := fields[2]
 
-	cpuPercent, err := k.parseCPUValue(cpuStr)
+	cpuMillicores, err := k.parseCPUValue(cpuStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse CPU: %w", err)
 	}
@@ -478,12 +478,12 @@ func (k *k8s) parseKubectlTopOutput(output string) (*types.Metrics, error) {
 	}
 
 	return &types.Metrics{
-		CPU: cpuPercent,
+		CPU: cpuMillicores,
 		Mem: memoryBytes,
 	}, nil
 }
 
-func (k *k8s) parseCPUValue(cpuStr string) (float64, error) {
+func (k *k8s) parseCPUValue(cpuStr string) (uint64, error) {
 	// Handle millicores (e.g., "250m") and cores (e.g., "1.5")
 	if strings.HasSuffix(cpuStr, "m") {
 		milliStr := strings.TrimSuffix(cpuStr, "m")
@@ -491,14 +491,14 @@ func (k *k8s) parseCPUValue(cpuStr string) (float64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return milli / 10, nil // Convert millicores to percentage (1000m = 100%)
+		return uint64(milli), nil
 	}
 
 	cores, err := strconv.ParseFloat(cpuStr, 64)
 	if err != nil {
 		return 0, err
 	}
-	return cores * 100, nil // Convert cores to percentage
+	return uint64(cores * 1000), nil // Convert cores to millicores
 }
 
 func (k *k8s) parseMemoryValue(memoryStr string) (uint64, error) {
