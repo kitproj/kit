@@ -276,7 +276,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		podKey := pod.Namespace + "/" + pod.Name
 
 		if !slices.Contains(k.pods, podKey) {
-
+			k.pods = append(k.pods, podKey)
 		}
 
 		running := make(map[string]bool)
