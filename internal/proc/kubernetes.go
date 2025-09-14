@@ -40,10 +40,10 @@ import (
 )
 
 type k8s struct {
-	log      *log.Logger
-	spec     types.Spec
-	name     string
-	podNames []string
+	log  *log.Logger
+	spec types.Spec
+	name string
+	pods []string // namespace/name
 	types.Task
 }
 
@@ -273,8 +273,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	processPod := func(obj any) {
 		pod := obj.(*corev1.Pod)
 
-		if !slices.Contains(k.podNames, pod.Name) {
-			k.podNames = append(k.podNames, pod.Name)
+		podKey := pod.Namespace + "/" + pod.Name
+
+		if !slices.Contains(k.pods, podKey) {
+
 		}
 
 		running := make(map[string]bool)
@@ -434,8 +436,11 @@ func sortUnstructureds(uns []*unstructured.Unstructured) {
 
 func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	sum := &types.Metrics{}
-	for _, podName := range k.podNames {
-		metrics, err := k.getMetrics(ctx, podName)
+	for _, podKey := range k.pods {
+		parts := strings.SplitN(podKey, "/", 2)
+		namespace := parts[0]
+		podName := parts[1]
+		metrics, err := k.getMetrics(ctx, namespace, podName)
 		if err != nil {
 			return nil, err
 		}
@@ -445,8 +450,8 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	return sum, nil
 }
 
-func (k *k8s) getMetrics(ctx context.Context, podName string) (*types.Metrics, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", "top", "pod", podName, "--no-headers")
+func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
+	cmd := exec.CommandContext(ctx, "kubectl", "top", "pod", "-n", namespace, podName, "--no-headers")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("kubectl top failed %q: %w", string(output), err)
