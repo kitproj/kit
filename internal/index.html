@@ -1,812 +1,898 @@
 <!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>...</title>
+    <head>
+        <meta charset="utf-8" />
+        <title>...</title>
 
-    <!-- Load required libraries for graph visualization -->
-    <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
-    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+        <!-- Load required libraries for graph visualization -->
+        <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+        <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+        <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 
-    <style id="css">
-        /* Base styles for the page */
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #f6f8fa; /* GitHub-style light gray background */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; /* GitHub font stack */
-            color: #24292f;
-        }
-
-        /* Flexbox layout for containers */
-        .flex {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Common styles for container boxes */
-        .box {
-            border: 0;
-            border-radius: 6px;
-            margin: 16px;
-            background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12); /* Subtle shadow for depth */
-            overflow: hidden;
-        }
-
-        /* Graph container styles */
-        #cy {
-            height: 50vh; /* Take half of the viewport height */
-            background-color: #f6f8fa; /* Match GitHub's background color */
-            cursor: grab; /* Show grab cursor to indicate users can grab to pan */
-        }
-
-        #cy:active {
-            cursor: grabbing; /* Show grabbing cursor when actively panning */
-        }
-
-        /* Resizer element between graph and logs */
-        #resizer {
-            height: 4px;
-            cursor: row-resize;
-            margin: 0;
-            background-color: #f6f8fa;
-        }
-
-        /* Log container styles - dark theme for better readability */
-        #log-container {
-            background-color: #0d1117; /* GitHub dark theme background */
-            color: #c9d1d9; /* GitHub dark theme text color */
-            border: 1px solid #30363d; /* GitHub dark theme border */
-            border-radius: 6px;
-        }
-
-        /* Header area of log container */
-        #log-container > div.flex {
-            padding: 8px 16px;
-            border-bottom: 1px solid #30363d;
-            background-color: #161b22; /* Slightly lighter than main background */
-        }
-
-        /* Log content area */
-        #logs {
-            margin-top: 0 8px;
-            overflow: auto;
-            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; /* Monospace font for logs */
-            padding: 16px;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #c9d1d9;
-        }
-
-        /* Line numbers in logs */
-        .lineNumber {
-            color: #8b949e; /* Muted color for line numbers */
-            margin-right: 16px;
-            user-select: none; /* Prevent selection of line numbers */
-        }
-
-        /* Link styling */
-        a {
-            color: #58a6ff; /* GitHub dark theme link color */
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        /* Auto-scroll toggle button */
-        #follow {
-            color: #58a6ff;
-            font-weight: 500;
-        }
-
-        /* Task name in log header */
-        #name {
-            font-weight: 600;
-            color: #c9d1d9;
-        }
-
-        /* Task message in log header */
-        #message {
-            color: #8b949e;
-        }
-
-        /* Status message */
-        #status {
-            color: #8b949e;
-            font-size: 14px;
-        }
-
-        /* Animation for pulsing elements (used for running/starting nodes) */
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
+        <style id="css">
+            /* Base styles for the page */
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                background: #f6f8fa; /* GitHub-style light gray background */
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+                    Arial, sans-serif; /* GitHub font stack */
+                color: #24292f;
             }
-            50% {
-                opacity: 0.5;
-            }
-        }
 
-        /* Animation for spinning elements (used in running/starting icons) */
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
+            /* Flexbox layout for containers */
+            .flex {
+                display: flex;
+                justify-content: space-between;
             }
-            100% {
-                transform: rotate(360deg);
+
+            /* Common styles for container boxes */
+            .box {
+                border: 0;
+                border-radius: 6px;
+                margin: 16px;
+                background-color: #fff;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); /* Subtle shadow for depth */
+                overflow: hidden;
             }
-        }
 
-        /* Animation for pulsing nodes */
-        .node.running, .node.starting {
-            animation: pulse 2s infinite ease-in-out;
-        }
+            /* Graph container styles */
+            #cy {
+                height: 50vh; /* Take half of the viewport height */
+                background-color: #f6f8fa; /* Match GitHub's background color */
+                cursor: grab; /* Show grab cursor to indicate users can grab to pan */
+            }
 
-        /* Apply spin animation to elements with this class */
-        .spin-animation {
-            animation: spin 1.5s linear infinite;
-            transform-origin: center;
-            transform-box: fill-box;
-        }
-    </style>
-</head>
-<body>
-<!-- Main graph container -->
-<div id="cy" class="box">
-</div>
-<!-- Resizable divider between graph and logs -->
-<div id="resizer"></div>
-<!-- Log container with header and content area -->
-<div class="box" id="log-container">
-    <div class="flex">
-        <div>
-            <b id="name">Click on a task to see logs</b>
-            <span id="message"></span>
+            #cy:active {
+                cursor: grabbing; /* Show grabbing cursor when actively panning */
+            }
+
+            /* Resizer element between graph and logs */
+            #resizer {
+                height: 4px;
+                cursor: row-resize;
+                margin: 0;
+                background-color: #f6f8fa;
+            }
+
+            /* Log container styles - dark theme for better readability */
+            #log-container {
+                background-color: #0d1117; /* GitHub dark theme background */
+                color: #c9d1d9; /* GitHub dark theme text color */
+                border: 1px solid #30363d; /* GitHub dark theme border */
+                border-radius: 6px;
+            }
+
+            /* Header area of log container */
+            #log-container > div.flex {
+                padding: 8px 16px;
+                border-bottom: 1px solid #30363d;
+                background-color: #161b22; /* Slightly lighter than main background */
+            }
+
+            /* Log content area */
+            #logs {
+                margin-top: 0 8px;
+                overflow: auto;
+                font-family:
+                    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                    "Liberation Mono", monospace; /* Monospace font for logs */
+                padding: 16px;
+                font-size: 12px;
+                line-height: 1.5;
+                color: #c9d1d9;
+            }
+
+            /* Line numbers in logs */
+            .lineNumber {
+                color: #8b949e; /* Muted color for line numbers */
+                margin-right: 16px;
+                user-select: none; /* Prevent selection of line numbers */
+            }
+
+            /* Link styling */
+            a {
+                color: #58a6ff; /* GitHub dark theme link color */
+                text-decoration: none;
+            }
+
+            a:hover {
+                text-decoration: underline;
+            }
+
+            /* Auto-scroll toggle button */
+            #follow {
+                color: #58a6ff;
+                font-weight: 500;
+            }
+
+            /* Task name in log header */
+            #name {
+                font-weight: 600;
+                color: #c9d1d9;
+            }
+
+            /* Task message in log header */
+            #message {
+                color: #8b949e;
+            }
+
+            /* Status message */
+            #status {
+                color: #8b949e;
+                font-size: 14px;
+            }
+
+            /* Animation for pulsing elements (used for running/starting nodes) */
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
+            /* Animation for spinning elements (used in running/starting icons) */
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Animation for pulsing nodes */
+            .node.running,
+            .node.starting {
+                animation: pulse 2s infinite ease-in-out;
+            }
+
+            /* Apply spin animation to elements with this class */
+            .spin-animation {
+                animation: spin 1.5s linear infinite;
+                transform-origin: center;
+                transform-box: fill-box;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Main graph container -->
+        <div id="cy" class="box"></div>
+        <!-- Resizable divider between graph and logs -->
+        <div id="resizer"></div>
+        <!-- Log container with header and content area -->
+        <div class="box" id="log-container">
+            <div class="flex">
+                <div>
+                    <b id="name">Click on a task to see logs</b>
+                    <span id="message"></span>
+                </div>
+                <div id="follow" style="cursor: pointer">Auto-scrolling</div>
+            </div>
+            <div id="logs"></div>
+            <div
+                id="status"
+                style="
+                    position: absolute;
+                    top: 20px;
+                    left: 20px;
+                    font-size: 14px;
+                    color: #8b949e;
+                "
+            >
+                ...
+            </div>
         </div>
-        <div id="follow" style="cursor:pointer">Auto-scrolling</div>
-    </div>
-    <div id="logs"></div>
-    <div id="status" style="position: absolute; top: 20px; left: 20px; font-size: 14px; color: #8b949e;">...</div>
-</div>
 
+        <script id="js">
+            // Define SVG icons for each task state
+            // Each icon is a 16x16 SVG with a colored circle and a distinctive symbol
+            const icons = {
+                // Waiting: Yellow circle with pause symbol (ready to execute)
+                waiting:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFEB3B" stroke="#FFEB3B" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
 
-<script id="js">
-    // Define SVG icons for each task state
-    // Each icon is a 16x16 SVG with a colored circle and a distinctive symbol
-    const icons = {
-        // Waiting: Yellow circle with pause symbol (ready to execute)
-        waiting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFEB3B" stroke="#FFEB3B" stroke-width="0"/><rect x="5" y="4" width="2" height="8" fill="#fff"/><rect x="9" y="4" width="2" height="8" fill="#fff"/></svg>',
-        
-        // Pending: Orange circle with block/stop symbol (waiting for dependencies to complete)
-        pending: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFA726" stroke="#FFA726" stroke-width="0"/><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="4.5" y1="11.5" x2="11.5" y2="4.5" stroke="#fff" stroke-width="1.5"/></svg>',
-        
-        // Starting: Amber circle with hourglass symbol (initialization)
-        starting: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#f59e0b" stroke-width="0"/><path d="M5 4h6v1l-3 3-3-3z M5 12h6v-1l-3-3-3 3z" fill="#fff"/></svg>',
-        
-        // Running: Blue circle with white dot (active execution)
-        running: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3" fill="#fff"/></svg>',
-        
-        // Stalled: Purple circle with three dots (not making progress)
-        stalled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8250df" stroke="#8250df" stroke-width="0"/><circle cx="4" cy="8" r="1.5" fill="#fff"/><circle cx="8" cy="8" r="1.5" fill="#fff"/><circle cx="12" cy="8" r="1.5" fill="#fff"/></svg>',
-        
-        // Failed: Red circle with X (error)
-        failed: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#cf222e" stroke="#cf222e" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>',
-        
-        // Succeeded: Green circle with checkmark (completed successfully)
-        succeeded: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#2da44e" stroke="#2da44e" stroke-width="0"/><path fill="#fff" d="M11.28 6.78a.75.75 0 00-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 00-1.06 1.06l2 2a.75.75 0 001.06 0l3.5-3.5z" stroke="#fff" stroke-width="0.5"/></svg>',
-        
-        // Skipped: Light gray circle with skip-forward symbol
-        skipped: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8c959f" stroke="#8c959f" stroke-width="0"/><path d="M4 4l4 4-4 4V4z M9 4l4 4-4 4V4z" fill="#fff"/></svg>',
-        
-        // Cancelled: Dark gray circle with stop symbol (square)
-        cancelled: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#57606a" stroke="#57606a" stroke-width="0"/><rect x="5" y="5" width="6" height="6" fill="#fff"/></svg>'
-    };
+                // Pending: Orange circle with block/stop symbol (waiting for dependencies to complete)
+                pending:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#FFA726" stroke="#FFA726" stroke-width="0"/><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="4.5" y1="11.5" x2="11.5" y2="4.5" stroke="#fff" stroke-width="1.5"/></svg>',
 
-    // Initialize Cytoscape with the dagre layout for directed graph visualization
-    const cy = cytoscape({
-        container: document.getElementById('cy'),
-        // Disable user interaction with nodes
-        userZoomingEnabled: true,    // Allow zooming
-        userPanningEnabled: true,    // Allow panning
-        boxSelectionEnabled: false,  // Disable box selection
-        autounselectify: true,       // Prevent node selection
-        autoungrabify: true,         // Prevent node grabbing/moving
-        style: [
-            // Base node styling - applies to all nodes
-            {
-                selector: 'node',
-                style: {
-                    'label': 'data(label)', // Use the label data property for node text
-                    'text-valign': 'center', // Vertically center the text
-                    'color': '#24292f', // GitHub text color
-                    'cursor': 'pointer',
-                    'background-color': '#ffffff', // White background for nodes
-                    'border-width': 1,
-                    'border-color': '#d0d7de', // Light gray border
-                    'border-opacity': 1,
-                    'shape': 'round-rectangle', // Rounded rectangle shape for nodes
-                    'width': 160, // Fixed width for consistent layout
-                    'height': 18, // Compact height
-                    'font-size': 13,
-                    'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-                    'text-wrap': 'ellipsis', // Truncate text that's too long
-                    'text-max-width': '120px', // Maximum text width before truncation
-                    'padding': 8, // Padding inside nodes
-                    'background-image': 'data(icon)', // Use the icon data property for status icons
-                    'background-position-x': '8px', // Position icon on the left
-                    'background-position-y': '50%', // Center icon vertically
-                    'background-width': '14px', // Icon dimensions
-                    'background-height': '14px',
-                    'background-fit': 'none', // Don't resize the icon
-                    'background-clip': 'none', // Don't clip the icon
-                    'background-image-opacity': 1, // Full opacity for icons
-                    'border-radius': 4, // Rounded corners
-                    'shadow-blur': 1, // Subtle shadow
-                    'shadow-color': 'rgba(0,0,0,0.1)',
-                    'shadow-opacity': 0.3,
-                    'shadow-offset-x': 0,
-                    'shadow-offset-y': 1,
-                    'text-background-shape': 'rectangle'
-                }
-            },
-            // Group node styling
-            {
-                selector: 'node.group',
-                style: {
-                    'shape': 'round-rectangle',
-                    'background-color': '#fbfcfd',
-                    'border-width': 1,
-                    'border-color': '#d0d7de',
-                    'text-valign': 'top',
-                    'text-halign': 'center',
-                    'text-margin-y': 5,
-                    'font-weight': 'bold',
-                    'padding': 10,
-                    'compound-sizing-wrt-labels': 'include',
-                    'text-background-opacity': 0
-                }
-            },
-            // Edge styling - connects nodes with light gray lines
-            {
-                selector: 'edge',
-                style: {
-                    'width': 1, // Thin lines
-                    'line-color': '#d0d7de', // Light gray color
-                    'target-arrow-color': '#d0d7de',
-                    'target-arrow-shape': 'none', // No arrowheads
-                    'curve-style': 'straight', // Straight lines instead of curved
-                }
-            },
-            // Status-specific styling for nodes
-            // Each node type maintains the same border color but different background colors
-            {
-                selector: 'node.succeeded',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.failed',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.waiting',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1,
-                    'border-style': 'solid',
-                    'opacity': 0.9
-                }
-            },
-            {
-                selector: 'node.pending',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1,
-                    'border-style': 'dotted',
-                    'opacity': 0.7
-                }
-            },
-            {
-                selector: 'node.starting',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.running',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.stalled',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.skipped',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            },
-            {
-                selector: 'node.cancelled',
-                style: {
-                    'border-color': '#d0d7de',
-                    'border-width': 1
-                }
-            }
-        ]
-    });
+                // Starting: Amber circle with hourglass symbol (initialization)
+                starting:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#f59e0b" stroke-width="0"/><path d="M5 4h6v1l-3 3-3-3z M5 12h6v-1l-3-3-3 3z" fill="#fff"/></svg>',
 
-    // Add event listeners to handle cursor changes
-    cy.on('mouseover', 'node', function(e) {
-        document.getElementById('cy').style.cursor = 'pointer';
-    });
-    
-    cy.on('mouseout', 'node', function(e) {
-        document.getElementById('cy').style.cursor = 'grab';
-    });
+                // Running: Blue circle with white dot (active execution)
+                running:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#0969da" stroke="#0969da" stroke-width="0"/><circle cx="8" cy="8" r="3" fill="#fff"/></svg>',
 
-    // Get references to DOM elements
-    const status = document.getElementById('status');
-    const name = document.getElementById('name');
-    const message = document.getElementById('message');
-    const logs = document.getElementById("logs");
-    const logsContainer = document.getElementById("log-container");
-    const follow = document.getElementById("follow");
-    const resizer = document.getElementById('resizer');
-    const graphContainer = document.getElementById('cy');
+                // Stalled: Purple circle with three dots (not making progress)
+                stalled:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8250df" stroke="#8250df" stroke-width="0"/><circle cx="4" cy="8" r="1.5" fill="#fff"/><circle cx="8" cy="8" r="1.5" fill="#fff"/><circle cx="12" cy="8" r="1.5" fill="#fff"/></svg>',
 
-    // Auto-scroll flag for logs
-    let autoScroll = true;
+                // Failed: Red circle with X (error)
+                failed: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#cf222e" stroke="#cf222e" stroke-width="0"/><path fill="#fff" d="M5.5 5.5l5 5m0-5l-5 5" stroke="#fff" stroke-width="1.5"/></svg>',
 
-    // Map of phase names to human-readable descriptions (for tooltips)
-    const phaseDescriptions = {
-        waiting: 'Waiting',
-        pending: 'Pending',
-        starting: 'Starting',
-        running: 'Running',
-        stalled: 'Stalled',
-        failed: 'Failed',
-        succeeded: 'Succeeded',
-        skipped: 'Skipped',
-        cancelled: 'Cancelled'
-    };
+                // Succeeded: Green circle with checkmark (completed successfully)
+                succeeded:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#2da44e" stroke="#2da44e" stroke-width="0"/><path fill="#fff" d="M11.28 6.78a.75.75 0 00-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 00-1.06 1.06l2 2a.75.75 0 001.06 0l3.5-3.5z" stroke="#fff" stroke-width="0.5"/></svg>',
 
-    // Variables for log streaming
-    var logSource; // EventSource for logs
-    var lineNumber = 0; // line number for logs
+                // Skipped: Light gray circle with skip-forward symbol
+                skipped:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#8c959f" stroke="#8c959f" stroke-width="0"/><path d="M4 4l4 4-4 4V4z M9 4l4 4-4 4V4z" fill="#fff"/></svg>',
 
-    // Function to convert ANSI escape codes to HTML for colorized logs
-    const ansiToHtml = (ansiString) => {
-        if (!ansiString) return '';
-        
-        // Replace ANSI escape sequences with HTML spans
-        return ansiString.replace(/\u001b\[((?:\d{1,3};?)+)m/g, (match, codes) => {
-            let styles = '';
-            
-            codes.split(';').forEach(code => {
-                code = parseInt(code, 10);
-                
-                if (code === 0) {
-                    // Reset all styles
-                    styles = '';
-                } else if (code === 1) {
-                    // Bold
-                    styles += 'font-weight: bold;';
-                } else if (code === 3) {
-                    // Italic
-                    styles += 'font-style: italic;';
-                } else if (code === 4) {
-                    // Underline
-                    styles += 'text-decoration: underline;';
-                } else if (code >= 30 && code <= 37) {
-                    // Foreground color
-                    styles += `color: ${ansiColor(code)};`;
-                } else if (code >= 90 && code <= 97) {
-                    // Bright foreground color
-                    styles += `color: ${ansiBrightColor(code)};`;
-                } else if (code >= 40 && code <= 47) {
-                    // Background color
-                    styles += `background-color: ${ansiColor(code - 10)};`;
-                } else if (code >= 100 && code <= 107) {
-                    // Bright background color
-                    styles += `background-color: ${ansiBrightColor(code - 10)};`;
-                } else {
-                    styles = ''; // Reset
-                }
-            });
+                // Cancelled: Dark gray circle with stop symbol (square)
+                cancelled:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7" fill="#57606a" stroke="#57606a" stroke-width="0"/><rect x="5" y="5" width="6" height="6" fill="#fff"/></svg>',
+            };
 
-            return `<span style="${styles}">`;
-        }) + '</span>'; // Ensure closing span
-    }
-    
-    // Function to map ANSI color codes to CSS colors
-    const ansiColor = (code) => {
-        const colors = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'];
-        return colors[code - 30];
-    }
-
-    // Function to map ANSI bright color codes to CSS colors
-    const ansiBrightColor = (code) => {
-        const brightColors = ['gray', 'lightcoral', 'lightgreen', 'lightyellow', 'lightblue', 'violet', 'lightcyan', 'white'];
-        return brightColors[code - 90];
-    }
-
-    // Fetch the initial graph data from the server
-    fetch('/dag')
-        .then(response => response.json())
-        .then(data => {
-            // set the title of the page to the name of the graph
-            document.title = data.name;
-
-            // Group nodes by their group property
-            const nodeGroups = {};
-            const ungroupedNodes = [];
-            
-            // First pass: identify all groups and ungrouped nodes
-            Object.values(data.nodes).forEach(node => {
-                if (node.task && node.task.group) {
-                    if (!nodeGroups[node.task.group]) {
-                        nodeGroups[node.task.group] = [];
-                    }
-                    nodeGroups[node.task.group].push(node);
-                } else {
-                    ungroupedNodes.push(node);
-                }
-            });
-            
-            // Create group parent nodes first
-            Object.keys(nodeGroups).forEach(groupName => {
-                cy.add({
-                    group: 'nodes',
-                    data: {
-                        id: `group:${groupName}`,
-                        label: groupName
+            // Initialize Cytoscape with the dagre layout for directed graph visualization
+            const cy = cytoscape({
+                container: document.getElementById("cy"),
+                // Disable user interaction with nodes
+                userZoomingEnabled: true, // Allow zooming
+                userPanningEnabled: true, // Allow panning
+                boxSelectionEnabled: false, // Disable box selection
+                autounselectify: true, // Prevent node selection
+                autoungrabify: true, // Prevent node grabbing/moving
+                style: [
+                    // Base node styling - applies to all nodes
+                    {
+                        selector: "node",
+                        style: {
+                            label: "data(label)", // Use the label data property for node text
+                            "text-valign": "center", // Vertically center the text
+                            color: "#24292f", // GitHub text color
+                            cursor: "pointer",
+                            "background-color": "#ffffff", // White background for nodes
+                            "border-width": 1,
+                            "border-color": "#d0d7de", // Light gray border
+                            "border-opacity": 1,
+                            shape: "round-rectangle", // Rounded rectangle shape for nodes
+                            width: 160, // Fixed width for consistent layout
+                            height: 18, // Compact height
+                            "font-size": 13,
+                            "font-family":
+                                '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+                            "text-wrap": "ellipsis", // Truncate text that's too long
+                            "text-max-width": "120px", // Maximum text width before truncation
+                            padding: 8, // Padding inside nodes
+                            "background-image": "data(icon)", // Use the icon data property for status icons
+                            "background-position-x": "8px", // Position icon on the left
+                            "background-position-y": "50%", // Center icon vertically
+                            "background-width": "14px", // Icon dimensions
+                            "background-height": "14px",
+                            "background-fit": "none", // Don't resize the icon
+                            "background-clip": "none", // Don't clip the icon
+                            "background-image-opacity": 1, // Full opacity for icons
+                            "border-radius": 4, // Rounded corners
+                            "shadow-blur": 1, // Subtle shadow
+                            "shadow-color": "rgba(0,0,0,0.1)",
+                            "shadow-opacity": 0.3,
+                            "shadow-offset-x": 0,
+                            "shadow-offset-y": 1,
+                            "text-background-shape": "rectangle",
+                        },
                     },
-                    classes: 'group'
-                });
-            });
-
-            // Create nodes with icons
-            Object.values(data.nodes).forEach(node => {
-                const nodePhase = node.phase || 'pending';
-                // Ensure the icon is properly encoded for use as a data URL
-                const iconSvg = icons[nodePhase];
-                const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
-                
-                // Add the node to the graph
-                const nodeData = {
-                    group: 'nodes',
-                    data: {
-                        id: node.name,
-                        label: node.name,
-                        phase: nodePhase,
-                        message: node.message || '',
-                        ports: node.task?.ports || '',
-                        icon: iconDataUrl
+                    // Group node styling
+                    {
+                        selector: "node.group",
+                        style: {
+                            shape: "round-rectangle",
+                            "background-color": "#fbfcfd",
+                            "border-width": 1,
+                            "border-color": "#d0d7de",
+                            "text-valign": "top",
+                            "text-halign": "center",
+                            "text-margin-y": 5,
+                            "font-weight": "bold",
+                            padding: 10,
+                            "compound-sizing-wrt-labels": "include",
+                            "text-background-opacity": 0,
+                        },
                     },
-                    classes: nodePhase
-                };
-                
-                // If node belongs to a group, set the parent
-                if (node.task && node.task.group) {
-                    nodeData.data.parent = `group:${node.task.group}`;
-                }
-                
-                cy.add(nodeData);
+                    // Edge styling - connects nodes with light gray lines
+                    {
+                        selector: "edge",
+                        style: {
+                            width: 1, // Thin lines
+                            "line-color": "#d0d7de", // Light gray color
+                            "target-arrow-color": "#d0d7de",
+                            "target-arrow-shape": "none", // No arrowheads
+                            "curve-style": "straight", // Straight lines instead of curved
+                        },
+                    },
+                    // Status-specific styling for nodes
+                    // Each node type maintains the same border color but different background colors
+                    {
+                        selector: "node.succeeded",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.failed",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.waiting",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                            "border-style": "solid",
+                            opacity: 0.9,
+                        },
+                    },
+                    {
+                        selector: "node.pending",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                            "border-style": "dotted",
+                            opacity: 0.7,
+                        },
+                    },
+                    {
+                        selector: "node.starting",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.running",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.stalled",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.skipped",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                    {
+                        selector: "node.cancelled",
+                        style: {
+                            "border-color": "#d0d7de",
+                            "border-width": 1,
+                        },
+                    },
+                ],
             });
 
-            // Create edges between nodes based on parent-child relationships
-            Object.keys(data.children).forEach(parent => {
-                data.children[parent].forEach(child => {
-                    cy.add({
-                        group: 'edges',
-                        data: {
-                            id: `${parent}-${child}`,
-                            source: parent,
-                            target: child
+            // Add event listeners to handle cursor changes
+            cy.on("mouseover", "node", function (e) {
+                document.getElementById("cy").style.cursor = "pointer";
+            });
+
+            cy.on("mouseout", "node", function (e) {
+                document.getElementById("cy").style.cursor = "grab";
+            });
+
+            // Get references to DOM elements
+            const status = document.getElementById("status");
+            const name = document.getElementById("name");
+            const message = document.getElementById("message");
+            const logs = document.getElementById("logs");
+            const logsContainer = document.getElementById("log-container");
+            const follow = document.getElementById("follow");
+            const resizer = document.getElementById("resizer");
+            const graphContainer = document.getElementById("cy");
+
+            // Auto-scroll flag for logs
+            let autoScroll = true;
+
+            // Map of phase names to human-readable descriptions (for tooltips)
+            const phaseDescriptions = {
+                waiting: "Waiting",
+                pending: "Pending",
+                starting: "Starting",
+                running: "Running",
+                stalled: "Stalled",
+                failed: "Failed",
+                succeeded: "Succeeded",
+                skipped: "Skipped",
+                cancelled: "Cancelled",
+            };
+
+            // Variables for log streaming
+            var logSource; // EventSource for logs
+            var lineNumber = 0; // line number for logs
+
+            // Function to convert ANSI escape codes to HTML for colorized logs
+            const ansiToHtml = (ansiString) => {
+                if (!ansiString) return "";
+
+                // Replace ANSI escape sequences with HTML spans
+                return (
+                    ansiString.replace(
+                        /\u001b\[((?:\d{1,3};?)+)m/g,
+                        (match, codes) => {
+                            let styles = "";
+
+                            codes.split(";").forEach((code) => {
+                                code = parseInt(code, 10);
+
+                                if (code === 0) {
+                                    // Reset all styles
+                                    styles = "";
+                                } else if (code === 1) {
+                                    // Bold
+                                    styles += "font-weight: bold;";
+                                } else if (code === 3) {
+                                    // Italic
+                                    styles += "font-style: italic;";
+                                } else if (code === 4) {
+                                    // Underline
+                                    styles += "text-decoration: underline;";
+                                } else if (code >= 30 && code <= 37) {
+                                    // Foreground color
+                                    styles += `color: ${ansiColor(code)};`;
+                                } else if (code >= 90 && code <= 97) {
+                                    // Bright foreground color
+                                    styles += `color: ${ansiBrightColor(code)};`;
+                                } else if (code >= 40 && code <= 47) {
+                                    // Background color
+                                    styles += `background-color: ${ansiColor(code - 10)};`;
+                                } else if (code >= 100 && code <= 107) {
+                                    // Bright background color
+                                    styles += `background-color: ${ansiBrightColor(code - 10)};`;
+                                } else {
+                                    styles = ""; // Reset
+                                }
+                            });
+
+                            return `<span style="${styles}">`;
+                        },
+                    ) + "</span>"
+                ); // Ensure closing span
+            };
+
+            // Function to map ANSI color codes to CSS colors
+            const ansiColor = (code) => {
+                const colors = [
+                    "black",
+                    "red",
+                    "green",
+                    "yellow",
+                    "blue",
+                    "magenta",
+                    "cyan",
+                    "white",
+                ];
+                return colors[code - 30];
+            };
+
+            // Function to map ANSI bright color codes to CSS colors
+            const ansiBrightColor = (code) => {
+                const brightColors = [
+                    "gray",
+                    "lightcoral",
+                    "lightgreen",
+                    "lightyellow",
+                    "lightblue",
+                    "violet",
+                    "lightcyan",
+                    "white",
+                ];
+                return brightColors[code - 90];
+            };
+
+            // Fetch the initial graph data from the server
+            fetch("/dag")
+                .then((response) => response.json())
+                .then((data) => {
+                    // set the title of the page to the name of the graph
+                    document.title = data.name;
+
+                    // Group nodes by their group property
+                    const nodeGroups = {};
+                    const ungroupedNodes = [];
+
+                    // First pass: identify all groups and ungrouped nodes
+                    Object.values(data.nodes).forEach((node) => {
+                        if (node.task && node.task.group) {
+                            if (!nodeGroups[node.task.group]) {
+                                nodeGroups[node.task.group] = [];
+                            }
+                            nodeGroups[node.task.group].push(node);
+                        } else {
+                            ungroupedNodes.push(node);
                         }
                     });
-                });
-            });
 
-            // Run the layout algorithm to position nodes and edges
-            const layout = cy.layout({
-                name: 'dagre', // Use dagre layout for directed graphs
-                rankDir: 'LR', // Left to right direction
-                nodeSep: 40, // Horizontal spacing between nodes
-                rankSep: 80, // Vertical spacing between ranks
-                padding: 30, // Padding around the entire graph
-                fit: true, // Fit the graph to the container
-                spacingFactor: 0.9, // Spacing factor for the layout
-                animate: false, // Don't animate the layout
-                edgeSep: 10, // Edge separation
-                ranker: 'network-simplex', // Layout algorithm
-                align: 'UL', // Align nodes to upper left
-                // Compound graph options
-                nestingFactor: 1.2, // Nesting padding factor
-                minLen: function(edge) { return 1; }, // Minimum edge length
-                edgeWeight: function(edge) { return 1; }, // Edge weight
-                // Handle compound nodes (groups)
-                rankCompound: true, // Whether to include compounds in the rank
-                nodeDimensionsIncludeLabels: true // Whether to include node labels in node dimensions
-            });
-            
-            layout.run();
-            
-            // Ensure the graph is centered and fits in the viewport
-            setTimeout(() => {
-                cy.center();
-                cy.fit(undefined, 50); // Add padding of 50px
-            }, 100);
-            
-            // Add click event to nodes to show logs
-            cy.on('tap', 'node', function(evt) {
-                const node = evt.target;
-                const nodeId = node.id();
-                const nodeData = node.data();
-                
-                // Update the log header with node information
-                name.textContent = nodeId;
-                message.textContent = nodeData.message ? ` - ${nodeData.message}` : '';
-                
-                // Clear previous logs
-                logs.innerHTML = '';
-                lineNumber = 0;
-                
-                // Close previous EventSource if it exists
-                if (logSource) {
-                    logSource.close();
-                }
-                
-                // Create a new EventSource for logs
-                logSource = new EventSource(`/logs/${nodeId}`);
+                    // Create group parent nodes first
+                    Object.keys(nodeGroups).forEach((groupName) => {
+                        cy.add({
+                            group: "nodes",
+                            data: {
+                                id: `group:${groupName}`,
+                                label: groupName,
+                            },
+                            classes: "group",
+                        });
+                    });
 
-                logSource.onopen = () => {
-                    if (autoScroll) {
-                        follow.textContent = 'Auto-scrolling';
-                    } else {
-                        follow.textContent = 'Manual scrolling';
-                    }
+                    // Create nodes with icons
+                    Object.values(data.nodes).forEach((node) => {
+                        const nodePhase = node.phase || "pending";
+                        // Ensure the icon is properly encoded for use as a data URL
+                        const iconSvg = icons[nodePhase];
+                        const iconDataUrl =
+                            "data:image/svg+xml;utf8," +
+                            encodeURIComponent(iconSvg);
 
-                }
-                
-                // Handle incoming log messages
-                logSource.onmessage = (event) => {
-                    const logLine = document.createElement('div');
-                    // Convert URLs in logs to clickable links
-                    const linkedLogLine = event.data.replace(/(https?:\/\/[^\s'"]+)/g, '<a href="$1" target="_blank">$1</a>');
-                    // Convert ANSI color codes to HTML
-                    const coloredLog = ansiToHtml(linkedLogLine);
-                    // Add line number and formatted log content
-                    logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${coloredLog}`;
-                    logs.appendChild(logLine);
-                    // Auto-scroll to the bottom if enabled
-                    if (autoScroll)
-                        logs.scrollTop = logs.scrollHeight;
-                };
-                
-                // Handle errors in log streaming
-                logSource.onerror = () => {
-                    logSource.close();
-                    follow.innerHTML = 'Disconnected';
-                };
-            });
+                        // Add the node to the graph
+                        const nodeData = {
+                            group: "nodes",
+                            data: {
+                                id: node.name,
+                                label: node.name,
+                                phase: nodePhase,
+                                message: node.message || "",
+                                ports: node.task?.ports || "",
+                                icon: iconDataUrl,
+                            },
+                            classes: nodePhase,
+                        };
 
-            // Start the event stream for real-time updates
-            const eventSource = new EventSource('/events');
-
-            // Event handlers for the event stream
-            eventSource.onopen = () => status.textContent = '';
-            eventSource.onerror = () => status.textContent = 'disconnected';
-
-            // Handle incoming events (node status updates)
-            eventSource.onmessage = (event) => {
-                const node = JSON.parse(event.data);
-                
-                // Check if the node already exists
-                const existingNode = cy.getElementById(node.name);
-                
-                if (existingNode.length > 0) {
-                    // Ensure the icon is properly encoded for use as a data URL
-                    const iconSvg = icons[node.phase];
-                    const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
-                    
-                    // Only update if there's a change (optimization)
-                    if (existingNode.data('phase') !== node.phase || 
-                        existingNode.data('message') !== node.message ||
-                        existingNode.data('parent') !== (node.task && node.task.group ? `group:${node.task.group}` : undefined)) {
-                        
-                        // Update node data
-                        existingNode.data('phase', node.phase);
-                        existingNode.data('message', node.message);
-                        existingNode.data('ports', node.task?.ports || '');
-                        existingNode.data('icon', iconDataUrl);
-                        
-                        // Update parent if group changed
+                        // If node belongs to a group, set the parent
                         if (node.task && node.task.group) {
-                            // Check if the group exists, if not create it
-                            const groupNode = cy.getElementById(`group:${node.task.group}`);
-                            if (groupNode.length === 0) {
-                                cy.add({
-                                    group: 'nodes',
-                                    data: {
-                                        id: `group:${node.task.group}`,
-                                        label: node.task.group
-                                    },
-                                    classes: 'group'
-                                });
-                            }
-                            existingNode.move({ parent: `group:${node.task.group}` });
-                        } else if (existingNode.data('parent')) {
-                            // Remove from group if no longer in one
-                            existingNode.move({ parent: null });
+                            nodeData.data.parent = `group:${node.task.group}`;
                         }
-                        
-                        // Update node class for styling
-                        existingNode.removeClass();
-                        existingNode.addClass(node.phase);
-                    }
-                } else {
-                    // Ensure the icon is properly encoded for use as a data URL
-                    const iconSvg = icons[node.phase];
-                    const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
-                    
-                    // Create node data
-                    const nodeData = {
-                        group: 'nodes',
-                        data: {
-                            id: node.name,
-                            label: node.name,
-                            phase: node.phase,
-                            message: node.message || '',
-                            ports: node.task?.ports || '',
-                            icon: iconDataUrl
-                        },
-                        classes: node.phase
-                    };
-                    
-                    // If node belongs to a group, set the parent
-                    if (node.task && node.task.group) {
-                        // Check if the group exists, if not create it
-                        const groupNode = cy.getElementById(`group:${node.task.group}`);
-                        if (groupNode.length === 0) {
+
+                        cy.add(nodeData);
+                    });
+
+                    // Create edges between nodes based on parent-child relationships
+                    Object.keys(data.children).forEach((parent) => {
+                        data.children[parent].forEach((child) => {
                             cy.add({
-                                group: 'nodes',
+                                group: "edges",
                                 data: {
-                                    id: `group:${node.task.group}`,
-                                    label: node.task.group
+                                    id: `${parent}-${child}`,
+                                    source: parent,
+                                    target: child,
                                 },
-                                classes: 'group'
                             });
-                        }
-                        nodeData.data.parent = `group:${node.task.group}`;
-                    }
-                    
-                    // Add new node
-                    cy.add(nodeData);
-                    
-                    // Re-run layout if a new node was added
-                    cy.layout({
-                        name: 'dagre',
-                        rankDir: 'LR',
-                        nodeSep: 40,
-                        rankSep: 80,
-                        padding: 30,
-                        fit: true,
-                        spacingFactor: 0.9,
-                        animate: false,
-                        edgeSep: 10,
-                        ranker: 'tight-tree',
-                        align: 'UL',
+                        });
+                    });
+
+                    // Run the layout algorithm to position nodes and edges
+                    const layout = cy.layout({
+                        name: "dagre", // Use dagre layout for directed graphs
+                        rankDir: "LR", // Left to right direction
+                        nodeSep: 40, // Horizontal spacing between nodes
+                        rankSep: 80, // Vertical spacing between ranks
+                        padding: 30, // Padding around the entire graph
+                        fit: true, // Fit the graph to the container
+                        spacingFactor: 0.9, // Spacing factor for the layout
+                        animate: false, // Don't animate the layout
+                        edgeSep: 10, // Edge separation
+                        ranker: "network-simplex", // Layout algorithm
+                        align: "UL", // Align nodes to upper left
                         // Compound graph options
                         nestingFactor: 1.2, // Nesting padding factor
-                        minLen: function(edge) { return 1; }, // Minimum edge length
-                        edgeWeight: function(edge) { return 1; }, // Edge weight
+                        minLen: function (edge) {
+                            return 1;
+                        }, // Minimum edge length
+                        edgeWeight: function (edge) {
+                            return 1;
+                        }, // Edge weight
                         // Handle compound nodes (groups)
                         rankCompound: true, // Whether to include compounds in the rank
-                        nodeDimensionsIncludeLabels: true // Whether to include node labels in node dimensions
-                    }).run();
-                    
-                    // Ensure the graph is centered after adding a new node
+                        nodeDimensionsIncludeLabels: true, // Whether to include node labels in node dimensions
+                    });
+
+                    layout.run();
+
+                    // Ensure the graph is centered and fits in the viewport
                     setTimeout(() => {
                         cy.center();
                         cy.fit(undefined, 50); // Add padding of 50px
                     }, 100);
+
+                    // Add click event to nodes to show logs
+                    cy.on("tap", "node", function (evt) {
+                        const node = evt.target;
+                        const nodeId = node.id();
+                        const nodeData = node.data();
+
+                        // Update the log header with node information
+                        name.textContent = nodeId;
+                        message.textContent = nodeData.message
+                            ? ` - ${nodeData.message}`
+                            : "";
+
+                        // Clear previous logs
+                        logs.innerHTML = "";
+                        lineNumber = 0;
+
+                        // Close previous EventSource if it exists
+                        if (logSource) {
+                            logSource.close();
+                        }
+
+                        // Create a new EventSource for logs
+                        logSource = new EventSource(`/logs/${nodeId}`);
+
+                        logSource.onopen = () => {
+                            if (autoScroll) {
+                                follow.textContent = "Auto-scrolling";
+                            } else {
+                                follow.textContent = "Manual scrolling";
+                            }
+                        };
+
+                        // Handle incoming log messages
+                        logSource.onmessage = (event) => {
+                            const logLine = document.createElement("div");
+                            // Convert URLs in logs to clickable links
+                            const linkedLogLine = event.data.replace(
+                                /(https?:\/\/[^\s'"]+)/g,
+                                '<a href="$1" target="_blank">$1</a>',
+                            );
+                            // Convert ANSI color codes to HTML
+                            const coloredLog = ansiToHtml(linkedLogLine);
+                            // Add line number and formatted log content
+                            logLine.innerHTML = `<span class="lineNumber">${++lineNumber}</span> ${coloredLog}`;
+                            logs.appendChild(logLine);
+                            // Auto-scroll to the bottom if enabled
+                            if (autoScroll) logs.scrollTop = logs.scrollHeight;
+                        };
+
+                        // Handle errors in log streaming
+                        logSource.onerror = () => {
+                            logSource.close();
+                            follow.innerHTML = "Disconnected";
+                        };
+                    });
+
+                    // Start the event stream for real-time updates
+                    const eventSource = new EventSource("/events");
+
+                    // Event handlers for the event stream
+                    eventSource.onopen = () => (status.textContent = "");
+                    eventSource.onerror = () =>
+                        (status.textContent = "disconnected");
+
+                    // Handle incoming events (node status updates)
+                    eventSource.onmessage = (event) => {
+                        const node = JSON.parse(event.data);
+
+                        // Check if the node already exists
+                        const existingNode = cy.getElementById(node.name);
+
+                        if (existingNode.length > 0) {
+                            // Ensure the icon is properly encoded for use as a data URL
+                            const iconSvg = icons[node.phase];
+                            const iconDataUrl =
+                                "data:image/svg+xml;utf8," +
+                                encodeURIComponent(iconSvg);
+
+                            // Only update if there's a change (optimization)
+                            if (
+                                existingNode.data("phase") !== node.phase ||
+                                existingNode.data("message") !== node.message ||
+                                existingNode.data("parent") !==
+                                    (node.task && node.task.group
+                                        ? `group:${node.task.group}`
+                                        : undefined)
+                            ) {
+                                // Update node data
+                                existingNode.data("phase", node.phase);
+                                existingNode.data("message", node.message);
+                                existingNode.data(
+                                    "ports",
+                                    node.task?.ports || "",
+                                );
+                                existingNode.data("icon", iconDataUrl);
+
+                                // Update parent if group changed
+                                if (node.task && node.task.group) {
+                                    // Check if the group exists, if not create it
+                                    const groupNode = cy.getElementById(
+                                        `group:${node.task.group}`,
+                                    );
+                                    if (groupNode.length === 0) {
+                                        cy.add({
+                                            group: "nodes",
+                                            data: {
+                                                id: `group:${node.task.group}`,
+                                                label: node.task.group,
+                                            },
+                                            classes: "group",
+                                        });
+                                    }
+                                    existingNode.move({
+                                        parent: `group:${node.task.group}`,
+                                    });
+                                } else if (existingNode.data("parent")) {
+                                    // Remove from group if no longer in one
+                                    existingNode.move({ parent: null });
+                                }
+
+                                // Update node class for styling
+                                existingNode.removeClass();
+                                existingNode.addClass(node.phase);
+                            }
+                        } else {
+                            // Ensure the icon is properly encoded for use as a data URL
+                            const iconSvg = icons[node.phase];
+                            const iconDataUrl =
+                                "data:image/svg+xml;utf8," +
+                                encodeURIComponent(iconSvg);
+
+                            // Create node data
+                            const nodeData = {
+                                group: "nodes",
+                                data: {
+                                    id: node.name,
+                                    label: node.name,
+                                    phase: node.phase,
+                                    message: node.message || "",
+                                    ports: node.task?.ports || "",
+                                    icon: iconDataUrl,
+                                },
+                                classes: node.phase,
+                            };
+
+                            // If node belongs to a group, set the parent
+                            if (node.task && node.task.group) {
+                                // Check if the group exists, if not create it
+                                const groupNode = cy.getElementById(
+                                    `group:${node.task.group}`,
+                                );
+                                if (groupNode.length === 0) {
+                                    cy.add({
+                                        group: "nodes",
+                                        data: {
+                                            id: `group:${node.task.group}`,
+                                            label: node.task.group,
+                                        },
+                                        classes: "group",
+                                    });
+                                }
+                                nodeData.data.parent = `group:${node.task.group}`;
+                            }
+
+                            // Add new node
+                            cy.add(nodeData);
+
+                            // Re-run layout if a new node was added
+                            cy.layout({
+                                name: "dagre",
+                                rankDir: "LR",
+                                nodeSep: 40,
+                                rankSep: 80,
+                                padding: 30,
+                                fit: true,
+                                spacingFactor: 0.9,
+                                animate: false,
+                                edgeSep: 10,
+                                ranker: "tight-tree",
+                                align: "UL",
+                                // Compound graph options
+                                nestingFactor: 1.2, // Nesting padding factor
+                                minLen: function (edge) {
+                                    return 1;
+                                }, // Minimum edge length
+                                edgeWeight: function (edge) {
+                                    return 1;
+                                }, // Edge weight
+                                // Handle compound nodes (groups)
+                                rankCompound: true, // Whether to include compounds in the rank
+                                nodeDimensionsIncludeLabels: true, // Whether to include node labels in node dimensions
+                            }).run();
+
+                            // Ensure the graph is centered after adding a new node
+                            setTimeout(() => {
+                                cy.center();
+                                cy.fit(undefined, 50); // Add padding of 50px
+                            }, 100);
+                        }
+                    };
+                });
+
+            // Event listener for disabling auto-scroll when user manually scrolls
+            logs.addEventListener("mousedown", () => {
+                follow.innerHTML = "Manual scroll";
+                autoScroll = false;
+            });
+
+            // Also detect scroll wheel and trackpad scrolling
+            logs.addEventListener("scroll", () => {
+                // If user scrolls up and we're at auto-scroll, switch to manual
+                if (
+                    autoScroll &&
+                    logs.scrollTop < logs.scrollHeight - logs.clientHeight - 10
+                ) {
+                    autoScroll = false;
+                    follow.innerHTML = "Manual scrolling";
                 }
-            }
-        });
+            });
 
-    // Event listener for disabling auto-scroll when user manually scrolls
-    logs.addEventListener('mousedown', () => {
-        follow.innerHTML = 'Manual scroll';
-        autoScroll = false;
-    });
+            // Toggle auto-scroll when clicking the follow button
+            follow.addEventListener("click", () => {
+                autoScroll = !autoScroll;
+                follow.innerHTML = autoScroll
+                    ? "Auto-scrolling"
+                    : "Manual scrolling";
+                if (autoScroll) {
+                    logs.scrollTop = logs.scrollHeight;
+                }
+            });
 
-    // Also detect scroll wheel and trackpad scrolling
-    logs.addEventListener('scroll', () => {
-        // If user scrolls up and we're at auto-scroll, switch to manual
-        if (autoScroll && logs.scrollTop < logs.scrollHeight - logs.clientHeight - 10) {
-            autoScroll = false;
-            follow.innerHTML = 'Manual scrolling';
-        }
-    });
-
-    // Toggle auto-scroll when clicking the follow button
-    follow.addEventListener('click', () => {
-        autoScroll = !autoScroll;
-        follow.innerHTML = autoScroll ? 'Auto-scrolling' : 'Manual scrolling';
-        if (autoScroll) {
-            logs.scrollTop = logs.scrollHeight;
-        }
-    });
-
-    // Function to adjust layout based on window size
-    const layout = () => {
-        const height = window.innerHeight;
-        const graphHeight = height * 0.5; 
-        const logsHeight = height - graphHeight - 72; 
-        graphContainer.style.height = `${graphHeight}px`;
-        logsContainer.style.height = `${logsHeight}px`;
-        logs.style.height = `${logsHeight - 64}px`;
-    };
-
-    // Adjust layout on window resize
-    window.addEventListener('resize', layout);
-
-    // Variable to track resizing state
-    let resizing = false;
-
-    // Event listeners for resizing the panels
-    resizer.addEventListener('mousedown', (e) => {
-        resizing = true;
-        document.body.style.cursor = 'row-resize';
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (resizing) {
-            const windowHeight = window.innerHeight;
-            // Adjust the graphHeight calculation by subtracting 16px to fix the offset
-            const graphHeight = e.clientY - 32;
-            const logsHeight = windowHeight - graphHeight - 72;
-            
-            // Add constraints to maintain reasonable proportions
-            // Ensure graph takes between 30% and 70% of the window height
-            const minGraphHeight = windowHeight * 0.3;
-            const maxGraphHeight = windowHeight * 0.7;
-            
-            if (graphHeight >= minGraphHeight && graphHeight <= maxGraphHeight) {
+            // Function to adjust layout based on window size
+            const layout = () => {
+                const height = window.innerHeight;
+                const graphHeight = height * 0.5;
+                const logsHeight = height - graphHeight - 72;
                 graphContainer.style.height = `${graphHeight}px`;
                 logsContainer.style.height = `${logsHeight}px`;
-                logs.style.height = `${logsHeight - 40}px`;
-            }
-        }
-    });
+                logs.style.height = `${logsHeight - 64}px`;
+            };
 
-    document.addEventListener('mouseup', () => {
-        resizing = false;
-        document.body.style.cursor = '';
-    });
+            // Adjust layout on window resize
+            window.addEventListener("resize", layout);
 
-    // Initial layout setup
-    layout();
-</script>
-</body>
+            // Variable to track resizing state
+            let resizing = false;
+
+            // Event listeners for resizing the panels
+            resizer.addEventListener("mousedown", (e) => {
+                resizing = true;
+                document.body.style.cursor = "row-resize";
+                e.preventDefault();
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (resizing) {
+                    const windowHeight = window.innerHeight;
+                    // Adjust the graphHeight calculation by subtracting 16px to fix the offset
+                    const graphHeight = e.clientY - 32;
+                    const logsHeight = windowHeight - graphHeight - 72;
+
+                    // Add constraints to maintain reasonable proportions
+                    // Ensure graph takes between 30% and 70% of the window height
+                    const minGraphHeight = windowHeight * 0.3;
+                    const maxGraphHeight = windowHeight * 0.7;
+
+                    if (
+                        graphHeight >= minGraphHeight &&
+                        graphHeight <= maxGraphHeight
+                    ) {
+                        graphContainer.style.height = `${graphHeight}px`;
+                        logsContainer.style.height = `${logsHeight}px`;
+                        logs.style.height = `${logsHeight - 40}px`;
+                    }
+                }
+            });
+
+            document.addEventListener("mouseup", () => {
+                resizing = false;
+                document.body.style.cursor = "";
+            });
+
+            // Initial layout setup
+            layout();
+        </script>
+    </body>
 </html>
