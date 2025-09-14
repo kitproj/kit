@@ -24,6 +24,9 @@ type TaskNode struct {
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
 	Message string `json:"message,omitempty"`
+
+	// metrics for resource usage tracking
+	Metrics *types.Metrics `json:"metrics,omitempty"`
 	// cancel function
 	cancel func()
 	// a mutex

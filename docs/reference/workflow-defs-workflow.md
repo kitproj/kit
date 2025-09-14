@@ -25,6 +25,7 @@ https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow
 | [semaphores](#semaphores)                                       | `object`  | Optional | cannot be null | [Untitled schema](workflow-defs-workflow-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores")                                       |
 | [env](#env)                                                     | `object`  | Optional | cannot be null | [Untitled schema](workflow-defs-envvars.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/env")                                                                     |
 | [envfile](#envfile)                                             | `array`   | Optional | cannot be null | [Untitled schema](workflow-defs-envfile.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/envfile")                                                                 |
+| [enableMetrics](#enablemetrics)                                 | `boolean` | Optional | cannot be null | [Untitled schema](workflow-defs-workflow-properties-enablemetrics.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/enableMetrics")                                 |
 
 ## port
 
@@ -151,3 +152,21 @@ A list of environment variables.
 ### envfile Type
 
 `string[]`
+
+## enableMetrics
+
+
+
+`enableMetrics`
+
+*   is optional
+
+*   Type: `boolean` ([enableMetrics](workflow-defs-workflow-properties-enablemetrics.md))
+
+*   cannot be null
+
+*   defined in: [Untitled schema](workflow-defs-workflow-properties-enablemetrics.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/enableMetrics")
+
+### enableMetrics Type
+
+`boolean` ([enableMetrics](workflow-defs-workflow-properties-enablemetrics.md))

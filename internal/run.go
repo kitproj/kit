@@ -424,6 +424,29 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 						out = io.MultiWriter(out, buf)
 					}
 
+					go func() {
+						ticker := time.NewTicker(20 * time.Second)
+						defer ticker.Stop()
+
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							case <-ticker.C:
+								if node.Phase != "running" && node.Phase != "stalled" {
+									continue
+								}
+								metrics, err := p.GetMetrics(ctx)
+								if err != nil {
+									logger.Printf("failed to get metrics: %v", err)
+									continue
+								}
+								node.Metrics = metrics
+								statusEvents <- node
+							}
+						}
+					}()
+
 					err = p.Run(ctx, out, out)
 					// if the task was cancelled, we don't want to restart it, this is normal exit
 					if errors.Is(ctx.Err(), context.Canceled) {

@@ -114,8 +114,14 @@
                 color: #c9d1d9;
             }
 
+            #metrics {
+                color: #8b949e;
+                margin-left: 16px;
+            }
+
             /* Task message in log header */
             #message {
+                margin-left: 16px;
                 color: #8b949e;
             }
 
@@ -170,6 +176,7 @@
             <div class="flex">
                 <div>
                     <b id="name">Click on a task to see logs</b>
+                    <span id="metrics"></span>
                     <span id="message"></span>
                 </div>
                 <div id="follow" style="cursor: pointer">Auto-scrolling</div>
@@ -389,6 +396,7 @@
             // Get references to DOM elements
             const status = document.getElementById("status");
             const name = document.getElementById("name");
+            const metrics = document.getElementById("metrics");
             const message = document.getElementById("message");
             const logs = document.getElementById("logs");
             const logsContainer = document.getElementById("log-container");
@@ -495,6 +503,12 @@
                 return brightColors[code - 90];
             };
 
+            const formatMetrics = (metrics) => {
+                if (!metrics) return "";
+
+                return `${(metrics.cpu * 1000).toFixed(0)}m,${(metrics.mem / 1024 / 1024).toFixed(0)}Mi`;
+            };
+
             // Fetch the initial graph data from the server
             fetch("/dag")
                 .then((response) => response.json())
@@ -546,6 +560,7 @@
                                 id: node.name,
                                 label: node.name,
                                 phase: nodePhase,
+                                metrics: node.metrics,
                                 message: node.message || "",
                                 ports: node.task?.ports || "",
                                 icon: iconDataUrl,
@@ -617,8 +632,11 @@
 
                         // Update the log header with node information
                         name.textContent = nodeId;
+                        metrics.textContent = nodeData.metrics
+                            ? formatMetrics(nodeData.metrics)
+                            : "";
                         message.textContent = nodeData.message
-                            ? ` - ${nodeData.message}`
+                            ? nodeData.message
                             : "";
 
                         // Clear previous logs
@@ -691,6 +709,7 @@
                             if (
                                 existingNode.data("phase") !== node.phase ||
                                 existingNode.data("message") !== node.message ||
+                                existingNode.data("metrics") !== node.metrics ||
                                 existingNode.data("parent") !==
                                     (node.task && node.task.group
                                         ? `group:${node.task.group}`
@@ -698,6 +717,7 @@
                             ) {
                                 // Update node data
                                 existingNode.data("phase", node.phase);
+                                existingNode.data("metrics", node.metrics);
                                 existingNode.data("message", node.message);
                                 existingNode.data(
                                     "ports",
@@ -747,6 +767,7 @@
                                     id: node.name,
                                     label: node.name,
                                     phase: node.phase,
+                                    metrics: node.metrics,
                                     message: node.message || "",
                                     ports: node.task?.ports || "",
                                     icon: iconDataUrl,

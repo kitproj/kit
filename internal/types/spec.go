@@ -18,6 +18,8 @@ type Spec struct {
 	Env EnvVars `json:"env,omitempty"`
 	// Environment file (e.g. .env) to use
 	Envfile Envfile `json:"envfile,omitempty"`
+	// EnableMetrics enables resource usage metrics collection for all tasks
+	EnableMetrics *bool `json:"enableMetrics,omitempty"`
 }
 
 func (s *Spec) GetTerminationGracePeriod() time.Duration {
@@ -25,6 +27,13 @@ func (s *Spec) GetTerminationGracePeriod() time.Duration {
 		return time.Duration(*s.TerminationGracePeriodSeconds) * time.Second
 	}
 	return 3 * time.Second
+}
+
+func (s *Spec) GetEnableMetrics() bool {
+	if s.EnableMetrics != nil {
+		return *s.EnableMetrics
+	}
+	return true // Default to enabled
 }
 
 // Retuns the environment variables for the spec.
