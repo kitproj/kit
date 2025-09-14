@@ -394,10 +394,6 @@
         "envfile": {
           "$ref": "#/$defs/Envfile",
           "title": "envfile"
-        },
-        "enableMetrics": {
-          "type": "boolean",
-          "title": "enableMetrics"
         }
       },
       "additionalProperties": false,

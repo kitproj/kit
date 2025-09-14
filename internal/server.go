@@ -136,29 +136,6 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 			}
 		}
 	})
-	mux.HandleFunc("/metrics/{task}", func(w http.ResponseWriter, r *http.Request) {
-		task := r.PathValue("task")
-		node, ok := dag.Nodes[task]
-		if !ok {
-			http.Error(w, "task not found", http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if node.Metrics != nil {
-			marshal, err := json.Marshal(node.Metrics)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			_, err = w.Write(marshal)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		} else {
-			w.Write([]byte("{}"))
-		}
-	})
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", port),
