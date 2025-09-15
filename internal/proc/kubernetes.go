@@ -12,8 +12,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +43,7 @@ type k8s struct {
 	log  *log.Logger
 	spec types.Spec
 	name string
+	pods []string // namespace/name
 	types.Task
 }
 
@@ -268,6 +273,12 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	processPod := func(obj any) {
 		pod := obj.(*corev1.Pod)
 
+		podKey := pod.Namespace + "/" + pod.Name
+
+		if !slices.Contains(k.pods, podKey) {
+			k.pods = append(k.pods, podKey)
+		}
+
 		running := make(map[string]bool)
 
 		for _, s := range append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...) {
@@ -421,4 +432,117 @@ func sortUnstructureds(uns []*unstructured.Unstructured) {
 		// slices.Index will return -1 if the element is not found
 		return slices.Index(order, uns[i].GetKind()) > slices.Index(order, uns[j].GetKind())
 	})
+}
+
+func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
+	sum := &types.Metrics{}
+	for _, podKey := range k.pods {
+		parts := strings.SplitN(podKey, "/", 2)
+		namespace := parts[0]
+		podName := parts[1]
+		metrics, err := k.getMetrics(ctx, namespace, podName)
+		if err != nil {
+			return nil, err
+		}
+		sum.CPU += metrics.CPU
+		sum.Mem += metrics.Mem
+	}
+	return sum, nil
+}
+
+func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
+	cmd := exec.CommandContext(ctx, "kubectl", "top", "pod", "-n", namespace, podName, "--no-headers")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("kubectl top failed %q: %w", string(output), err)
+	}
+
+	return k.parseKubectlTopOutput(string(output))
+}
+
+func (k *k8s) parseKubectlTopOutput(output string) (*types.Metrics, error) {
+	// kubectl top output format: NAME CPU(cores) MEMORY(bytes)
+	// Example: pod-name 250m 128Mi
+
+	fields := strings.Fields(strings.TrimSpace(output))
+	if len(fields) < 3 {
+		return nil, fmt.Errorf("unexpected kubectl top output format")
+	}
+
+	cpuStr := fields[1]
+	memoryStr := fields[2]
+
+	cpuMillicores, err := k.parseCPUValue(cpuStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse CPU: %w", err)
+	}
+
+	memoryBytes, err := k.parseMemoryValue(memoryStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse memory: %w", err)
+	}
+
+	return &types.Metrics{
+		CPU: cpuMillicores,
+		Mem: memoryBytes,
+	}, nil
+}
+
+func (k *k8s) parseCPUValue(cpuStr string) (uint64, error) {
+	// Handle millicores (e.g., "250m") and cores (e.g., "1.5")
+	if strings.HasSuffix(cpuStr, "m") {
+		milliStr := strings.TrimSuffix(cpuStr, "m")
+		milli, err := strconv.ParseFloat(milliStr, 64)
+		if err != nil {
+			return 0, err
+		}
+		return uint64(milli), nil
+	}
+
+	cores, err := strconv.ParseFloat(cpuStr, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(cores * 1000), nil // Convert cores to millicores
+}
+
+func (k *k8s) parseMemoryValue(memoryStr string) (uint64, error) {
+	// Handle various memory units: Ki, Mi, Gi, K, M, G
+	re := regexp.MustCompile(`^(\d+(?:\.\d+)?)([KMGT]i?)?$`)
+	matches := re.FindStringSubmatch(memoryStr)
+	if len(matches) < 2 {
+		return 0, fmt.Errorf("invalid memory format: %s", memoryStr)
+	}
+
+	value, err := strconv.ParseFloat(matches[1], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	unit := ""
+	if len(matches) > 2 {
+		unit = matches[2]
+	}
+
+	multiplier := uint64(1)
+	switch unit {
+	case "K":
+		multiplier = 1000
+	case "Ki":
+		multiplier = 1024
+	case "M":
+		multiplier = 1000 * 1000
+	case "Mi":
+		multiplier = 1024 * 1024
+	case "G":
+		multiplier = 1000 * 1000 * 1000
+	case "Gi":
+		multiplier = 1024 * 1024 * 1024
+	case "T":
+		multiplier = 1000 * 1000 * 1000 * 1000
+	case "Ti":
+		multiplier = 1024 * 1024 * 1024 * 1024
+	}
+
+	return uint64(value * float64(multiplier)), nil
 }

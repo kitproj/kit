@@ -35,6 +35,7 @@ type container struct {
 	log  *log.Logger
 	spec types.Spec
 	types.Task
+	containerID string
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
@@ -66,9 +67,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("error getting spec environ: %w", err)
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to get container ID: %w", err)
-	} else if id != "" {
+	if id != "" {
 		log.Printf("container already exists, skipping build/pull\n")
 	} else if _, err := os.Stat(dockerfile); err == nil {
 		log.Printf("creating tar image from %q", dockerfile)
@@ -175,6 +174,8 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to get container ID: %w", err)
 	}
+
+	c.containerID = id
 	if err = cli.ContainerStart(ctx, id, dockertypes.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
@@ -198,6 +199,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		// ignore errors, might be content cancelled, we still need to wait for the container to exit
 		log.Printf("failed to log container: %v", err)
 	}
+
 	waitC, errC := cli.ContainerWait(context.Background(), id, dockercontainer.WaitConditionNotRunning)
 	select {
 	case wait := <-waitC:
@@ -301,6 +303,57 @@ func ignoreNotExist(err error) error {
 	}
 	return err
 
+}
+
+func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
+	if c.containerID == "" {
+		return &types.Metrics{}, nil
+	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create docker client: %w", err)
+	}
+	defer cli.Close()
+
+	stats, err := cli.ContainerStats(ctx, c.containerID, false) // false = single stat, not stream
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container stats: %w", err)
+	}
+	defer stats.Body.Close()
+
+	data, err := io.ReadAll(stats.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read stats: %w", err)
+	}
+
+	var dockerStats dockertypes.StatsJSON
+	if err := json.Unmarshal(data, &dockerStats); err != nil {
+		return nil, fmt.Errorf("failed to parse stats: %w", err)
+	}
+
+	// Calculate memory usage (subtract cache if available)
+	memoryBytes := dockerStats.MemoryStats.Usage
+	if dockerStats.MemoryStats.Stats["cache"] != 0 {
+		memoryBytes -= dockerStats.MemoryStats.Stats["cache"]
+	}
+
+	// Calculate CPU usage in millicores
+	var cpuMillicores uint64
+	if dockerStats.PreCPUStats.CPUUsage.TotalUsage != 0 {
+		cpuDelta := dockerStats.CPUStats.CPUUsage.TotalUsage - dockerStats.PreCPUStats.CPUUsage.TotalUsage
+		systemDelta := dockerStats.CPUStats.SystemUsage - dockerStats.PreCPUStats.SystemUsage
+
+		if systemDelta > 0 {
+			cpuPercent := (float64(cpuDelta) / float64(systemDelta)) * float64(len(dockerStats.CPUStats.CPUUsage.PercpuUsage))
+			cpuMillicores = uint64(cpuPercent * 1000) // Convert to millicores
+		}
+	}
+
+	return &types.Metrics{
+		CPU: cpuMillicores,
+		Mem: memoryBytes,
+	}, nil
 }
 
 var _ Interface = &container{}

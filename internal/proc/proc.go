@@ -11,6 +11,8 @@ import (
 type Interface interface {
 	// Run runs the process.
 	Run(ctx context.Context, stdout, stderr io.Writer) error
+	// GetMetrics returns current resource metrics for this process
+	GetMetrics(ctx context.Context) (*types.Metrics, error)
 }
 
 func New(name string, t types.Task, log *log.Logger, spec types.Spec) Interface {
