@@ -14,13 +14,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -451,98 +450,16 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 }
 
 func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", "top", "pod", "-n", namespace, podName, "--no-headers")
-	output, err := cmd.CombinedOutput()
+	command, args := metrics.GetAllProcessesCommand()
+	cmdArgs := append([]string{"exec", "-n", namespace, podName, "--"}, command)
+	cmdArgs = append(cmdArgs, args...)
+	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
+	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("kubectl top failed %q: %w", string(output), err)
+		return nil, fmt.Errorf("kubectl exec ps failed for pod %s/%s: %w", namespace, podName, err)
 	}
 
-	return k.parseKubectlTopOutput(string(output))
+	return metrics.ParseOutput(string(output))
 }
 
-func (k *k8s) parseKubectlTopOutput(output string) (*types.Metrics, error) {
-	// kubectl top output format: NAME CPU(cores) MEMORY(bytes)
-	// Example: pod-name 250m 128Mi
 
-	fields := strings.Fields(strings.TrimSpace(output))
-	if len(fields) < 3 {
-		return nil, fmt.Errorf("unexpected kubectl top output format")
-	}
-
-	cpuStr := fields[1]
-	memoryStr := fields[2]
-
-	cpuMillicores, err := k.parseCPUValue(cpuStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse CPU: %w", err)
-	}
-
-	memoryBytes, err := k.parseMemoryValue(memoryStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse memory: %w", err)
-	}
-
-	return &types.Metrics{
-		CPU: cpuMillicores,
-		Mem: memoryBytes,
-	}, nil
-}
-
-func (k *k8s) parseCPUValue(cpuStr string) (uint64, error) {
-	// Handle millicores (e.g., "250m") and cores (e.g., "1.5")
-	if strings.HasSuffix(cpuStr, "m") {
-		milliStr := strings.TrimSuffix(cpuStr, "m")
-		milli, err := strconv.ParseFloat(milliStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return uint64(milli), nil
-	}
-
-	cores, err := strconv.ParseFloat(cpuStr, 64)
-	if err != nil {
-		return 0, err
-	}
-	return uint64(cores * 1000), nil // Convert cores to millicores
-}
-
-func (k *k8s) parseMemoryValue(memoryStr string) (uint64, error) {
-	// Handle various memory units: Ki, Mi, Gi, K, M, G
-	re := regexp.MustCompile(`^(\d+(?:\.\d+)?)([KMGT]i?)?$`)
-	matches := re.FindStringSubmatch(memoryStr)
-	if len(matches) < 2 {
-		return 0, fmt.Errorf("invalid memory format: %s", memoryStr)
-	}
-
-	value, err := strconv.ParseFloat(matches[1], 64)
-	if err != nil {
-		return 0, err
-	}
-
-	unit := ""
-	if len(matches) > 2 {
-		unit = matches[2]
-	}
-
-	multiplier := uint64(1)
-	switch unit {
-	case "K":
-		multiplier = 1000
-	case "Ki":
-		multiplier = 1024
-	case "M":
-		multiplier = 1000 * 1000
-	case "Mi":
-		multiplier = 1024 * 1024
-	case "G":
-		multiplier = 1000 * 1000 * 1000
-	case "Gi":
-		multiplier = 1024 * 1024 * 1024
-	case "T":
-		multiplier = 1000 * 1000 * 1000 * 1000
-	case "Ti":
-		multiplier = 1024 * 1024 * 1024 * 1024
-	}
-
-	return uint64(value * float64(multiplier)), nil
-}
