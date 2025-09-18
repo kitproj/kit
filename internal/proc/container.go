@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/nat"
+	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"k8s.io/utils/strings/slices"
@@ -310,50 +312,15 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		return &types.Metrics{}, nil
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	command := metrics.GetCommand(1) // PID 1
+	cmdArgs := append([]string{"exec", c.name}, command...)
+	cmd := exec.CommandContext(ctx, "docker", cmdArgs...)
+	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create docker client: %w", err)
-	}
-	defer cli.Close()
-
-	stats, err := cli.ContainerStats(ctx, c.containerID, false) // false = single stat, not stream
-	if err != nil {
-		return nil, fmt.Errorf("failed to get container stats: %w", err)
-	}
-	defer stats.Body.Close()
-
-	data, err := io.ReadAll(stats.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read stats: %w", err)
+		return nil, fmt.Errorf("docker exec ps failed for container %s: %w", c.name, err)
 	}
 
-	var dockerStats dockertypes.StatsJSON
-	if err := json.Unmarshal(data, &dockerStats); err != nil {
-		return nil, fmt.Errorf("failed to parse stats: %w", err)
-	}
-
-	// Calculate memory usage (subtract cache if available)
-	memoryBytes := dockerStats.MemoryStats.Usage
-	if dockerStats.MemoryStats.Stats["cache"] != 0 {
-		memoryBytes -= dockerStats.MemoryStats.Stats["cache"]
-	}
-
-	// Calculate CPU usage in millicores
-	var cpuMillicores uint64
-	if dockerStats.PreCPUStats.CPUUsage.TotalUsage != 0 {
-		cpuDelta := dockerStats.CPUStats.CPUUsage.TotalUsage - dockerStats.PreCPUStats.CPUUsage.TotalUsage
-		systemDelta := dockerStats.CPUStats.SystemUsage - dockerStats.PreCPUStats.SystemUsage
-
-		if systemDelta > 0 {
-			cpuPercent := (float64(cpuDelta) / float64(systemDelta)) * float64(len(dockerStats.CPUStats.CPUUsage.PercpuUsage))
-			cpuMillicores = uint64(cpuPercent * 1000) // Convert to millicores
-		}
-	}
-
-	return &types.Metrics{
-		CPU: cpuMillicores,
-		Mem: memoryBytes,
-	}, nil
+	return metrics.ParseOutput(string(output))
 }
 
 var _ Interface = &container{}

@@ -450,9 +450,8 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 }
 
 func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	command, args := metrics.GetAllProcessesCommand()
-	cmdArgs := append([]string{"exec", "-n", namespace, podName, "--"}, command)
-	cmdArgs = append(cmdArgs, args...)
+	command := metrics.GetCommand(1) // PID 1
+	cmdArgs := append([]string{"exec", "-n", namespace, podName, "--"}, command...)
 	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
 	output, err := cmd.Output()
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -90,8 +90,8 @@ func ignoreProcessFinishedErr(err error) error {
 }
 
 func (h *host) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	command, args := metrics.GetCommand(h.pid)
-	cmd := exec.CommandContext(ctx, command, args...)
+	command := metrics.GetCommand(h.pid)
+	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
 	output, err := cmd.Output()
 	if err != nil {
