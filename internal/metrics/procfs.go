@@ -17,19 +17,17 @@ func GetProcFSCommand(pid int) []string {
 func ParseProcFSOutput(output string) (*types.Metrics, error) {
 	fields := strings.Fields(strings.TrimSpace(output))
 	if len(fields) < 24 {
-		return nil, nil, fmt.Errorf("unexpected /proc/pid/stat output: insufficient fields")
+		return nil, fmt.Errorf("unexpected /proc/pid/stat output: insufficient fields")
 	}
 
 	// Field 23 (0-indexed): RSS in pages
 	rssPages, err := strconv.ParseInt(fields[23], 10, 64)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse RSS from /proc/pid/stat: %w", err)
+		return nil, fmt.Errorf("failed to parse RSS from /proc/pid/stat: %w", err)
 	}
 
 	// Convert pages to bytes (assuming 4KB page size)
 	memoryBytes := uint64(rssPages * 4096)
 
-	return &types.Metrics{
-		Mem: memoryBytes,
-	}, currentSnapshot, nil
+	return &types.Metrics{Mem: memoryBytes}, nil
 }
