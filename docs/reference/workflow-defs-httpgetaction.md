@@ -28,13 +28,13 @@ Scheme to use for connecting to the host. Defaults to HTTP.
 
 `scheme`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([scheme](workflow-defs-httpgetaction-properties-scheme.md))
+* Type: `string` ([scheme](workflow-defs-httpgetaction-properties-scheme.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/scheme")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/scheme")
 
 ### scheme Type
 
@@ -46,13 +46,13 @@ Number of the port
 
 `port`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([port](workflow-defs-httpgetaction-properties-port.md))
+* Type: `integer` ([port](workflow-defs-httpgetaction-properties-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/port")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/port")
 
 ### port Type
 
@@ -64,13 +64,13 @@ Path to access on the HTTP server.
 
 `path`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([path](workflow-defs-httpgetaction-properties-path.md))
+* Type: `string` ([path](workflow-defs-httpgetaction-properties-path.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/path")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/path")
 
 ### path Type
 

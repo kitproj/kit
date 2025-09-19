@@ -26,13 +26,13 @@ https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/propertie
 
 `.*`
 
-*   is optional
+* is optional
 
-*   Type: `integer`
+* Type: `integer`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-workflow-properties-semaphores-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores/patternProperties/.*")
+* defined in: [Untitled schema](workflow-defs-workflow-properties-semaphores-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores/patternProperties/.*")
 
 ### .\* Type
 

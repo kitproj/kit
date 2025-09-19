@@ -8,8 +8,9 @@ Sim is straight-forward API simulation tool that's tiny, fast, secure and scalab
 tasks:
   "":
     image: ghcr.io/kitproj/sim
-    ports: "8080"
-    readinessProbe: http://:8080/hello?failureThreshold=20&initialDelay=5s&period=5s&successThreshold=1
+    ports:
+    - "8080"
+    readinessProbe: http://localhost:8080/hello
 volumes:
 - hostPath:
     path: volumes/sim/apis

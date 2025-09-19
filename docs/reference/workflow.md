@@ -34,13 +34,13 @@ Reference this group by using
 
 `Duration`
 
-*   is required
+* is required
 
-*   Type: `object` ([Duration](workflow-defs-duration.md))
+* Type: `object` ([Duration](workflow-defs-duration.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration")
+* defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration")
 
 #### Duration Type
 
@@ -64,13 +64,13 @@ Reference this group by using
 
 `.*`
 
-*   is optional
+* is optional
 
-*   Type: `string`
+* Type: `string`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars/patternProperties/.*")
+* defined in: [Untitled schema](workflow-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars/patternProperties/.*")
 
 #### .\* Type
 
@@ -107,13 +107,13 @@ Scheme to use for connecting to the host. Defaults to HTTP.
 
 `scheme`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([scheme](workflow-defs-httpgetaction-properties-scheme.md))
+* Type: `string` ([scheme](workflow-defs-httpgetaction-properties-scheme.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/scheme")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-scheme.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/scheme")
 
 #### scheme Type
 
@@ -125,13 +125,13 @@ Number of the port
 
 `port`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([port](workflow-defs-httpgetaction-properties-port.md))
+* Type: `integer` ([port](workflow-defs-httpgetaction-properties-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/port")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/port")
 
 #### port Type
 
@@ -143,13 +143,13 @@ Path to access on the HTTP server.
 
 `path`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([path](workflow-defs-httpgetaction-properties-path.md))
+* Type: `string` ([path](workflow-defs-httpgetaction-properties-path.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/path")
+* defined in: [Untitled schema](workflow-defs-httpgetaction-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HTTPGetAction/properties/path")
 
 #### path Type
 
@@ -173,13 +173,13 @@ Path of the directory on the host.
 
 `path`
 
-*   is required
+* is required
 
-*   Type: `string` ([path](workflow-defs-hostpath-properties-path.md))
+* Type: `string` ([path](workflow-defs-hostpath-properties-path.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HostPath/properties/path")
+* defined in: [Untitled schema](workflow-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HostPath/properties/path")
 
 #### path Type
 
@@ -204,13 +204,13 @@ The container port to expose
 
 `containerPort`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([containerPort](workflow-defs-port-properties-containerport.md))
+* Type: `integer` ([containerPort](workflow-defs-port-properties-containerport.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/containerPort")
+* defined in: [Untitled schema](workflow-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/containerPort")
 
 #### containerPort Type
 
@@ -222,13 +222,13 @@ The host port to route to the container port
 
 `hostPort`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([hostPort](workflow-defs-port-properties-hostport.md))
+* Type: `integer` ([hostPort](workflow-defs-port-properties-hostport.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/hostPort")
+* defined in: [Untitled schema](workflow-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/hostPort")
 
 #### hostPort Type
 
@@ -268,13 +268,13 @@ TCPSocketAction describes an action based on opening a socket
 
 `tcpSocket`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([TCPSocketAction](workflow-defs-tcpsocketaction.md))
+* Type: `object` ([TCPSocketAction](workflow-defs-tcpsocketaction.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/tcpSocket")
+* defined in: [Untitled schema](workflow-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/tcpSocket")
 
 #### tcpSocket Type
 
@@ -286,13 +286,13 @@ HTTPGetAction describes an action based on HTTP Locks requests.
 
 `httpGet`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([HTTPGetAction](workflow-defs-httpgetaction.md))
+* Type: `object` ([HTTPGetAction](workflow-defs-httpgetaction.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/httpGet")
+* defined in: [Untitled schema](workflow-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/httpGet")
 
 #### httpGet Type
 
@@ -304,13 +304,13 @@ Number of seconds after the process has started before the probe is initiated.
 
 `initialDelaySeconds`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([initialDelaySeconds](workflow-defs-probe-properties-initialdelayseconds.md))
+* Type: `integer` ([initialDelaySeconds](workflow-defs-probe-properties-initialdelayseconds.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/initialDelaySeconds")
+* defined in: [Untitled schema](workflow-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/initialDelaySeconds")
 
 #### initialDelaySeconds Type
 
@@ -322,13 +322,13 @@ How often (in seconds) to perform the probe.
 
 `periodSeconds`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([periodSeconds](workflow-defs-probe-properties-periodseconds.md))
+* Type: `integer` ([periodSeconds](workflow-defs-probe-properties-periodseconds.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/periodSeconds")
+* defined in: [Untitled schema](workflow-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/periodSeconds")
 
 #### periodSeconds Type
 
@@ -340,13 +340,13 @@ Minimum consecutive successes for the probe to be considered successful after ha
 
 `successThreshold`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([successThreshold](workflow-defs-probe-properties-successthreshold.md))
+* Type: `integer` ([successThreshold](workflow-defs-probe-properties-successthreshold.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/successThreshold")
+* defined in: [Untitled schema](workflow-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/successThreshold")
 
 #### successThreshold Type
 
@@ -358,13 +358,13 @@ Minimum consecutive failures for the probe to be considered failed after having 
 
 `failureThreshold`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([failureThreshold](workflow-defs-probe-properties-failurethreshold.md))
+* Type: `integer` ([failureThreshold](workflow-defs-probe-properties-failurethreshold.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/failureThreshold")
+* defined in: [Untitled schema](workflow-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/failureThreshold")
 
 #### failureThreshold Type
 
@@ -399,13 +399,13 @@ Port number of the port to probe.
 
 `port`
 
-*   is required
+* is required
 
-*   Type: `integer` ([port](workflow-defs-tcpsocketaction-properties-port.md))
+* Type: `integer` ([port](workflow-defs-tcpsocketaction-properties-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/TCPSocketAction/properties/port")
+* defined in: [Untitled schema](workflow-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/TCPSocketAction/properties/port")
 
 #### port Type
 
@@ -457,13 +457,13 @@ Services are running in the background.
 
 `type`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([type](workflow-defs-task-properties-type.md))
+* Type: `string` ([type](workflow-defs-task-properties-type.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-type.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/type")
+* defined in: [Untitled schema](workflow-defs-task-properties-type.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/type")
 
 #### type Type
 
@@ -475,13 +475,13 @@ Where to log the output of the task. E.g. if the task is verbose. Defaults to /d
 
 `log`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([log](workflow-defs-task-properties-log.md))
+* Type: `string` ([log](workflow-defs-task-properties-log.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/log")
+* defined in: [Untitled schema](workflow-defs-task-properties-log.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/log")
 
 #### log Type
 
@@ -493,13 +493,13 @@ Either the container image to run, or a directory containing a Dockerfile. If om
 
 `image`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([image](workflow-defs-task-properties-image.md))
+* Type: `string` ([image](workflow-defs-task-properties-image.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/image")
+* defined in: [Untitled schema](workflow-defs-task-properties-image.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/image")
 
 #### image Type
 
@@ -511,13 +511,13 @@ Pull policy, e.g. Always, Never, IfNotPresent
 
 `imagePullPolicy`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([imagePullPolicy](workflow-defs-task-properties-imagepullpolicy.md))
+* Type: `string` ([imagePullPolicy](workflow-defs-task-properties-imagepullpolicy.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/imagePullPolicy")
+* defined in: [Untitled schema](workflow-defs-task-properties-imagepullpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/imagePullPolicy")
 
 #### imagePullPolicy Type
 
@@ -529,13 +529,13 @@ A probe to check if the task is alive, it will be restarted if not.
 
 `livenessProbe`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Probe](workflow-defs-probe.md))
+* Type: `object` ([Probe](workflow-defs-probe.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/livenessProbe")
+* defined in: [Untitled schema](workflow-defs-probe.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/livenessProbe")
 
 #### livenessProbe Type
 
@@ -547,13 +547,13 @@ A probe to check if the task is alive, it will be restarted if not.
 
 `readinessProbe`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Probe](workflow-defs-probe.md))
+* Type: `object` ([Probe](workflow-defs-probe.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/readinessProbe")
+* defined in: [Untitled schema](workflow-defs-probe.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/readinessProbe")
 
 #### readinessProbe Type
 
@@ -565,13 +565,13 @@ The command to run in the container or on the host. If both the image and the co
 
 `command`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/command")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/command")
 
 #### command Type
 
@@ -583,13 +583,13 @@ The arguments to pass to the command
 
 `args`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/args")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/args")
 
 #### args Type
 
@@ -601,13 +601,13 @@ The shell script to run, instead of the command
 
 `sh`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([sh](workflow-defs-task-properties-sh.md))
+* Type: `string` ([sh](workflow-defs-task-properties-sh.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/sh")
+* defined in: [Untitled schema](workflow-defs-task-properties-sh.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/sh")
 
 #### sh Type
 
@@ -619,13 +619,13 @@ A directories or files of Kubernetes manifests to apply. Once running the task w
 
 `manifests`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/manifests")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/manifests")
 
 #### manifests Type
 
@@ -637,13 +637,13 @@ The namespace to run the Kubernetes resource in. Defaults to the namespace of th
 
 `namespace`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([namespace](workflow-defs-task-properties-namespace.md))
+* Type: `string` ([namespace](workflow-defs-task-properties-namespace.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/namespace")
+* defined in: [Untitled schema](workflow-defs-task-properties-namespace.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/namespace")
 
 #### namespace Type
 
@@ -655,13 +655,13 @@ The working directory in the container or on the host
 
 `workingDir`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([workingDir](workflow-defs-task-properties-workingdir.md))
+* Type: `string` ([workingDir](workflow-defs-task-properties-workingdir.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/workingDir")
+* defined in: [Untitled schema](workflow-defs-task-properties-workingdir.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/workingDir")
 
 #### workingDir Type
 
@@ -673,13 +673,13 @@ The user to run the task as.
 
 `user`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([user](workflow-defs-task-properties-user.md))
+* Type: `string` ([user](workflow-defs-task-properties-user.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/user")
+* defined in: [Untitled schema](workflow-defs-task-properties-user.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/user")
 
 #### user Type
 
@@ -691,13 +691,13 @@ A list of environment variables.
 
 `env`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([EnvVars](workflow-defs-envvars.md))
+* Type: `object` ([EnvVars](workflow-defs-envvars.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envvars.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/env")
+* defined in: [Untitled schema](workflow-defs-envvars.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/env")
 
 #### env Type
 
@@ -709,13 +709,13 @@ Environment file (e.g. .env) to use
 
 `envfile`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envfile.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/envfile")
+* defined in: [Untitled schema](workflow-defs-envfile.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/envfile")
 
 #### envfile Type
 
@@ -727,13 +727,13 @@ A list of ports to expose.
 
 `ports`
 
-*   is optional
+* is optional
 
-*   Type: `object[]` ([Port](workflow-defs-port.md))
+* Type: `object[]` ([Port](workflow-defs-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-ports.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/ports")
+* defined in: [Untitled schema](workflow-defs-ports.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/ports")
 
 #### ports Type
 
@@ -745,13 +745,13 @@ Volumes to mount in the container
 
 `volumeMounts`
 
-*   is optional
+* is optional
 
-*   Type: `object[]` ([VolumeMount](workflow-defs-volumemount.md))
+* Type: `object[]` ([VolumeMount](workflow-defs-volumemount.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/volumeMounts")
+* defined in: [Untitled schema](workflow-defs-task-properties-volumemounts.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/volumeMounts")
 
 #### volumeMounts Type
 
@@ -763,13 +763,13 @@ Use a pseudo-TTY
 
 `tty`
 
-*   is optional
+* is optional
 
-*   Type: `boolean` ([tty](workflow-defs-task-properties-tty.md))
+* Type: `boolean` ([tty](workflow-defs-task-properties-tty.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/tty")
+* defined in: [Untitled schema](workflow-defs-task-properties-tty.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/tty")
 
 #### tty Type
 
@@ -781,13 +781,13 @@ A list of files to watch for changes, and restart the task if they change
 
 `watch`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/watch")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/watch")
 
 #### watch Type
 
@@ -799,13 +799,13 @@ A mutex to prevent multiple tasks with the same mutex from running at the same t
 
 `mutex`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([mutex](workflow-defs-task-properties-mutex.md))
+* Type: `string` ([mutex](workflow-defs-task-properties-mutex.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/mutex")
+* defined in: [Untitled schema](workflow-defs-task-properties-mutex.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/mutex")
 
 #### mutex Type
 
@@ -817,13 +817,13 @@ A semaphore to limit the number of tasks with the same semaphore that can run at
 
 `semaphore`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([semaphore](workflow-defs-task-properties-semaphore.md))
+* Type: `string` ([semaphore](workflow-defs-task-properties-semaphore.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/semaphore")
+* defined in: [Untitled schema](workflow-defs-task-properties-semaphore.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/semaphore")
 
 #### semaphore Type
 
@@ -835,13 +835,13 @@ A list of tasks to run before this task
 
 `dependencies`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/dependencies")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/dependencies")
 
 #### dependencies Type
 
@@ -853,13 +853,13 @@ A list of files this task will create. If these exist, and they're newer than th
 
 `targets`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/targets")
+* defined in: [Untitled schema](workflow-defs-strings.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/targets")
 
 #### targets Type
 
@@ -871,13 +871,13 @@ The restart policy, e.g. Always, Never, OnFailure. Defaults depends on the type 
 
 `restartPolicy`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([restartPolicy](workflow-defs-task-properties-restartpolicy.md))
+* Type: `string` ([restartPolicy](workflow-defs-task-properties-restartpolicy.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")
+* defined in: [Untitled schema](workflow-defs-task-properties-restartpolicy.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/restartPolicy")
 
 #### restartPolicy Type
 
@@ -889,13 +889,13 @@ The timeout for the task to be considered stalled. If omitted, the task will be 
 
 `stalledTimeout`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Duration](workflow-defs-duration.md))
+* Type: `object` ([Duration](workflow-defs-duration.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")
+* defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/stalledTimeout")
 
 #### stalledTimeout Type
 
@@ -907,13 +907,13 @@ The group this task belongs to. Tasks in the same group will be visually grouped
 
 `group`
 
-*   is optional
+* is optional
 
-*   Type: `string` ([group](workflow-defs-task-properties-group.md))
+* Type: `string` ([group](workflow-defs-task-properties-group.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-group.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/group")
+* defined in: [Untitled schema](workflow-defs-task-properties-group.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/group")
 
 #### group Type
 
@@ -925,13 +925,13 @@ Whether this is the default task to run if no task is specified.
 
 `default`
 
-*   is optional
+* is optional
 
-*   Type: `boolean` ([default](workflow-defs-task-properties-default.md))
+* Type: `boolean` ([default](workflow-defs-task-properties-default.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task-properties-default.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/default")
+* defined in: [Untitled schema](workflow-defs-task-properties-default.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Task/properties/default")
 
 #### default Type
 
@@ -955,13 +955,13 @@ A task is a container or a command to run.
 
 `.*`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Task](workflow-defs-task.md))
+* Type: `object` ([Task](workflow-defs-task.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Tasks/patternProperties/.*")
+* defined in: [Untitled schema](workflow-defs-task.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Tasks/patternProperties/.*")
 
 #### .\* Type
 
@@ -986,13 +986,13 @@ Volume's name.
 
 `name`
 
-*   is required
+* is required
 
-*   Type: `string` ([name](workflow-defs-volume-properties-name.md))
+* Type: `string` ([name](workflow-defs-volume-properties-name.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/name")
+* defined in: [Untitled schema](workflow-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/name")
 
 #### name Type
 
@@ -1004,13 +1004,13 @@ HostPath represents a pre-existing file or directory on the host machine that is
 
 `hostPath`
 
-*   is required
+* is required
 
-*   Type: `object` ([HostPath](workflow-defs-hostpath.md))
+* Type: `object` ([HostPath](workflow-defs-hostpath.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/hostPath")
+* defined in: [Untitled schema](workflow-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/hostPath")
 
 #### hostPath Type
 
@@ -1035,13 +1035,13 @@ This must match the name of a volume.
 
 `name`
 
-*   is required
+* is required
 
-*   Type: `string` ([name](workflow-defs-volumemount-properties-name.md))
+* Type: `string` ([name](workflow-defs-volumemount-properties-name.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/name")
+* defined in: [Untitled schema](workflow-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/name")
 
 #### name Type
 
@@ -1053,13 +1053,13 @@ Path within the container at which the volume should be mounted.
 
 `mountPath`
 
-*   is required
+* is required
 
-*   Type: `string` ([mountPath](workflow-defs-volumemount-properties-mountpath.md))
+* Type: `string` ([mountPath](workflow-defs-volumemount-properties-mountpath.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/mountPath")
+* defined in: [Untitled schema](workflow-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/mountPath")
 
 #### mountPath Type
 
@@ -1089,13 +1089,13 @@ Reference this group by using
 
 `port`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([port](workflow-defs-workflow-properties-port.md))
+* Type: `integer` ([port](workflow-defs-workflow-properties-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-workflow-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/port")
+* defined in: [Untitled schema](workflow-defs-workflow-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/port")
 
 #### port Type
 
@@ -1107,13 +1107,13 @@ Reference this group by using
 
 `terminationGracePeriodSeconds`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([terminationGracePeriodSeconds](workflow-defs-workflow-properties-terminationgraceperiodseconds.md))
+* Type: `integer` ([terminationGracePeriodSeconds](workflow-defs-workflow-properties-terminationgraceperiodseconds.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-workflow-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/terminationGracePeriodSeconds")
+* defined in: [Untitled schema](workflow-defs-workflow-properties-terminationgraceperiodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/terminationGracePeriodSeconds")
 
 #### terminationGracePeriodSeconds Type
 
@@ -1125,13 +1125,13 @@ Reference this group by using
 
 `tasks`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Tasks](workflow-defs-tasks.md))
+* Type: `object` ([Tasks](workflow-defs-tasks.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-tasks.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/tasks")
+* defined in: [Untitled schema](workflow-defs-tasks.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/tasks")
 
 #### tasks Type
 
@@ -1143,13 +1143,13 @@ Reference this group by using
 
 `volumes`
 
-*   is optional
+* is optional
 
-*   Type: `object[]` ([Volume](workflow-defs-volume.md))
+* Type: `object[]` ([Volume](workflow-defs-volume.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-workflow-properties-volumes.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/volumes")
+* defined in: [Untitled schema](workflow-defs-workflow-properties-volumes.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/volumes")
 
 #### volumes Type
 
@@ -1161,13 +1161,13 @@ Reference this group by using
 
 `semaphores`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([semaphores](workflow-defs-workflow-properties-semaphores.md))
+* Type: `object` ([semaphores](workflow-defs-workflow-properties-semaphores.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-workflow-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores")
+* defined in: [Untitled schema](workflow-defs-workflow-properties-semaphores.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/semaphores")
 
 #### semaphores Type
 
@@ -1179,13 +1179,13 @@ A list of environment variables.
 
 `env`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([EnvVars](workflow-defs-envvars.md))
+* Type: `object` ([EnvVars](workflow-defs-envvars.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envvars.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/env")
+* defined in: [Untitled schema](workflow-defs-envvars.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/env")
 
 #### env Type
 
@@ -1197,13 +1197,13 @@ A list of environment variables.
 
 `envfile`
 
-*   is optional
+* is optional
 
-*   Type: `string[]`
+* Type: `string[]`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envfile.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/envfile")
+* defined in: [Untitled schema](workflow-defs-envfile.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Workflow/properties/envfile")
 
 #### envfile Type
 

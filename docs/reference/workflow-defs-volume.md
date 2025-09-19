@@ -27,13 +27,13 @@ Volume's name.
 
 `name`
 
-*   is required
+* is required
 
-*   Type: `string` ([name](workflow-defs-volume-properties-name.md))
+* Type: `string` ([name](workflow-defs-volume-properties-name.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/name")
+* defined in: [Untitled schema](workflow-defs-volume-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/name")
 
 ### name Type
 
@@ -45,13 +45,13 @@ HostPath represents a pre-existing file or directory on the host machine that is
 
 `hostPath`
 
-*   is required
+* is required
 
-*   Type: `object` ([HostPath](workflow-defs-hostpath.md))
+* Type: `object` ([HostPath](workflow-defs-hostpath.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/hostPath")
+* defined in: [Untitled schema](workflow-defs-hostpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Volume/properties/hostPath")
 
 ### hostPath Type
 
