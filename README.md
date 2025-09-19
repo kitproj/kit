@@ -35,11 +35,11 @@ Download the standalone binary from the [releases page](https://github.com/kitpr
 
 ```bash
 # For Linux
-sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.104/kit_v0.1.104_linux_386
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_386
 sudo chmod +x /usr/local/bin/kit
 
 # For Go users
-go install github.com/kitproj/kit@v0.1.104
+go install github.com/kitproj/kit@v0.1.105
 ```
 
 ### Basic Usage
