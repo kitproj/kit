@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -33,9 +32,10 @@ import (
 )
 
 type container struct {
-	name string
-	log  *log.Logger
-	spec types.Spec
+	name      string
+	log       *log.Logger
+	spec      types.Spec
+	dockerCli client.APIClient
 	types.Task
 	containerID string
 }
@@ -308,16 +308,21 @@ func ignoreNotExist(err error) error {
 }
 
 func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	if c.containerID == "" {
-		return &types.Metrics{}, nil
+	// Initialize Docker client if not already done
+	if c.dockerCli == nil {
+		cli, err := client.NewClientWithOpts(client.FromEnv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create docker client: %w", err)
+		}
+		c.dockerCli = cli
 	}
 
 	command := metrics.GetProcFSCommand(1) // PID 1
-	cmdArgs := append([]string{"exec", c.name}, command...)
-	cmd := exec.CommandContext(ctx, "docker", cmdArgs...)
-	output, err := cmd.CombinedOutput()
+
+	// Use Docker API for exec instead of command line
+	output, err := c.execInContainer(ctx, command)
 	if err != nil {
-		return nil, fmt.Errorf("docker exec ps failed for container %s: %w, output: %s", c.name, err, string(output))
+		return nil, fmt.Errorf("docker exec failed for container %s: %w", c.name, err)
 	}
 
 	metrics, err := metrics.ParseProcFSOutput(string(output))
@@ -325,6 +330,47 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", c.name, err)
 	}
 	return metrics, nil
+}
+
+func (c *container) execInContainer(ctx context.Context, command []string) ([]byte, error) {
+	// Create exec configuration
+	execConfig := dockertypes.ExecConfig{
+		Cmd:          command,
+		AttachStdout: true,
+		AttachStderr: true,
+	}
+
+	// Create exec instance
+	execResp, err := c.dockerCli.ContainerExecCreate(ctx, c.containerID, execConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exec instance: %w", err)
+	}
+
+	// Start exec and get response
+	resp, err := c.dockerCli.ContainerExecAttach(ctx, execResp.ID, dockertypes.ExecStartCheck{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to exec: %w", err)
+	}
+	defer resp.Close()
+
+	// Read the output
+	var stdout, stderr bytes.Buffer
+	_, err = stdcopy.StdCopy(&stdout, &stderr, resp.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read exec output: %w", err)
+	}
+
+	// Check exec exit code
+	inspectResp, err := c.dockerCli.ContainerExecInspect(ctx, execResp.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect exec: %w", err)
+	}
+
+	if inspectResp.ExitCode != 0 {
+		return nil, fmt.Errorf("exec command failed with exit code %d, stderr: %s", inspectResp.ExitCode, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }
 
 var _ Interface = &container{}

@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -30,19 +29,24 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/yaml"
 )
 
 type k8s struct {
-	log  *log.Logger
-	spec types.Spec
-	name string
-	pods []string // namespace/name
+	log        *log.Logger
+	spec       types.Spec
+	name       string
+	pods       []string // namespace/name
+	clientset  kubernetes.Interface
+	restConfig *rest.Config
 	types.Task
 }
 
@@ -108,6 +112,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	if err != nil {
 		return fmt.Errorf("failed to create clientset: %w", err)
 	}
+
+	// Store clientset and config for later use in metrics
+	k.clientset = clientset
+	k.restConfig = config
 
 	// Create a Discovery client
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
@@ -472,14 +480,17 @@ func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types
 }
 
 func (k *k8s) getContainersInPod(ctx context.Context, namespace, podName string) ([]string, error) {
-	// Use kubectl to get pod details and extract container names
-	cmd := exec.CommandContext(ctx, "kubectl", "get", "pod", "-n", namespace, podName, "-o", "jsonpath={.spec.containers[*].name}")
-	output, err := cmd.CombinedOutput()
+	// Use Kubernetes API to get pod details and extract container names
+	pod, err := k.clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pod containers: %w, output: %s", err, string(output))
+		return nil, fmt.Errorf("failed to get pod %s/%s: %w", namespace, podName, err)
 	}
 
-	containerNames := strings.Fields(strings.TrimSpace(string(output)))
+	var containerNames []string
+	for _, container := range pod.Spec.Containers {
+		containerNames = append(containerNames, container.Name)
+	}
+
 	if len(containerNames) == 0 {
 		return nil, fmt.Errorf("no containers found in pod %s/%s", namespace, podName)
 	}
@@ -489,11 +500,11 @@ func (k *k8s) getContainersInPod(ctx context.Context, namespace, podName string)
 
 func (k *k8s) getContainerMetrics(ctx context.Context, namespace, podName, containerName string) (*types.Metrics, error) {
 	command := metrics.GetProcFSCommand(1) // PID 1
-	cmdArgs := append([]string{"exec", "-n", namespace, podName, "-c", containerName, "--"}, command...)
-	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
-	output, err := cmd.CombinedOutput()
+
+	// Use Kubernetes API to execute command in container
+	output, err := k.execInContainer(ctx, namespace, podName, containerName, command)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run %q: %w, output: %s", strings.Join(cmd.Args, " "), err, string(output))
+		return nil, fmt.Errorf("failed to exec in container %s/%s/%s: %w", namespace, podName, containerName, err)
 	}
 
 	metrics, err := metrics.ParseProcFSOutput(string(output))
@@ -501,4 +512,36 @@ func (k *k8s) getContainerMetrics(ctx context.Context, namespace, podName, conta
 		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", containerName, err)
 	}
 	return metrics, nil
+}
+
+func (k *k8s) execInContainer(ctx context.Context, namespace, podName, containerName string, command []string) ([]byte, error) {
+	req := k.clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("exec")
+
+	req.VersionedParams(&corev1.PodExecOptions{
+		Container: containerName,
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(k.restConfig, "POST", req.URL())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create executor: %w", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err = executor.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute command: %w, stderr: %s", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }
