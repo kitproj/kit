@@ -25,6 +25,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/nat"
+	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"k8s.io/utils/strings/slices"
@@ -34,6 +35,7 @@ type container struct {
 	name string
 	log  *log.Logger
 	spec types.Spec
+	cli  client.APIClient
 	types.Task
 	containerID string
 }
@@ -49,6 +51,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("failed to create docker client: %w", err)
 	}
 	defer cli.Close()
+	c.cli = cli
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
 	id, existingHash, err := c.getContainer(ctx, cli)
@@ -306,54 +309,62 @@ func ignoreNotExist(err error) error {
 }
 
 func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	if c.containerID == "" {
-		return &types.Metrics{}, nil
-	}
+	// Initialize Docker client if not already done
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	command := metrics.GetProcFSCommand(1) // PID 1
+
+	// Use Docker API for exec instead of command line
+	output, err := c.execInContainer(ctx, command)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create docker client: %w", err)
+		return nil, fmt.Errorf("docker exec failed for container %s: %w", c.name, err)
 	}
-	defer cli.Close()
 
-	stats, err := cli.ContainerStats(ctx, c.containerID, false) // false = single stat, not stream
+	metrics, err := metrics.ParseProcFSOutput(string(output))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get container stats: %w", err)
+		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", c.name, err)
 	}
-	defer stats.Body.Close()
+	return metrics, nil
+}
 
-	data, err := io.ReadAll(stats.Body)
+func (c *container) execInContainer(ctx context.Context, command []string) ([]byte, error) {
+	// Create exec configuration
+	execConfig := dockertypes.ExecConfig{
+		Cmd:          command,
+		AttachStdout: true,
+		AttachStderr: true,
+	}
+
+	// Create exec instance
+	execResp, err := c.cli.ContainerExecCreate(ctx, c.containerID, execConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read stats: %w", err)
+		return nil, fmt.Errorf("failed to create exec instance: %w", err)
 	}
 
-	var dockerStats dockertypes.StatsJSON
-	if err := json.Unmarshal(data, &dockerStats); err != nil {
-		return nil, fmt.Errorf("failed to parse stats: %w", err)
+	// Start exec and get response
+	resp, err := c.cli.ContainerExecAttach(ctx, execResp.ID, dockertypes.ExecStartCheck{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to exec: %w", err)
+	}
+	defer resp.Close()
+
+	// Read the output
+	var stdout, stderr bytes.Buffer
+	_, err = stdcopy.StdCopy(&stdout, &stderr, resp.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read exec output: %w", err)
 	}
 
-	// Calculate memory usage (subtract cache if available)
-	memoryBytes := dockerStats.MemoryStats.Usage
-	if dockerStats.MemoryStats.Stats["cache"] != 0 {
-		memoryBytes -= dockerStats.MemoryStats.Stats["cache"]
+	// Check exec exit code
+	inspectResp, err := c.cli.ContainerExecInspect(ctx, execResp.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect exec: %w", err)
 	}
 
-	// Calculate CPU usage in millicores
-	var cpuMillicores uint64
-	if dockerStats.PreCPUStats.CPUUsage.TotalUsage != 0 {
-		cpuDelta := dockerStats.CPUStats.CPUUsage.TotalUsage - dockerStats.PreCPUStats.CPUUsage.TotalUsage
-		systemDelta := dockerStats.CPUStats.SystemUsage - dockerStats.PreCPUStats.SystemUsage
-
-		if systemDelta > 0 {
-			cpuPercent := (float64(cpuDelta) / float64(systemDelta)) * float64(len(dockerStats.CPUStats.CPUUsage.PercpuUsage))
-			cpuMillicores = uint64(cpuPercent * 1000) // Convert to millicores
-		}
+	if inspectResp.ExitCode != 0 {
+		return nil, fmt.Errorf("exec command failed with exit code %d, stderr: %s", inspectResp.ExitCode, stderr.String())
 	}
 
-	return &types.Metrics{
-		CPU: cpuMillicores,
-		Mem: memoryBytes,
-	}, nil
+	return stdout.Bytes(), nil
 }
 
 var _ Interface = &container{}
