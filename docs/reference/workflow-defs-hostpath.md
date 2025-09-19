@@ -26,13 +26,13 @@ Path of the directory on the host.
 
 `path`
 
-*   is required
+* is required
 
-*   Type: `string` ([path](workflow-defs-hostpath-properties-path.md))
+* Type: `string` ([path](workflow-defs-hostpath-properties-path.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HostPath/properties/path")
+* defined in: [Untitled schema](workflow-defs-hostpath-properties-path.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/HostPath/properties/path")
 
 ### path Type
 

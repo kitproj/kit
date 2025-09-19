@@ -26,13 +26,13 @@ A list of environment variables.
 
 `.*`
 
-*   is optional
+* is optional
 
-*   Type: `string`
+* Type: `string`
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars/patternProperties/.*")
+* defined in: [Untitled schema](workflow-defs-envvars-patternproperties-.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/EnvVars/patternProperties/.*")
 
 ### .\* Type
 

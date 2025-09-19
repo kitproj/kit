@@ -5,8 +5,12 @@ The apachepulsar/pulsar container image provides a scalable and distributed mess
 ```yaml
 tasks:
   "":
-    command: /pulsar/bin/pulsar standalone
+    command:
+    - /pulsar/bin/pulsar
+    - standalone
     image: apachepulsar/pulsar
-    ports: 6650 8080
+    ports:
+    - "6650"
+    - "8080"
 ```
 

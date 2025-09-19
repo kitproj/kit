@@ -26,13 +26,13 @@ The timeout for the task to be considered stalled. If omitted, the task will be 
 
 `Duration`
 
-*   is required
+* is required
 
-*   Type: `object` ([Duration](workflow-defs-duration.md))
+* Type: `object` ([Duration](workflow-defs-duration.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration")
+* defined in: [Untitled schema](workflow-defs-duration.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Duration/properties/Duration")
 
 ### Duration Type
 

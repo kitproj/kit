@@ -26,13 +26,13 @@ Port number of the port to probe.
 
 `port`
 
-*   is required
+* is required
 
-*   Type: `integer` ([port](workflow-defs-tcpsocketaction-properties-port.md))
+* Type: `integer` ([port](workflow-defs-tcpsocketaction-properties-port.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/TCPSocketAction/properties/port")
+* defined in: [Untitled schema](workflow-defs-tcpsocketaction-properties-port.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/TCPSocketAction/properties/port")
 
 ### port Type
 

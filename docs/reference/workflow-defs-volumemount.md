@@ -27,13 +27,13 @@ This must match the name of a volume.
 
 `name`
 
-*   is required
+* is required
 
-*   Type: `string` ([name](workflow-defs-volumemount-properties-name.md))
+* Type: `string` ([name](workflow-defs-volumemount-properties-name.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/name")
+* defined in: [Untitled schema](workflow-defs-volumemount-properties-name.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/name")
 
 ### name Type
 
@@ -45,13 +45,13 @@ Path within the container at which the volume should be mounted.
 
 `mountPath`
 
-*   is required
+* is required
 
-*   Type: `string` ([mountPath](workflow-defs-volumemount-properties-mountpath.md))
+* Type: `string` ([mountPath](workflow-defs-volumemount-properties-mountpath.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/mountPath")
+* defined in: [Untitled schema](workflow-defs-volumemount-properties-mountpath.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/VolumeMount/properties/mountPath")
 
 ### mountPath Type
 

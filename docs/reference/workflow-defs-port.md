@@ -27,13 +27,13 @@ The container port to expose
 
 `containerPort`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([containerPort](workflow-defs-port-properties-containerport.md))
+* Type: `integer` ([containerPort](workflow-defs-port-properties-containerport.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/containerPort")
+* defined in: [Untitled schema](workflow-defs-port-properties-containerport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/containerPort")
 
 ### containerPort Type
 
@@ -45,13 +45,13 @@ The host port to route to the container port
 
 `hostPort`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([hostPort](workflow-defs-port-properties-hostport.md))
+* Type: `integer` ([hostPort](workflow-defs-port-properties-hostport.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/hostPort")
+* defined in: [Untitled schema](workflow-defs-port-properties-hostport.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Port/properties/hostPort")
 
 ### hostPort Type
 

@@ -70,7 +70,11 @@ func createExamplesReadme(err error, examples []Example) error {
 		if description == "" {
 			description = example.Documentation
 		}
-		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", example.Title, example.Name+".md", description))
+		title := example.Title
+		if title == "" {
+			title = example.Name
+		}
+		_, err = out.WriteString(fmt.Sprintf(" * [%s](%s) %s\n", title, example.Name+".md", description))
 		if err != nil {
 			return fmt.Errorf("failed to write README.md: %w", err)
 		}

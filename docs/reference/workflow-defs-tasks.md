@@ -26,13 +26,13 @@ A task is a container or a command to run.
 
 `.*`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([Task](workflow-defs-task.md))
+* Type: `object` ([Task](workflow-defs-task.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-task.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Tasks/patternProperties/.*")
+* defined in: [Untitled schema](workflow-defs-task.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Tasks/patternProperties/.*")
 
 ### .\* Type
 

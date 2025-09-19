@@ -31,13 +31,13 @@ TCPSocketAction describes an action based on opening a socket
 
 `tcpSocket`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([TCPSocketAction](workflow-defs-tcpsocketaction.md))
+* Type: `object` ([TCPSocketAction](workflow-defs-tcpsocketaction.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/tcpSocket")
+* defined in: [Untitled schema](workflow-defs-tcpsocketaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/tcpSocket")
 
 ### tcpSocket Type
 
@@ -49,13 +49,13 @@ HTTPGetAction describes an action based on HTTP Locks requests.
 
 `httpGet`
 
-*   is optional
+* is optional
 
-*   Type: `object` ([HTTPGetAction](workflow-defs-httpgetaction.md))
+* Type: `object` ([HTTPGetAction](workflow-defs-httpgetaction.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/httpGet")
+* defined in: [Untitled schema](workflow-defs-httpgetaction.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/httpGet")
 
 ### httpGet Type
 
@@ -67,13 +67,13 @@ Number of seconds after the process has started before the probe is initiated.
 
 `initialDelaySeconds`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([initialDelaySeconds](workflow-defs-probe-properties-initialdelayseconds.md))
+* Type: `integer` ([initialDelaySeconds](workflow-defs-probe-properties-initialdelayseconds.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/initialDelaySeconds")
+* defined in: [Untitled schema](workflow-defs-probe-properties-initialdelayseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/initialDelaySeconds")
 
 ### initialDelaySeconds Type
 
@@ -85,13 +85,13 @@ How often (in seconds) to perform the probe.
 
 `periodSeconds`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([periodSeconds](workflow-defs-probe-properties-periodseconds.md))
+* Type: `integer` ([periodSeconds](workflow-defs-probe-properties-periodseconds.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/periodSeconds")
+* defined in: [Untitled schema](workflow-defs-probe-properties-periodseconds.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/periodSeconds")
 
 ### periodSeconds Type
 
@@ -103,13 +103,13 @@ Minimum consecutive successes for the probe to be considered successful after ha
 
 `successThreshold`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([successThreshold](workflow-defs-probe-properties-successthreshold.md))
+* Type: `integer` ([successThreshold](workflow-defs-probe-properties-successthreshold.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/successThreshold")
+* defined in: [Untitled schema](workflow-defs-probe-properties-successthreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/successThreshold")
 
 ### successThreshold Type
 
@@ -121,13 +121,13 @@ Minimum consecutive failures for the probe to be considered failed after having 
 
 `failureThreshold`
 
-*   is optional
+* is optional
 
-*   Type: `integer` ([failureThreshold](workflow-defs-probe-properties-failurethreshold.md))
+* Type: `integer` ([failureThreshold](workflow-defs-probe-properties-failurethreshold.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Untitled schema](workflow-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/failureThreshold")
+* defined in: [Untitled schema](workflow-defs-probe-properties-failurethreshold.md "https://github.com/kitproj/kit/internal/types/workflow#/$defs/Probe/properties/failureThreshold")
 
 ### failureThreshold Type
 
