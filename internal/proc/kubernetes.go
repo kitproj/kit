@@ -12,15 +12,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,19 +29,24 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
 	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/yaml"
 )
 
 type k8s struct {
-	log  *log.Logger
-	spec types.Spec
-	name string
-	pods []string // namespace/name
+	log        *log.Logger
+	spec       types.Spec
+	name       string
+	pods       []string // namespace/name
+	clientset  kubernetes.Interface
+	restConfig *rest.Config
 	types.Task
 }
 
@@ -109,6 +112,10 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 	if err != nil {
 		return fmt.Errorf("failed to create clientset: %w", err)
 	}
+
+	// Store clientset and config for later use in metrics
+	k.clientset = clientset
+	k.restConfig = config
 
 	// Create a Discovery client
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
@@ -442,107 +449,99 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		podName := parts[1]
 		metrics, err := k.getMetrics(ctx, namespace, podName)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get metrics for pod %s: %w", podKey, err)
 		}
-		sum.CPU += metrics.CPU
 		sum.Mem += metrics.Mem
 	}
 	return sum, nil
 }
 
 func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", "top", "pod", "-n", namespace, podName, "--no-headers")
-	output, err := cmd.CombinedOutput()
+	// First, get the list of containers in the pod
+	containers, err := k.getContainersInPod(ctx, namespace, podName)
 	if err != nil {
-		return nil, fmt.Errorf("kubectl top failed %q: %w", string(output), err)
+		return nil, fmt.Errorf("failed to get containers for pod %s/%s: %w", namespace, podName, err)
 	}
 
-	return k.parseKubectlTopOutput(string(output))
-}
+	totalMemory := uint64(0)
 
-func (k *k8s) parseKubectlTopOutput(output string) (*types.Metrics, error) {
-	// kubectl top output format: NAME CPU(cores) MEMORY(bytes)
-	// Example: pod-name 250m 128Mi
-
-	fields := strings.Fields(strings.TrimSpace(output))
-	if len(fields) < 3 {
-		return nil, fmt.Errorf("unexpected kubectl top output format")
-	}
-
-	cpuStr := fields[1]
-	memoryStr := fields[2]
-
-	cpuMillicores, err := k.parseCPUValue(cpuStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse CPU: %w", err)
-	}
-
-	memoryBytes, err := k.parseMemoryValue(memoryStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse memory: %w", err)
-	}
-
-	return &types.Metrics{
-		CPU: cpuMillicores,
-		Mem: memoryBytes,
-	}, nil
-}
-
-func (k *k8s) parseCPUValue(cpuStr string) (uint64, error) {
-	// Handle millicores (e.g., "250m") and cores (e.g., "1.5")
-	if strings.HasSuffix(cpuStr, "m") {
-		milliStr := strings.TrimSuffix(cpuStr, "m")
-		milli, err := strconv.ParseFloat(milliStr, 64)
+	// Iterate through each container and sum their memory usage
+	for _, containerName := range containers {
+		containerMetrics, err := k.getContainerMetrics(ctx, namespace, podName, containerName)
 		if err != nil {
-			return 0, err
+			// Log the error but continue with other containers
+			k.log.Printf("failed to get metrics for container %s in pod %s/%s: %v", containerName, namespace, podName, err)
+			continue
 		}
-		return uint64(milli), nil
+		totalMemory += containerMetrics.Mem
 	}
 
-	cores, err := strconv.ParseFloat(cpuStr, 64)
-	if err != nil {
-		return 0, err
-	}
-	return uint64(cores * 1000), nil // Convert cores to millicores
+	return &types.Metrics{Mem: totalMemory}, nil
 }
 
-func (k *k8s) parseMemoryValue(memoryStr string) (uint64, error) {
-	// Handle various memory units: Ki, Mi, Gi, K, M, G
-	re := regexp.MustCompile(`^(\d+(?:\.\d+)?)([KMGT]i?)?$`)
-	matches := re.FindStringSubmatch(memoryStr)
-	if len(matches) < 2 {
-		return 0, fmt.Errorf("invalid memory format: %s", memoryStr)
-	}
-
-	value, err := strconv.ParseFloat(matches[1], 64)
+func (k *k8s) getContainersInPod(ctx context.Context, namespace, podName string) ([]string, error) {
+	// Use Kubernetes API to get pod details and extract container names
+	pod, err := k.clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
-		return 0, err
+		return nil, fmt.Errorf("failed to get pod %s/%s: %w", namespace, podName, err)
 	}
 
-	unit := ""
-	if len(matches) > 2 {
-		unit = matches[2]
+	var containerNames []string
+	for _, container := range pod.Spec.Containers {
+		containerNames = append(containerNames, container.Name)
 	}
 
-	multiplier := uint64(1)
-	switch unit {
-	case "K":
-		multiplier = 1000
-	case "Ki":
-		multiplier = 1024
-	case "M":
-		multiplier = 1000 * 1000
-	case "Mi":
-		multiplier = 1024 * 1024
-	case "G":
-		multiplier = 1000 * 1000 * 1000
-	case "Gi":
-		multiplier = 1024 * 1024 * 1024
-	case "T":
-		multiplier = 1000 * 1000 * 1000 * 1000
-	case "Ti":
-		multiplier = 1024 * 1024 * 1024 * 1024
+	if len(containerNames) == 0 {
+		return nil, fmt.Errorf("no containers found in pod %s/%s", namespace, podName)
 	}
 
-	return uint64(value * float64(multiplier)), nil
+	return containerNames, nil
+}
+
+func (k *k8s) getContainerMetrics(ctx context.Context, namespace, podName, containerName string) (*types.Metrics, error) {
+	command := metrics.GetProcFSCommand(1) // PID 1
+
+	// Use Kubernetes API to execute command in container
+	output, err := k.execInContainer(ctx, namespace, podName, containerName, command)
+	if err != nil {
+		return nil, fmt.Errorf("failed to exec in container %s/%s/%s: %w", namespace, podName, containerName, err)
+	}
+
+	metrics, err := metrics.ParseProcFSOutput(string(output))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", containerName, err)
+	}
+	return metrics, nil
+}
+
+func (k *k8s) execInContainer(ctx context.Context, namespace, podName, containerName string, command []string) ([]byte, error) {
+	req := k.clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("exec")
+
+	req.VersionedParams(&corev1.PodExecOptions{
+		Container: containerName,
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(k.restConfig, "POST", req.URL())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create executor: %w", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err = executor.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute command: %w, stderr: %s", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }

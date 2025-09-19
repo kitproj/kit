@@ -506,7 +506,7 @@
             const formatMetrics = (metrics) => {
                 if (!metrics) return "";
 
-                return `${metrics.cpu.toFixed(0)}m,${(metrics.mem / 1024 / 1024).toFixed(0)}Mi`;
+                return `${(metrics.mem / 1024 / 1024).toFixed(0)}Mi`;
             };
 
             // Fetch the initial graph data from the server
