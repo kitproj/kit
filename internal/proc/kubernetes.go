@@ -44,7 +44,6 @@ type k8s struct {
 	name string
 	pods []string // namespace/name
 	types.Task
-	profFSSnapshot *metrics.ProcFSSnapshot
 }
 
 // previously we used the K8s common labels, but because charts use them themselves (e.g. Helm) we cannot and must create our own annotations
@@ -458,10 +457,9 @@ func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types
 		return nil, fmt.Errorf("failed to run %q: %w", strings.Join(cmd.Args, " "), err)
 	}
 
-	metrics, procFSSnapshot, err := metrics.ParseProcFSOutput(string(output), k.profFSSnapshot)
+	metrics, err := metrics.ParseProcFSOutput(string(output))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse process metrics for pid: %w", err)
 	}
-	k.profFSSnapshot = procFSSnapshot
 	return metrics, nil
 }

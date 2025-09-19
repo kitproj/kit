@@ -19,8 +19,7 @@ type host struct {
 	log  *log.Logger
 	spec types.Spec
 	types.Task
-	pid            int
-	profFSSnapshot *metrics.ProcFSSnapshot
+	pid int
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
