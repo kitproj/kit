@@ -93,9 +93,9 @@ func (h *host) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	command := metrics.GetPSCommand(h.pid)
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get process metrics for pid %d: %w", h.pid, err)
+		return nil, fmt.Errorf("failed to get process metrics for pid %d: %w, output: %s", h.pid, err, string(output))
 	}
 
 	return metrics.ParsePSOutput(string(output))

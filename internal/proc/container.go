@@ -315,9 +315,9 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	command := metrics.GetProcFSCommand(1) // PID 1
 	cmdArgs := append([]string{"exec", c.name}, command...)
 	cmd := exec.CommandContext(ctx, "docker", cmdArgs...)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("docker exec ps failed for container %s: %w", c.name, err)
+		return nil, fmt.Errorf("docker exec ps failed for container %s: %w, output: %s", c.name, err, string(output))
 	}
 
 	metrics, err := metrics.ParseProcFSOutput(string(output))

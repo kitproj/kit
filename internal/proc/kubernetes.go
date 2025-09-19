@@ -449,17 +449,56 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 }
 
 func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	command := metrics.GetProcFSCommand(1) // PID 1
-	cmdArgs := append([]string{"exec", "-n", namespace, podName, "--"}, command...)
-	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
-	output, err := cmd.Output()
+	// First, get the list of containers in the pod
+	containers, err := k.getContainersInPod(ctx, namespace, podName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run %q: %w", strings.Join(cmd.Args, " "), err)
+		return nil, fmt.Errorf("failed to get containers for pod %s/%s: %w", namespace, podName, err)
+	}
+
+	totalMemory := uint64(0)
+
+	// Iterate through each container and sum their memory usage
+	for _, containerName := range containers {
+		containerMetrics, err := k.getContainerMetrics(ctx, namespace, podName, containerName)
+		if err != nil {
+			// Log the error but continue with other containers
+			k.log.Printf("failed to get metrics for container %s in pod %s/%s: %v", containerName, namespace, podName, err)
+			continue
+		}
+		totalMemory += containerMetrics.Mem
+	}
+
+	return &types.Metrics{Mem: totalMemory}, nil
+}
+
+func (k *k8s) getContainersInPod(ctx context.Context, namespace, podName string) ([]string, error) {
+	// Use kubectl to get pod details and extract container names
+	cmd := exec.CommandContext(ctx, "kubectl", "get", "pod", "-n", namespace, podName, "-o", "jsonpath={.spec.containers[*].name}")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod containers: %w, output: %s", err, string(output))
+	}
+
+	containerNames := strings.Fields(strings.TrimSpace(string(output)))
+	if len(containerNames) == 0 {
+		return nil, fmt.Errorf("no containers found in pod %s/%s", namespace, podName)
+	}
+
+	return containerNames, nil
+}
+
+func (k *k8s) getContainerMetrics(ctx context.Context, namespace, podName, containerName string) (*types.Metrics, error) {
+	command := metrics.GetProcFSCommand(1) // PID 1
+	cmdArgs := append([]string{"exec", "-n", namespace, podName, "-c", containerName, "--"}, command...)
+	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run %q: %w, output: %s", strings.Join(cmd.Args, " "), err, string(output))
 	}
 
 	metrics, err := metrics.ParseProcFSOutput(string(output))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse process metrics for pid: %w", err)
+		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", containerName, err)
 	}
 	return metrics, nil
 }
