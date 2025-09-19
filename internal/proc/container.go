@@ -32,10 +32,10 @@ import (
 )
 
 type container struct {
-	name      string
-	log       *log.Logger
-	spec      types.Spec
-	dockerCli client.APIClient
+	name string
+	log  *log.Logger
+	spec types.Spec
+	cli  client.APIClient
 	types.Task
 	containerID string
 }
@@ -51,6 +51,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("failed to create docker client: %w", err)
 	}
 	defer cli.Close()
+	c.cli = cli
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
 	id, existingHash, err := c.getContainer(ctx, cli)
@@ -309,13 +310,6 @@ func ignoreNotExist(err error) error {
 
 func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	// Initialize Docker client if not already done
-	if c.dockerCli == nil {
-		cli, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create docker client: %w", err)
-		}
-		c.dockerCli = cli
-	}
 
 	command := metrics.GetProcFSCommand(1) // PID 1
 
@@ -341,13 +335,13 @@ func (c *container) execInContainer(ctx context.Context, command []string) ([]by
 	}
 
 	// Create exec instance
-	execResp, err := c.dockerCli.ContainerExecCreate(ctx, c.containerID, execConfig)
+	execResp, err := c.cli.ContainerExecCreate(ctx, c.containerID, execConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create exec instance: %w", err)
 	}
 
 	// Start exec and get response
-	resp, err := c.dockerCli.ContainerExecAttach(ctx, execResp.ID, dockertypes.ExecStartCheck{})
+	resp, err := c.cli.ContainerExecAttach(ctx, execResp.ID, dockertypes.ExecStartCheck{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to attach to exec: %w", err)
 	}
@@ -361,7 +355,7 @@ func (c *container) execInContainer(ctx context.Context, command []string) ([]by
 	}
 
 	// Check exec exit code
-	inspectResp, err := c.dockerCli.ContainerExecInspect(ctx, execResp.ID)
+	inspectResp, err := c.cli.ContainerExecInspect(ctx, execResp.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect exec: %w", err)
 	}
