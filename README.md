@@ -25,7 +25,7 @@ With Kit, you can define and manage complex workflows in a single `tasks.yaml` f
 - **Auto-restart** - Automatically restart services on failure
 - **File watching** - Re-run tasks when files change
 - **Port forwarding** - Forward ports from services to host
-- **Web UI** - Visualize your workflow and monitor task status
+- **Web UI** - Visualize your workflow and monitor task status with real-time metrics
 
 ## Quick Start
 
