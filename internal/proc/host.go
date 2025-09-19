@@ -19,7 +19,8 @@ type host struct {
 	log  *log.Logger
 	spec types.Spec
 	types.Task
-	pid int
+	pid            int
+	profFSSnapshot *metrics.ProcFSSnapshot
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
@@ -90,7 +91,7 @@ func ignoreProcessFinishedErr(err error) error {
 }
 
 func (h *host) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	command := metrics.GetCommand(h.pid)
+	command := metrics.GetPSCommand(h.pid)
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
 	output, err := cmd.Output()
@@ -98,5 +99,5 @@ func (h *host) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		return nil, fmt.Errorf("failed to get process metrics for pid %d: %w", h.pid, err)
 	}
 
-	return metrics.ParseOutput(string(output))
+	return metrics.ParsePSOutput(string(output))
 }

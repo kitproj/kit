@@ -37,7 +37,8 @@ type container struct {
 	log  *log.Logger
 	spec types.Spec
 	types.Task
-	containerID string
+	containerID    string
+	profFSSnapshot *metrics.ProcFSSnapshot
 }
 
 func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
@@ -312,7 +313,7 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		return &types.Metrics{}, nil
 	}
 
-	command := metrics.GetCommand(1) // PID 1
+	command := metrics.GetProcFSCommand(1) // PID 1
 	cmdArgs := append([]string{"exec", c.name}, command...)
 	cmd := exec.CommandContext(ctx, "docker", cmdArgs...)
 	output, err := cmd.Output()
@@ -320,7 +321,12 @@ func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		return nil, fmt.Errorf("docker exec ps failed for container %s: %w", c.name, err)
 	}
 
-	return metrics.ParseOutput(string(output))
+	metrics, procFSSnapshot, err := metrics.ParseProcFSOutput(string(output), c.profFSSnapshot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", c.name, err)
+	}
+	c.profFSSnapshot = procFSSnapshot
+	return metrics, nil
 }
 
 var _ Interface = &container{}

@@ -44,6 +44,7 @@ type k8s struct {
 	name string
 	pods []string // namespace/name
 	types.Task
+	profFSSnapshot *metrics.ProcFSSnapshot
 }
 
 // previously we used the K8s common labels, but because charts use them themselves (e.g. Helm) we cannot and must create our own annotations
@@ -441,24 +442,26 @@ func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 		podName := parts[1]
 		metrics, err := k.getMetrics(ctx, namespace, podName)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get metrics for pod %s: %w", podKey, err)
 		}
-		sum.CPU += metrics.CPU
 		sum.Mem += metrics.Mem
 	}
 	return sum, nil
 }
 
 func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	command := metrics.GetCommand(1) // PID 1
+	command := metrics.GetProcFSCommand(1) // PID 1
 	cmdArgs := append([]string{"exec", "-n", namespace, podName, "--"}, command...)
 	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("kubectl exec ps failed for pod %s/%s: %w", namespace, podName, err)
+		return nil, fmt.Errorf("failed to run %q: %w", strings.Join(cmd.Args, " "), err)
 	}
 
-	return metrics.ParseOutput(string(output))
+	metrics, procFSSnapshot, err := metrics.ParseProcFSOutput(string(output), k.profFSSnapshot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse process metrics for pid: %w", err)
+	}
+	k.profFSSnapshot = procFSSnapshot
+	return metrics, nil
 }
-
-

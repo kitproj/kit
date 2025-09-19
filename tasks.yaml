@@ -42,7 +42,7 @@ tasks:
     manifests:
       - testdata
     ports:
-      - 80:8080
+      - 18080:80
   script:
     sh: |
       set -eu
