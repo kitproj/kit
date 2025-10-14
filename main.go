@@ -25,6 +25,7 @@ func init() {
 func main() {
 	help := false
 	printVersion := false
+	workingDir := "."
 	configFile := ""
 	tasksToSkip := ""
 	port := -1 // -1 means unspecified, 0 means disabled, >0 means specified
@@ -33,6 +34,7 @@ func main() {
 
 	flag.BoolVar(&help, "h", false, "print help and exit")
 	flag.BoolVar(&printVersion, "v", false, "print version and exit")
+	flag.StringVar(&workingDir, "C", ".", "working directory (default current directory)")
 	flag.StringVar(&configFile, "f", "tasks.yaml", "config file (default tasks.yaml)")
 	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
 	flag.IntVar(&port, "p", port, "port to start UI on (default 3000, zero disables)")
@@ -50,6 +52,11 @@ func main() {
 		info, _ := debug.ReadBuildInfo()
 		fmt.Printf("%v\n", info.Main.Version)
 		os.Exit(0)
+	}
+
+	if err := os.Chdir(workingDir); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "failed to change to directory %s: %v\n", workingDir, err)
+		os.Exit(1)
 	}
 
 	err := func() error {
