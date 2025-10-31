@@ -150,8 +150,8 @@ func (t *Task) CreateBootstrapFile(name string) (string, error) {
 	hash := adler32.Checksum([]byte(t.Sh))
 	
 	// Create filename with format: name-XXXXXXXX.sh (8 hex chars)
-	// Using %-8x as specified in the requirement
-	filename := fmt.Sprintf("%s-%-8x.sh", name, hash)
+	// Using %08x to ensure consistent 8-character hex output with zero-padding
+	filename := fmt.Sprintf("%s-%08x.sh", name, hash)
 	
 	// Create the file in the working directory (or current directory if not set)
 	workDir := t.WorkingDir
