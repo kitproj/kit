@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	"hash/adler32"
 	"os"
 	"path/filepath"
 	"time"
@@ -134,6 +136,38 @@ func (t *Task) Environ() ([]string, error) {
 	}
 	s, err := t.Env.Environ()
 	return append(environ, s...), err
+}
+
+// CreateBootstrapFile creates a temporary bootstrap file for shell scripts
+// and returns its path. The file is named using the pattern: <name>-<hash>.sh
+// where hash is an 8-character hex string.
+func (t *Task) CreateBootstrapFile(name string) (string, error) {
+	if t.Sh == "" {
+		return "", fmt.Errorf("no shell script to create bootstrap file for")
+	}
+	
+	// Calculate hash of the script content
+	hash := adler32.Checksum([]byte(t.Sh))
+	
+	// Create filename with format: name-XXXXXXXX.sh (8 hex chars)
+	// Using %-8x as specified in the requirement
+	filename := fmt.Sprintf("%s-%-8x.sh", name, hash)
+	
+	// Create the file in the working directory (or current directory if not set)
+	workDir := t.WorkingDir
+	if workDir == "" {
+		workDir = "."
+	}
+	
+	filepath := filepath.Join(workDir, filename)
+	
+	// Write the script content to the file
+	err := os.WriteFile(filepath, []byte(t.Sh), 0755)
+	if err != nil {
+		return "", fmt.Errorf("failed to create bootstrap file: %w", err)
+	}
+	
+	return filepath, nil
 }
 
 func (t *Task) GetCommand() Strings {

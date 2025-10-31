@@ -26,6 +26,7 @@ func New(name string, t types.Task, log *log.Logger, spec types.Spec) Interface 
 	}
 	if len(t.GetCommand()) > 0 {
 		return &host{
+			name: name,
 			log:  log,
 			spec: spec,
 			Task: t,

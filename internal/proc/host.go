@@ -16,10 +16,12 @@ import (
 )
 
 type host struct {
+	name string
 	log  *log.Logger
 	spec types.Spec
 	types.Task
-	pid int
+	pid            int
+	bootstrapFile  string
 }
 
 func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
@@ -31,7 +33,28 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		return fmt.Errorf("error getting spec environ: %w", err)
 	}
 
+	// If the task has a shell script, create a bootstrap file
+	var bootstrapFile string
+	if h.Sh != "" {
+		bootstrapFile, err = h.Task.CreateBootstrapFile(h.name)
+		if err != nil {
+			return fmt.Errorf("failed to create bootstrap file: %w", err)
+		}
+		h.bootstrapFile = bootstrapFile
+		// Clean up the bootstrap file when done
+		defer func() {
+			if err := os.Remove(bootstrapFile); err != nil && !os.IsNotExist(err) {
+				h.log.Printf("failed to remove bootstrap file %s: %v", bootstrapFile, err)
+			}
+		}()
+	}
+
 	command := h.GetCommand()
+	// If we created a bootstrap file, use it instead of sh -c
+	if bootstrapFile != "" {
+		command = []string{"sh", bootstrapFile}
+	}
+	
 	path := command[0]
 	cmd := exec.CommandContext(ctx, path, append(command[1:], h.Args...)...)
 	cmd.Dir = h.WorkingDir
