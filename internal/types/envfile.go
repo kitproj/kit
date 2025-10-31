@@ -2,6 +2,7 @@ package types
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +14,9 @@ type Envfile Strings
 func (f Envfile) Environ(workingDir string) ([]string, error) {
 	var environ []string
 	for _, e := range f {
-		file, err := os.Open(filepath.Join(workingDir, e))
+		filePath := filepath.Join(workingDir, e)
+		fmt.Printf("loading envfile: %s\n", filePath)
+		file, err := os.Open(filePath)
 		if err != nil {
 			return nil, err
 		}
