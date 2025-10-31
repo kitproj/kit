@@ -10,6 +10,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// BootstrapFileMode is the file permission mode for bootstrap script files (rwxr-xr-x)
+const BootstrapFileMode = 0755
+
 func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
 }
@@ -162,7 +165,7 @@ func (t *Task) CreateBootstrapFile(name string) (string, error) {
 	filepath := filepath.Join(workDir, filename)
 	
 	// Write the script content to the file
-	err := os.WriteFile(filepath, []byte(t.Sh), 0755)
+	err := os.WriteFile(filepath, []byte(t.Sh), BootstrapFileMode)
 	if err != nil {
 		return "", fmt.Errorf("failed to create bootstrap file: %w", err)
 	}
