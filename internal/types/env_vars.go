@@ -50,12 +50,9 @@ func (v EnvVars) Environ() ([]string, error) {
 			return val
 		}
 		// Otherwise check OS environment
-		val := os.Getenv(key)
-		if val == "" {
-			// Check if it's actually set to empty string or missing
-			if _, exists := os.LookupEnv(key); !exists {
-				missingVars = append(missingVars, key)
-			}
+		val, exists := os.LookupEnv(key)
+		if !exists {
+			missingVars = append(missingVars, key)
 		}
 		return val
 	}

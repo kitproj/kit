@@ -103,4 +103,17 @@ func TestEnvVars_Environ(t *testing.T) {
 		// but both will contain a reference to the other
 		assert.Len(t, environ, 2)
 	})
+
+	t.Run("EmptyStringVariable", func(t *testing.T) {
+		// Test that environment variables set to empty string are not treated as missing
+		os.Setenv("EMPTY_VAR", "")
+		defer os.Unsetenv("EMPTY_VAR")
+
+		envVars := EnvVars{
+			"FOO": "value_${EMPTY_VAR}_end",
+		}
+		environ, err := envVars.Environ()
+		assert.NoError(t, err)
+		assert.ElementsMatch(t, []string{"FOO=value__end"}, environ)
+	})
 }
