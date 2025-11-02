@@ -1,31 +1,26 @@
-# Kit - Unified Workflow Engine for Software Development
+# coding-context - Manage Coding Agent Rules
 
-[![CodeQL](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/codeql-analysis.yml)
-[![Go](https://github.com/kitproj/kit/actions/workflows/go.yml/badge.svg)](https://github.com/kitproj/kit/actions/workflows/go.yml)
+A unified CLI tool for managing coding rules across different AI coding agents (Claude, Gemini, Cursor, GitHub Copilot, and more).
 
-## What is Kit?
+## What is coding-context?
 
-Kit is a powerful workflow engine that simplifies complex software development environments by combining multiple tools into a single binary:
+coding-context simplifies the management of coding rules and guidelines across multiple AI coding agents. Instead of maintaining separate rule files for each agent, you can:
 
-- **Task execution** (like Makefile or Taskfile)
-- **Service orchestration** (like Foreman)
-- **Container management** (like Docker Compose)
-- **Kubernetes resource management** (like Tilt, Skaffold)
-- **Local development focus** (like Garden)
+- **Import** rules from all agents into a normalized format
+- **Export** rules to specific agent formats
+- **Bootstrap** the necessary directory structure
+- **View** aggregated prompts from all your rules
 
-With Kit, you can define and manage complex workflows in a single `tasks.yaml` file, making it ideal for projects that require running multiple components simultaneously.
+## Supported Agents
 
-![Kit UI Screenshot](img.png)
-
-## Key Features
-
-- **Single binary** - Easy to install and use
-- **Dependency management** - Define task dependencies in a DAG
-- **Multiple task types** - Run commands, containers, Kubernetes resources
-- **Auto-restart** - Automatically restart services on failure
-- **File watching** - Re-run tasks when files change
-- **Port forwarding** - Forward ports from services to host
-- **Web UI** - Visualize your workflow and monitor task status with real-time metrics
+- **Claude** - Hierarchical concatenation with CLAUDE.md files
+- **Gemini** - Strategic layer with GEMINI.md files  
+- **Codex** - Uses AGENTS.md in ancestor directories
+- **Cursor** - Declarative context injection with .cursor/rules/
+- **Augment** - Structured rules in .augment/rules/
+- **GitHub Copilot** - Uses .github/copilot-instructions.md
+- **Windsurf** - Rules in .windsurf/rules/
+- **Goose** - Standard AGENTS.md compatibility
 
 ## Quick Start
 
@@ -35,8 +30,8 @@ Download the standalone binary from the [releases page](https://github.com/kitpr
 
 ```bash
 # For Linux
-sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_386
-sudo chmod +x /usr/local/bin/kit
+sudo curl --fail --location --output /usr/local/bin/coding-context https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_386
+sudo chmod +x /usr/local/bin/coding-context
 
 # For Go users
 go install github.com/kitproj/kit@v0.1.105
@@ -44,154 +39,128 @@ go install github.com/kitproj/kit@v0.1.105
 
 ### Basic Usage
 
-1. Create a `tasks.yaml` file in your project:
-
-```yaml
-tasks:
-  build:
-    command: go build .
-    watch: .  # Auto-rebuild when files change
-  run:
-    dependencies: [build]
-    command: ./myapp
-    ports: [8080]  # Define as a service that listens on port 8080
-```
-
-2. Start your workflow:
+1. **Bootstrap** - Create initial directory structure:
 
 ```bash
-kit run  # Run the 'run' task and its dependencies
+coding-context bootstrap
 ```
 
-## Core Concepts
+2. **Import** - Gather rules from all agents:
 
-### Jobs vs Services
-
-- **Jobs**: Run once and exit (default)
-- **Services**: Run indefinitely and listen on ports
-
-```yaml
-# Job example
-build:
-  command: go build .
-
-# Service example
-api:
-  command: ./api-server
-  ports: [8080]
+```bash
+coding-context import
 ```
 
-Services automatically restart on failure. Configure restart behavior with `restartPolicy` (Always, Never, OnFailure).
+3. **Export** - Distribute rules to a specific agent:
 
-### Task Types
-
-#### Host Tasks
-
-Run commands on your local machine:
-
-```yaml
-build:
-  command: go build .
+```bash
+coding-context export Gemini
 ```
 
-#### Shell Tasks
+4. **View Prompt** - See aggregated rules:
 
-Run shell scripts:
-
-```yaml
-setup:
-  sh: |
-    set -eux
-    echo "Setting up environment..."
-    mkdir -p ./data
+```bash
+coding-context prompt
 ```
 
-#### Container Tasks
+## Commands
 
-Run Docker containers:
+### import
 
-```yaml
-database:
-  image: postgres:14
-  ports: [5432:5432]
-  env:
-    - POSTGRES_PASSWORD=password
+Import rules from all supported agents into the normalized AGENTS.md format:
+
+```bash
+coding-context import
 ```
 
-Kit can also build and run containers from a Dockerfile:
+This command:
+- Scans for rules from all supported agents
+- Appends them to AGENTS.md with source annotations
+- Converts .mdc files to .md format
+- Skips duplicate imports of AGENTS.md
 
-```yaml
-api:
-  image: ./src/api  # Directory with Dockerfile
-  ports: [8080]
+### export
+
+Export rules from AGENTS.md to a specific agent's format:
+
+```bash
+coding-context export <agent>
 ```
 
-#### Kubernetes Tasks
+Available agents: Claude, Gemini, Codex, Cursor, Augment, GitHubCopilot, Windsurf, Goose
 
-Deploy and manage Kubernetes resources:
-
-```yaml
-deploy:
-  namespace: default
-  manifests:
-    - k8s/
-    - service.yaml
-  ports: [80:8080]  # Forward cluster port 80 to local port 8080
+Examples:
+```bash
+coding-context export Gemini    # Creates GEMINI.md
+coding-context export Claude    # Creates CLAUDE.md
+coding-context export Windsurf  # Creates .windsurf/rules/AGENTS.md
 ```
 
-### Advanced Features
+### bootstrap
 
-#### Task Dependencies
+Create the initial directory structure and files:
 
-```yaml
-test:
-  dependencies: [build, database]
-  command: go test ./...
+```bash
+coding-context bootstrap
 ```
 
-#### Environment Variables
+This creates:
+- `AGENTS.md` - Main rules file
+- `.prompts/` - Project-level rules directory
+- `~/.prompts/rules/` - User-level rules directory
 
-```yaml
-server:
-  command: ./server
-  env:
-    - PORT=8080
-    - DEBUG=true
-  envfile: .env  # Load from file
+### prompt
+
+Print the aggregated prompt from all rule files:
+
+```bash
+coding-context prompt
 ```
 
-#### File Watching
+This displays the content of all rule files in the normalized format.
 
-```yaml
-build:
-  command: go build .
-  watch: src/  # Rebuild when files in src/ change
-```
+## Rule Hierarchy
 
-#### Task Grouping
+Rules are organized by priority level:
 
-Organize tasks visually in the UI:
+1. **Project Rules (Level 0)** - Most important
+   - `.prompts/` directory
+   - Project-specific files like `.github/agents/`
 
-```yaml
-tasks:
-  api:
-    command: ./api
-    ports: [8080]
-    group: backend
-  db:
-    image: postgres
-    ports: [5432]
-    group: backend
-  ui:
-    command: npm start
-    ports: [3000]
-    group: frontend
-```
+2. **Ancestor Rules (Level 1)** - Next priority
+   - Files in parent directories (e.g., AGENTS.md, CLAUDE.md)
 
-## Documentation
+3. **User Rules (Level 2)** - User-specific
+   - `~/.prompts/rules/`
+   - `~/.claude/CLAUDE.md`
+   - `~/.gemini/GEMINI.md`
 
-- [Examples](docs/examples) - Practical examples (MySQL, Kafka, etc.)
-- [Reference](docs/reference) - Detailed configuration options
+4. **System Rules (Level 3)** - System-wide
+   - `/usr/local/prompts-rules`
+
+## Agent-Specific Formats
+
+### Claude
+- Global: `~/.claude/CLAUDE.md`
+- Ancestor: `./CLAUDE.md` (checked into Git)
+- Local: `./CLAUDE.local.md` (highest precedence, typically .gitignore'd)
+
+### Gemini
+- Global: `~/.gemini/GEMINI.md`
+- Ancestor: `./GEMINI.md`
+- Project: `./.gemini/styleguide.md`
+
+### Cursor
+- Project: `./.cursor/rules/*.md` and `./.cursor/rules/*.mdc`
+- Compatibility: `./AGENTS.md`
+
+### GitHub Copilot
+- Repository: `./.github/copilot-instructions.md`
+- Agent Config: `.github/agents/`
+- Compatibility: `./AGENTS.md`
+
+### Windsurf
+- Project/Ancestor: `./.windsurf/rules/*.md`
 
 ## Contributing
 

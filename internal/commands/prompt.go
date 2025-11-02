@@ -9,7 +9,8 @@ import (
 
 // Prompt prints the aggregated prompt from all rule files
 func Prompt() error {
-	fmt.Println("# Aggregated Prompt from All Rules\n")
+	fmt.Println("# Aggregated Prompt from All Rules")
+	fmt.Println()
 	
 	// Get paths from the default agent (normalized format)
 	paths, err := agents.GetRulePaths(agents.Default)
