@@ -21,7 +21,7 @@ func Import() error {
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
-	agentsFilePath = agentsFilePath + "/AGENTS.md"
+	agentsFilePath = filepath.Join(agentsFilePath, "AGENTS.md")
 	
 	f, err := os.OpenFile(agentsFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {

@@ -83,6 +83,14 @@ func exportToClaude(content []byte) error {
 	return os.WriteFile(path, content, 0644)
 }
 
+func exportToCodex(content []byte) error {
+	// Codex uses AGENTS.md which is already the normalized format
+	// No need to write - AGENTS.md is the source file
+	path := "AGENTS.md"
+	fmt.Printf("  Using existing %s (Codex uses the normalized format)\n", path)
+	return nil
+}
+
 func exportToGemini(content []byte) error {
 	// Export to ./GEMINI.md
 	path := "GEMINI.md"
@@ -90,17 +98,11 @@ func exportToGemini(content []byte) error {
 	return os.WriteFile(path, content, 0644)
 }
 
-func exportToCodex(content []byte) error {
-	// Export to ./AGENTS.md (same as normalized)
-	path := "AGENTS.md"
-	fmt.Printf("  Using existing %s\n", path)
-	return nil
-}
-
 func exportToCursor(content []byte) error {
-	// Export to ./AGENTS.md (compatibility mode)
+	// Cursor uses AGENTS.md for compatibility mode
+	// No need to write - AGENTS.md is the source file
 	path := "AGENTS.md"
-	fmt.Printf("  Using existing %s\n", path)
+	fmt.Printf("  Using existing %s (Cursor compatibility mode)\n", path)
 	return nil
 }
 
@@ -149,8 +151,9 @@ func exportToWindsurf(content []byte) error {
 }
 
 func exportToGoose(content []byte) error {
-	// Export to ./AGENTS.md (same as normalized)
+	// Goose uses AGENTS.md which is the normalized format
+	// No need to write - AGENTS.md is the source file
 	path := "AGENTS.md"
-	fmt.Printf("  Using existing %s\n", path)
+	fmt.Printf("  Using existing %s (Goose uses the normalized format)\n", path)
 	return nil
 }
