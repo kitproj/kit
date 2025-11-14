@@ -34,8 +34,20 @@ With Kit, you can define and manage complex workflows in a single `tasks.yaml` f
 Download the standalone binary from the [releases page](https://github.com/kitproj/kit/releases/latest):
 
 ```bash
-# For Linux
-sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_386
+# For Linux (amd64)
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_amd64
+sudo chmod +x /usr/local/bin/kit
+
+# For Linux (arm64)
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_linux_arm64
+sudo chmod +x /usr/local/bin/kit
+
+# For MacOS (Intel)
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_darwin_amd64
+sudo chmod +x /usr/local/bin/kit
+
+# For MacOS (Apple Silicon)
+sudo curl --fail --location --output /usr/local/bin/kit https://github.com/kitproj/kit/releases/download/v0.1.105/kit_v0.1.105_darwin_arm64
 sudo chmod +x /usr/local/bin/kit
 
 # For Go users
