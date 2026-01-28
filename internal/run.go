@@ -101,8 +101,32 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			return fmt.Errorf("failed to create watcher: %w", err)
 		}
 		for _, source := range node.Task.Watch {
-			if err := watcher.Add(filepath.Join(node.Task.WorkingDir, source)); err != nil {
-				return fmt.Errorf("failed to watch %q: %w", source, err)
+			watchPath := filepath.Join(node.Task.WorkingDir, source)
+			info, err := os.Stat(watchPath)
+			if err != nil {
+				return fmt.Errorf("failed to stat %q: %w", source, err)
+			}
+			if info.IsDir() {
+				// Walk the directory tree to add the directory and all subdirectories
+				err := filepath.Walk(watchPath, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if info.IsDir() {
+						if err := watcher.Add(path); err != nil {
+							return fmt.Errorf("failed to watch %q: %w", path, err)
+						}
+					}
+					return nil
+				})
+				if err != nil {
+					return fmt.Errorf("failed to walk %q: %w", source, err)
+				}
+			} else {
+				// It's a file, watch it directly
+				if err := watcher.Add(watchPath); err != nil {
+					return fmt.Errorf("failed to watch %q: %w", source, err)
+				}
 			}
 		}
 		defer watcher.Close()
@@ -115,10 +139,22 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				case <-ctx.Done():
 					return
 				case event := <-watcher.Events:
+					// Handle file writes
 					if event.Op&fsnotify.Write == fsnotify.Write {
 						debounceTimer.Stop()
 						debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
 							logger.Printf("[%s] %s changed, re-running\n", node.Name, event.Name)
+							events <- node.Name
+						})
+					}
+					// Handle new directories being created - add them to the watcher
+					if event.Op&fsnotify.Create == fsnotify.Create {
+						if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+							_ = watcher.Add(event.Name)
+						}
+						debounceTimer.Stop()
+						debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
+							logger.Printf("[%s] %s created, re-running\n", node.Name, event.Name)
 							events <- node.Name
 						})
 					}
