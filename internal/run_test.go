@@ -311,6 +311,59 @@ sleep 30
 
 	})
 
+	t.Run("Restart job by modifying file in watched subdirectory", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		// Create subdirectory and file for testing
+		err := os.MkdirAll("testdata/subdir", 0755)
+		assert.NoError(t, err)
+		err = os.WriteFile("testdata/subdir/nested", []byte("initial"), 0644)
+		assert.NoError(t, err)
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"sh", "-c", `
+set -eu
+echo "hello from job"
+sleep 30
+`}, Watch: []string{"testdata"}, // Watch the parent directory
+				},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+
+		// Modify file in subdirectory - should trigger restart due to recursive watching
+		err = os.WriteFile("testdata/subdir/nested", []byte("modified"), 0644)
+		assert.NoError(t, err)
+
+		sleep(t)
+
+		cancel()
+		wg.Wait()
+
+		// We should see the restart triggered by the nested file change
+		assert.Contains(t, buffer.String(), "testdata/subdir/nested changed, re-running")
+
+		// Count how many times "hello from job" appears (should be 2)
+		count := 0
+		for _, line := range strings.Split(buffer.String(), "\n") {
+			if strings.Contains(line, "hello from job") {
+				count++
+			}
+		}
+		assert.Equal(t, 2, count)
+	})
+
 	t.Run("Service without ports is running", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
