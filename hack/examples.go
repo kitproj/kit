@@ -84,7 +84,7 @@ func createExamplesReadme(err error, examples []Example) error {
 
 func updateExample(ctx context.Context, example *Example) error {
 	log.Printf("updating %s", example.Name)
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
 	}

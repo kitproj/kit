@@ -46,7 +46,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	data, _ := json.Marshal(c.Task)
 	expectedHash := fmt.Sprintf("%x", adler32.Checksum(data))
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return fmt.Errorf("failed to create docker client: %w", err)
 	}
@@ -253,7 +253,7 @@ func (c *container) stop(ctx context.Context) error {
 		return nil
 	}
 	log := c.log
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return fmt.Errorf("failed to create docker client: %w", err)
 	}
