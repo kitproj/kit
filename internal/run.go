@@ -31,6 +31,13 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		}
 	}
 
+	// validate all tasks
+	for name, task := range wf.Tasks {
+		if err := task.Validate(); err != nil {
+			return fmt.Errorf("task %q is invalid: %w", name, err)
+		}
+	}
+
 	// check skipped tasks are valid
 	for _, name := range tasksToSkip {
 		if _, ok := wf.Tasks[name]; !ok {

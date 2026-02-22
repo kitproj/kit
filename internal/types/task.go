@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +11,27 @@ import (
 
 func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
+}
+
+// Validate checks that at most one of the mutually exclusive task execution fields is set.
+func (t *Task) Validate() error {
+	set := []string{}
+	if len(t.Command) > 0 {
+		set = append(set, "command")
+	}
+	if t.Sh != "" {
+		set = append(set, "sh")
+	}
+	if t.Image != "" {
+		set = append(set, "image")
+	}
+	if len(t.Manifests) > 0 {
+		set = append(set, "manifests")
+	}
+	if len(set) > 1 {
+		return fmt.Errorf("only one of %v is allowed", set)
+	}
+	return nil
 }
 
 // A task is a container or a command to run.
