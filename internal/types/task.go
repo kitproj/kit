@@ -13,23 +13,21 @@ func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
 }
 
-// Validate checks that at most one of the mutually exclusive task execution fields is set.
+// Validate checks that task execution fields are combined in a supported way.
 func (t *Task) Validate() error {
-	set := []string{}
-	if len(t.Command) > 0 {
-		set = append(set, "command")
+	hasCommand := len(t.Command) > 0
+	hasSh := t.Sh != ""
+	hasImage := t.Image != ""
+	hasManifests := len(t.Manifests) > 0
+
+	// command and sh are alternative ways to specify the task's command; they must not both be set.
+	if hasCommand && hasSh {
+		return fmt.Errorf("only one of command or sh is allowed")
 	}
-	if t.Sh != "" {
-		set = append(set, "sh")
-	}
-	if t.Image != "" {
-		set = append(set, "image")
-	}
-	if len(t.Manifests) > 0 {
-		set = append(set, "manifests")
-	}
-	if len(set) > 1 {
-		return fmt.Errorf("only one of %v is allowed", set)
+
+	// manifests-based tasks are mutually exclusive with image/command/sh-based tasks.
+	if hasManifests && (hasCommand || hasSh || hasImage) {
+		return fmt.Errorf("manifests cannot be set together with image, command, or sh")
 	}
 	return nil
 }
