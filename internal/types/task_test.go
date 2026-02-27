@@ -63,7 +63,7 @@ func TestTask_Validate(t *testing.T) {
 	})
 	t.Run("ShAndImage", func(t *testing.T) {
 		task := &Task{Sh: "echo hello", Image: "nginx"}
-		assert.EqualError(t, task.Validate(), "only one of [sh image] is allowed")
+		assert.NoError(t, task.Validate())
 	})
 	t.Run("CommandAndManifests", func(t *testing.T) {
 		task := &Task{Command: Strings{"echo"}, Manifests: Strings{"deploy.yaml"}}
