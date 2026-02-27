@@ -59,7 +59,7 @@ func TestTask_Validate(t *testing.T) {
 	})
 	t.Run("CommandAndSh", func(t *testing.T) {
 		task := &Task{Command: Strings{"echo"}, Sh: "echo hello"}
-		assert.EqualError(t, task.Validate(), "only one of [command sh] is allowed")
+		assert.EqualError(t, task.Validate(), "only one of command or sh is allowed")
 	})
 	t.Run("ShAndImage", func(t *testing.T) {
 		task := &Task{Sh: "echo hello", Image: "nginx"}
@@ -67,7 +67,7 @@ func TestTask_Validate(t *testing.T) {
 	})
 	t.Run("CommandAndManifests", func(t *testing.T) {
 		task := &Task{Command: Strings{"echo"}, Manifests: Strings{"deploy.yaml"}}
-		assert.EqualError(t, task.Validate(), "only one of [command manifests] is allowed")
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
 	})
 	t.Run("CommandAndImage", func(t *testing.T) {
 		task := &Task{Command: Strings{"echo"}, Image: "nginx"}
@@ -75,15 +75,15 @@ func TestTask_Validate(t *testing.T) {
 	})
 	t.Run("ShAndManifests", func(t *testing.T) {
 		task := &Task{Sh: "echo hello", Manifests: Strings{"deploy.yaml"}}
-		assert.EqualError(t, task.Validate(), "only one of [sh manifests] is allowed")
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
 	})
 	t.Run("ImageAndManifests", func(t *testing.T) {
 		task := &Task{Image: "nginx", Manifests: Strings{"deploy.yaml"}}
-		assert.EqualError(t, task.Validate(), "only one of [image manifests] is allowed")
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
 	})
 	t.Run("ThreeFields", func(t *testing.T) {
 		task := &Task{Command: Strings{"echo"}, Sh: "echo hello", Image: "nginx"}
-		assert.EqualError(t, task.Validate(), "only one of [command sh image] is allowed")
+		assert.EqualError(t, task.Validate(), "only one of command or sh is allowed")
 	})
 }
 

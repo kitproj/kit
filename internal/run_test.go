@@ -49,6 +49,18 @@ func TestRunSubgraph(t *testing.T) {
 		assert.EqualError(t, err, "skipped task \"job\" not found in workflow")
 	})
 
+	t.Run("Invalid task", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"echo"}, Sh: "echo hello"},
+			},
+		}
+		err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
+		assert.EqualError(t, err, "task \"job\" is invalid: only one of command or sh is allowed")
+	})
+
 	t.Run("Single successful job", func(t *testing.T) {
 		ctx, cancel, logger, _ := setup(t)
 		defer cancel()
