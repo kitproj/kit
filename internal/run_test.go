@@ -438,7 +438,7 @@ sleep 30
 		assert.NoError(t, err)
 	})
 
-	t.Run("Ready message is debounced", func(t *testing.T) {
+	t.Run("Ready message printed once when tasks become ready", func(t *testing.T) {
 		ctx, cancel, logger, buffer := setup(t)
 		defer cancel()
 
@@ -456,8 +456,8 @@ sleep 30
 		}()
 
 		sleep(t)
-		// the ready message should not appear yet because the debounce period has not elapsed
-		assert.NotContains(t, buffer.String(), "all requested tasks are running")
+		// the ready message should appear exactly once
+		assert.Equal(t, 1, strings.Count(buffer.String(), "all requested tasks are running"))
 		cancel()
 
 		wg.Wait()
