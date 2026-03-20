@@ -437,6 +437,70 @@ sleep 30
 		err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
 		assert.NoError(t, err)
 	})
+
+	t.Run("Ready message printed only once when service stays running", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"service": {Command: []string{"sleep", "30"}, Type: types.TaskTypeService},
+			},
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"service"}, nil)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+		cancel()
+		wg.Wait()
+
+		// The ready message should appear exactly once
+		count := strings.Count(buffer.String(), "🔵 all requested tasks are running:")
+		assert.Equal(t, 1, count)
+	})
+
+	t.Run("Ready message printed again after service restarts", func(t *testing.T) {
+		ctx, cancel, logger, buffer := setup(t)
+		defer cancel()
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"service": {
+					Command: []string{"sleep", "30"},
+					Watch:   []string{"testdata/marker"},
+					Type:    types.TaskTypeService,
+				},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"service"}, nil)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+
+		// Trigger a restart by modifying the watched file
+		err := os.WriteFile("testdata/marker", nil, 0644)
+		assert.NoError(t, err)
+
+		sleep(t)
+
+		cancel()
+		wg.Wait()
+
+		// The ready message should appear twice: once initially, once after restart
+		count := strings.Count(buffer.String(), "🔵 all requested tasks are running:")
+		assert.Equal(t, 2, count)
+	})
 }
 
 func sleep(t *testing.T) {
