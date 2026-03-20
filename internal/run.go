@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -507,6 +508,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					if err != nil {
 						setNodeStatus(node, "failed", fmt.Sprint(err))
+						runLifecycleHook(ctx, t, t.GetOnFailureHook(), out, logger)
 						if t.GetRestartPolicy() != "Never" {
 							restart()
 						}
@@ -514,6 +516,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					}
 
 					setNodeStatus(node, "succeeded", "")
+					runLifecycleHook(ctx, t, t.GetOnSuccessHook(), out, logger)
 					if t.GetRestartPolicy() == "Always" {
 						restart()
 					}
@@ -524,5 +527,28 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				panic(fmt.Sprintf("unexpected event: %v", event))
 			}
 		}
+	}
+}
+
+// runLifecycleHook runs the given lifecycle hook command, logging any errors.
+// It is a best-effort operation: if the hook command fails, the error is logged
+// but does not affect the task's outcome.
+func runLifecycleHook(ctx context.Context, t types.Task, hook *types.LifecycleHook, out io.Writer, logger *log.Logger) {
+	cmd := hook.GetCommand()
+	if len(cmd) == 0 {
+		return
+	}
+	environ, err := types.Environ(types.Spec{}, t)
+	if err != nil {
+		logger.Printf("lifecycle hook: failed to get environment: %v", err)
+		return
+	}
+	c := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
+	c.Dir = t.WorkingDir
+	c.Stdout = out
+	c.Stderr = out
+	c.Env = append(environ, os.Environ()...)
+	if err := c.Run(); err != nil {
+		logger.Printf("lifecycle hook failed: %v", err)
 	}
 }
