@@ -18,6 +18,8 @@ type Spec struct {
 	Env EnvVars `json:"env,omitempty"`
 	// Environment file (e.g. .env) to use
 	Envfile Envfile `json:"envfile,omitempty"`
+	// Lifecycle describes actions that the system should take in response to graph-level lifecycle events.
+	Lifecycle *Lifecycle `json:"lifecycle,omitempty"`
 }
 
 func (s *Spec) GetTerminationGracePeriod() time.Duration {
