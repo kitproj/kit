@@ -224,7 +224,7 @@ func (t *Task) GetOnSuccessHook() *LifecycleHook {
 	if t.Lifecycle == nil {
 		return nil
 	}
-	return t.Lifecycle.OnSuccess
+	return t.Lifecycle.GetOnSuccessHook()
 }
 
 // GetOnFailureHook returns the lifecycle hook to run when the task fails, or nil if none.
@@ -232,5 +232,5 @@ func (t *Task) GetOnFailureHook() *LifecycleHook {
 	if t.Lifecycle == nil {
 		return nil
 	}
-	return t.Lifecycle.OnFailure
+	return t.Lifecycle.GetOnFailureHook()
 }

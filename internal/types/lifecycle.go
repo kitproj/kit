@@ -29,3 +29,19 @@ type Lifecycle struct {
 	// OnFailure is the hook to run after the task fails.
 	OnFailure *LifecycleHook `json:"onFailure,omitempty"`
 }
+
+// GetOnSuccessHook returns the OnSuccess hook, or nil if the Lifecycle is nil.
+func (l *Lifecycle) GetOnSuccessHook() *LifecycleHook {
+	if l == nil {
+		return nil
+	}
+	return l.OnSuccess
+}
+
+// GetOnFailureHook returns the OnFailure hook, or nil if the Lifecycle is nil.
+func (l *Lifecycle) GetOnFailureHook() *LifecycleHook {
+	if l == nil {
+		return nil
+	}
+	return l.OnFailure
+}
