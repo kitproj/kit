@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +11,25 @@ import (
 
 func (t *Task) HasMutex() bool {
 	return t != nil && t.Mutex != ""
+}
+
+// Validate checks that task execution fields are combined in a supported way.
+func (t *Task) Validate() error {
+	hasCommand := len(t.Command) > 0
+	hasSh := t.Sh != ""
+	hasImage := t.Image != ""
+	hasManifests := len(t.Manifests) > 0
+
+	// command and sh are alternative ways to specify the task's command; they must not both be set.
+	if hasCommand && hasSh {
+		return fmt.Errorf("only one of command or sh is allowed")
+	}
+
+	// manifests-based tasks are mutually exclusive with image/command/sh-based tasks.
+	if hasManifests && (hasCommand || hasSh || hasImage) {
+		return fmt.Errorf("manifests cannot be set together with image, command, or sh")
+	}
+	return nil
 }
 
 // A task is a container or a command to run.

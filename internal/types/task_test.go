@@ -36,6 +36,57 @@ func TestTask_AllTargetsExist(t *testing.T) {
 	}
 }
 
+func TestTask_Validate(t *testing.T) {
+	t.Run("NoExecField", func(t *testing.T) {
+		task := &Task{}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("CommandOnly", func(t *testing.T) {
+		task := &Task{Command: Strings{"echo", "hello"}}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("ShOnly", func(t *testing.T) {
+		task := &Task{Sh: "echo hello"}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("ImageOnly", func(t *testing.T) {
+		task := &Task{Image: "nginx"}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("ManifestsOnly", func(t *testing.T) {
+		task := &Task{Manifests: Strings{"deploy.yaml"}}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("CommandAndSh", func(t *testing.T) {
+		task := &Task{Command: Strings{"echo"}, Sh: "echo hello"}
+		assert.EqualError(t, task.Validate(), "only one of command or sh is allowed")
+	})
+	t.Run("ShAndImage", func(t *testing.T) {
+		task := &Task{Sh: "echo hello", Image: "nginx"}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("CommandAndManifests", func(t *testing.T) {
+		task := &Task{Command: Strings{"echo"}, Manifests: Strings{"deploy.yaml"}}
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
+	})
+	t.Run("CommandAndImage", func(t *testing.T) {
+		task := &Task{Command: Strings{"echo"}, Image: "nginx"}
+		assert.NoError(t, task.Validate())
+	})
+	t.Run("ShAndManifests", func(t *testing.T) {
+		task := &Task{Sh: "echo hello", Manifests: Strings{"deploy.yaml"}}
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
+	})
+	t.Run("ImageAndManifests", func(t *testing.T) {
+		task := &Task{Image: "nginx", Manifests: Strings{"deploy.yaml"}}
+		assert.EqualError(t, task.Validate(), "manifests cannot be set together with image, command, or sh")
+	})
+	t.Run("ThreeFields", func(t *testing.T) {
+		task := &Task{Command: Strings{"echo"}, Sh: "echo hello", Image: "nginx"}
+		assert.EqualError(t, task.Validate(), "only one of command or sh is allowed")
+	})
+}
+
 func TestTask_GetType(t *testing.T) {
 	t.Run("Defined", func(t *testing.T) {
 		task := &Task{Type: TaskTypeService}
