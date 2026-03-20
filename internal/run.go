@@ -200,6 +200,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		})
 	}
 
+	allRunning := false
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -275,15 +277,20 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					logger.Println("✅ exiting because all requested tasks completed and none should be restarted")
 					cancel()
 				} else if len(remainingTasks) == 0 {
-					logger.Println("🔵 all requested tasks are running:")
-					// print a list of running tasks, and their ports
-					for _, node := range subgraph.Nodes {
-						if (node.Phase == "running" || node.Phase == "stalled") && node.Task.Ports != nil {
-							for _, port := range node.Task.Ports {
-								logger.Printf(" - %s: http://localhost:%d\n", node.Name, port.HostPort)
+					if !allRunning {
+						allRunning = true
+						logger.Println("🔵 all requested tasks are running:")
+						// print a list of running tasks, and their ports
+						for _, node := range subgraph.Nodes {
+							if (node.Phase == "running" || node.Phase == "stalled") && node.Task.Ports != nil {
+								for _, port := range node.Task.Ports {
+									logger.Printf(" - %s: http://localhost:%d\n", node.Name, port.HostPort)
+								}
 							}
 						}
 					}
+				} else {
+					allRunning = false
 				}
 
 			// if the event is a string, it is the name of the task to run
@@ -308,6 +315,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				node := subgraph.Nodes[taskName]
 
 				node.cancel()
+				allRunning = false
 
 				// each task is executed in a separate goroutine
 				wg.Add(1)
