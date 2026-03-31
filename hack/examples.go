@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/kitproj/kit/internal/types"
 	"sigs.k8s.io/yaml"
@@ -153,7 +153,7 @@ func updateExample(ctx context.Context, example *Example) error {
 }
 
 func pullImage(ctx context.Context, cli *client.Client, image string) error {
-	if resp, err := cli.ImagePull(ctx, image, dockertypes.ImagePullOptions{}); err != nil {
+	if resp, err := cli.ImagePull(ctx, image, dockerimage.PullOptions{}); err != nil {
 		return fmt.Errorf("failed to pull %s: %w", image, err)
 	} else {
 		defer resp.Close()
