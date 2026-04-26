@@ -72,6 +72,42 @@
       ],
       "title": "HostPath"
     },
+    "Lifecycle": {
+      "properties": {
+        "onSuccess": {
+          "$ref": "#/$defs/LifecycleHook",
+          "title": "onSuccess",
+          "description": "OnSuccess is the hook to run after the task succeeds."
+        },
+        "onFailure": {
+          "$ref": "#/$defs/LifecycleHook",
+          "title": "onFailure",
+          "description": "OnFailure is the hook to run after the task fails."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "Lifecycle",
+      "description": "Lifecycle describes actions that the system should take in response to lifecycle events."
+    },
+    "LifecycleHook": {
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/Strings",
+          "title": "command",
+          "description": "The command to run."
+        },
+        "sh": {
+          "type": "string",
+          "title": "sh",
+          "description": "The shell script to run, instead of command."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "LifecycleHook",
+      "description": "LifecycleHook defines a command to run at a specific point in the task lifecycle."
+    },
     "Port": {
       "properties": {
         "containerPort": {
@@ -298,6 +334,11 @@
           "type": "boolean",
           "title": "default",
           "description": "Whether this is the default task to run if no task is specified."
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle",
+          "title": "lifecycle",
+          "description": "Lifecycle describes actions that the system should take in response to task lifecycle events."
         }
       },
       "additionalProperties": false,
@@ -394,6 +435,10 @@
         "envfile": {
           "$ref": "#/$defs/Envfile",
           "title": "envfile"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle",
+          "title": "lifecycle"
         }
       },
       "additionalProperties": false,
