@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"golang.org/x/term"
 )
@@ -16,15 +17,23 @@ var isTerminalWriter = func(w io.Writer) bool {
 	return ok && term.IsTerminal(int(file.Fd()))
 }
 
+var terminalMu sync.Mutex
+
+var titleReplacer = strings.NewReplacer("\a", "", "\x1b", "", "\r", " ", "\n", " ")
+
 func setTerminalTitle(title string) {
+	terminalMu.Lock()
+	defer terminalMu.Unlock()
 	if terminalWriter == nil || !isTerminalWriter(terminalWriter) {
 		return
 	}
-	title = strings.NewReplacer("\a", "", "\x1b", "", "\r", " ", "\n", " ").Replace(title)
+	title = titleReplacer.Replace(title)
 	_, _ = fmt.Fprintf(terminalWriter, "\033]0;%s\033\\", title)
 }
 
 func ringTerminalBell() {
+	terminalMu.Lock()
+	defer terminalMu.Unlock()
 	if terminalWriter == nil || !isTerminalWriter(terminalWriter) {
 		return
 	}
