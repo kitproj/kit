@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -232,12 +231,12 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			}
 
 			if len(failures) > 0 {
-				runLifecycleHook(context.Background(), types.Task{}, wf.Lifecycle.GetOnFailureHook(), os.Stdout, logger)
+				runLifecycleHook(context.Background(), wf.Lifecycle.GetOnFailure(), wf, os.Stdout, logger)
 				return fmt.Errorf("failed tasks: %v", failures)
 			}
 
 			if graphCompleted {
-				runLifecycleHook(context.Background(), types.Task{}, wf.Lifecycle.GetOnSuccessHook(), os.Stdout, logger)
+				runLifecycleHook(context.Background(), wf.Lifecycle.GetOnSuccess(), wf, os.Stdout, logger)
 			}
 			return nil
 		case event := <-events:
@@ -514,7 +513,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					if err != nil {
 						setNodeStatus(node, "failed", fmt.Sprint(err))
-						runLifecycleHook(ctx, t, t.GetOnFailureHook(), out, logger)
+						runLifecycleHook(ctx, t.GetOnFailure(), wf, out, logger)
 						if t.GetRestartPolicy() != "Never" {
 							restart()
 						}
@@ -522,7 +521,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					}
 
 					setNodeStatus(node, "succeeded", "")
-					runLifecycleHook(ctx, t, t.GetOnSuccessHook(), out, logger)
+					runLifecycleHook(ctx, t.GetOnSuccess(), wf, out, logger)
 					if t.GetRestartPolicy() == "Always" {
 						restart()
 					}
@@ -536,28 +535,20 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 	}
 }
 
-// runLifecycleHook runs the given lifecycle hook command, logging any errors.
-// It is a best-effort operation: if the hook command fails, the error is logged
-// but does not affect the task's outcome.
-func runLifecycleHook(ctx context.Context, t types.Task, hook *types.LifecycleHook, out io.Writer, logger *log.Logger) {
-	if hook == nil {
+// runLifecycleHook runs the named task as a lifecycle hook, logging any errors.
+// It is a best-effort operation: if the hook task fails, the error is logged
+// but does not affect the triggering task's outcome.
+func runLifecycleHook(ctx context.Context, taskName string, wf *types.Workflow, out io.Writer, logger *log.Logger) {
+	if taskName == "" {
 		return
 	}
-	cmd := hook.GetCommand()
-	if len(cmd) == 0 {
+	t, ok := wf.Tasks[taskName]
+	if !ok {
+		logger.Printf("lifecycle hook: task %q not found", taskName)
 		return
 	}
-	environ, err := types.Environ(types.Spec{}, t)
-	if err != nil {
-		logger.Printf("lifecycle hook: failed to get environment: %v", err)
-		return
-	}
-	c := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
-	c.Dir = t.WorkingDir
-	c.Stdout = out
-	c.Stderr = out
-	c.Env = append(environ, os.Environ()...)
-	if err := c.Run(); err != nil {
+	p := proc.New(taskName, t, logger, types.Spec(*wf))
+	if err := p.Run(ctx, out, out); err != nil {
 		logger.Printf("lifecycle hook failed: %v", err)
 	}
 }

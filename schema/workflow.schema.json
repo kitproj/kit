@@ -75,38 +75,20 @@
     "Lifecycle": {
       "properties": {
         "onSuccess": {
-          "$ref": "#/$defs/LifecycleHook",
+          "type": "string",
           "title": "onSuccess",
-          "description": "OnSuccess is the hook to run after the task succeeds."
+          "description": "OnSuccess is the name of the task to run after the task/graph succeeds."
         },
         "onFailure": {
-          "$ref": "#/$defs/LifecycleHook",
+          "type": "string",
           "title": "onFailure",
-          "description": "OnFailure is the hook to run after the task fails."
+          "description": "OnFailure is the name of the task to run after the task/graph fails."
         }
       },
       "additionalProperties": false,
       "type": "object",
       "title": "Lifecycle",
       "description": "Lifecycle describes actions that the system should take in response to lifecycle events."
-    },
-    "LifecycleHook": {
-      "properties": {
-        "command": {
-          "$ref": "#/$defs/Strings",
-          "title": "command",
-          "description": "The command to run."
-        },
-        "sh": {
-          "type": "string",
-          "title": "sh",
-          "description": "The shell script to run, instead of command."
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "title": "LifecycleHook",
-      "description": "LifecycleHook defines a command to run at a specific point in the task lifecycle."
     },
     "Port": {
       "properties": {

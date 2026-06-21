@@ -219,18 +219,12 @@ func (t *Task) GetStalledTimeout() time.Duration {
 	return 30 * time.Second
 }
 
-// GetOnSuccessHook returns the lifecycle hook to run when the task succeeds, or nil if none.
-func (t *Task) GetOnSuccessHook() *LifecycleHook {
-	if t.Lifecycle == nil {
-		return nil
-	}
-	return t.Lifecycle.GetOnSuccessHook()
+// GetOnSuccess returns the name of the task to run when this task succeeds, or empty string if none.
+func (t *Task) GetOnSuccess() string {
+	return t.Lifecycle.GetOnSuccess()
 }
 
-// GetOnFailureHook returns the lifecycle hook to run when the task fails, or nil if none.
-func (t *Task) GetOnFailureHook() *LifecycleHook {
-	if t.Lifecycle == nil {
-		return nil
-	}
-	return t.Lifecycle.GetOnFailureHook()
+// GetOnFailure returns the name of the task to run when this task fails, or empty string if none.
+func (t *Task) GetOnFailure() string {
+	return t.Lifecycle.GetOnFailure()
 }
