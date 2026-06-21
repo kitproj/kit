@@ -5,6 +5,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/kitproj/kit/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,9 +28,16 @@ func TestSetTerminalTitle(t *testing.T) {
 func TestWorkflowTitle(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
 		title := workflowTitle("kit", map[string]*TaskNode{
-			"api": {Name: "api", Phase: "running"},
+			"api": {Name: "api", Phase: "running", Task: types.Task{Ports: types.Ports{{ContainerPort: 8080}}}},
 		})
 		assert.Equal(t, "kit kit: ready", title)
+	})
+
+	t.Run("starting when job running", func(t *testing.T) {
+		title := workflowTitle("kit", map[string]*TaskNode{
+			"job": {Name: "job", Phase: "running"},
+		})
+		assert.Equal(t, "kit kit: starting (0/1)", title)
 	})
 
 	t.Run("done", func(t *testing.T) {

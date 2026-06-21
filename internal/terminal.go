@@ -53,8 +53,10 @@ func workflowTitle(name string, nodes map[string]*TaskNode) string {
 		case "failed":
 			failures = append(failures, node.Name)
 		case "running", "stalled":
-			running++
-			complete++
+			if node.Task.GetType() == "Service" {
+				running++
+				complete++
+			}
 		case "succeeded", "skipped":
 			complete++
 		}
