@@ -7,9 +7,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -93,6 +95,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		logger.Println("no tasks to run")
 		return nil
 	}
+
+	setTerminalTitle(workflowTitle(name, subgraph.Nodes))
 
 	// create logs directory
 	if err := os.MkdirAll("logs", 0755); err != nil && !errors.Is(err, os.ErrExist) {
@@ -231,12 +235,18 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			}
 
 			if len(failures) > 0 {
-				runLifecycleHook(context.Background(), wf.Lifecycle.GetOnFailure(), wf, os.Stdout, logger)
+				hookCtx, hookStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+				runLifecycleHook(hookCtx, wf.Lifecycle.GetOnFailure(), wf, os.Stdout, logger)
+				hookStop()
+				setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+				ringTerminalBell()
 				return fmt.Errorf("failed tasks: %v", failures)
 			}
 
 			if graphCompleted {
-				runLifecycleHook(context.Background(), wf.Lifecycle.GetOnSuccess(), wf, os.Stdout, logger)
+				hookCtx, hookStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+				runLifecycleHook(hookCtx, wf.Lifecycle.GetOnSuccess(), wf, os.Stdout, logger)
+				hookStop()
 			}
 			return nil
 		case event := <-events:
@@ -281,6 +291,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				if len(pendingTasks) == 0 {
 					logger.Println("✅ exiting because all requested tasks completed and none should be restarted")
 					graphCompleted = true
+					setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+					ringTerminalBell()
 					cancel()
 				} else if len(remainingTasks) == 0 {
 					if !allRunning {
@@ -294,6 +306,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 								}
 							}
 						}
+						setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+						ringTerminalBell()
 					}
 				} else {
 					allRunning = false
@@ -356,6 +370,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 						node.Phase = phase
 						node.Message = message
 						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
+						setTerminalTitle(workflowTitle(name, subgraph.Nodes))
 						logger.Println(node.Message)
 						statusEvents <- node
 						events <- poisonPill

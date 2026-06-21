@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -26,6 +27,19 @@ func TestRunSubgraph(t *testing.T) {
 		t.Cleanup(buffer.Reset)
 		return ctx, cancel, logger, buffer
 
+	}
+
+	setupTerminal := func(t *testing.T) *bytes.Buffer {
+		buffer := &bytes.Buffer{}
+		previousWriter := terminalWriter
+		previousIsTerminal := isTerminalWriter
+		terminalWriter = buffer
+		isTerminalWriter = func(io.Writer) bool { return true }
+		t.Cleanup(func() {
+			terminalWriter = previousWriter
+			isTerminalWriter = previousIsTerminal
+		})
+		return buffer
 	}
 
 	t.Run("No tasks", func(t *testing.T) {
@@ -436,6 +450,64 @@ sleep 30
 		}
 		err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Successful job updates terminal title and rings bell", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+		terminal := setupTerminal(t)
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"true"}},
+			},
+		}
+		err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
+		assert.NoError(t, err)
+		assert.Contains(t, terminal.String(), ": done\033\\")
+		assert.Contains(t, terminal.String(), "\a")
+	})
+
+	t.Run("Ready service updates terminal title and rings bell", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+		terminal := setupTerminal(t)
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"service": {Command: []string{"sleep", "30"}, Type: types.TaskTypeService},
+			},
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"service"}, nil)
+			assert.NoError(t, err)
+		}()
+
+		sleep(t)
+		cancel()
+		wg.Wait()
+
+		assert.Contains(t, terminal.String(), ": ready\033\\")
+		assert.Contains(t, terminal.String(), "\a")
+	})
+
+	t.Run("Failed job updates terminal title and rings bell", func(t *testing.T) {
+		ctx, cancel, logger, _ := setup(t)
+		defer cancel()
+		terminal := setupTerminal(t)
+
+		wf := &types.Workflow{
+			Tasks: map[string]types.Task{
+				"job": {Command: []string{"false"}},
+			},
+		}
+		err := RunSubgraph(ctx, cancel, 0, false, logger, wf, []string{"job"}, nil)
+		assert.EqualError(t, err, "failed tasks: [job]")
+		assert.Contains(t, terminal.String(), ": failed (job)\033\\")
+		assert.Contains(t, terminal.String(), "\a")
 	})
 
 	t.Run("Ready message printed only once when service stays running", func(t *testing.T) {
