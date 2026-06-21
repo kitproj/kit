@@ -13,10 +13,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/config"
-	"github.com/docker/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
@@ -59,7 +60,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	// If the container exists and the hash is different, remove it.
 	if id != "" && existingHash != expectedHash {
 		log.Println("removing container")
-		if err := cli.ContainerRemove(ctx, id, dockertypes.ContainerRemoveOptions{Force: true}); err != nil {
+		if err := cli.ContainerRemove(ctx, id, dockercontainer.RemoveOptions{Force: true}); err != nil {
 			return fmt.Errorf("failed to remove container: %w", err)
 		}
 		id = ""
@@ -127,7 +128,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 		}
 		encodedAuth := base64.URLEncoding.EncodeToString(buf)
 
-		r, err := cli.ImagePull(ctx, c.Image, dockertypes.ImagePullOptions{
+		r, err := cli.ImagePull(ctx, c.Image, dockerimage.PullOptions{
 			RegistryAuth: encodedAuth,
 		})
 		if err != nil {
@@ -179,7 +180,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	}
 
 	c.containerID = id
-	if err = cli.ContainerStart(ctx, id, dockertypes.ContainerStartOptions{}); err != nil {
+	if err = cli.ContainerStart(ctx, id, dockercontainer.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 	go func() {
@@ -188,7 +189,7 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 			log.Printf("failed to stop: %v", err)
 		}
 	}()
-	logs, err := cli.ContainerLogs(ctx, c.name, dockertypes.ContainerLogsOptions{
+	logs, err := cli.ContainerLogs(ctx, c.name, dockercontainer.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
@@ -280,7 +281,7 @@ func (c *container) stop(ctx context.Context) error {
 const hashLabel = "kit.hash"
 
 func (c *container) getContainer(ctx context.Context, cli *client.Client) (string, string, error) {
-	list, err := cli.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+	list, err := cli.ContainerList(ctx, dockercontainer.ListOptions{All: true})
 	if err != nil {
 		return "", "", err
 	}
