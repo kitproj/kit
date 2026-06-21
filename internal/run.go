@@ -94,6 +94,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 		return nil
 	}
 
+	setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+
 	// create logs directory
 	if err := os.MkdirAll("logs", 0755); err != nil && !errors.Is(err, os.ErrExist) {
 		return fmt.Errorf("failed to create logs directory: %w", err)
@@ -230,6 +232,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			}
 
 			if len(failures) > 0 {
+				setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+				ringTerminalBell()
 				return fmt.Errorf("failed tasks: %v", failures)
 			}
 
@@ -275,6 +279,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 				if len(pendingTasks) == 0 {
 					logger.Println("✅ exiting because all requested tasks completed and none should be restarted")
+					setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+					ringTerminalBell()
 					cancel()
 				} else if len(remainingTasks) == 0 {
 					if !allRunning {
@@ -288,6 +294,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 								}
 							}
 						}
+						setTerminalTitle(workflowTitle(name, subgraph.Nodes))
+						ringTerminalBell()
 					}
 				} else {
 					allRunning = false
@@ -350,6 +358,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 						node.Phase = phase
 						node.Message = message
 						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
+						setTerminalTitle(workflowTitle(name, subgraph.Nodes))
 						logger.Println(node.Message)
 						statusEvents <- node
 						events <- poisonPill
