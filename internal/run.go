@@ -7,9 +7,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -203,6 +205,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 	}
 
 	allRunning := false
+	graphCompleted := false
 
 	for {
 		select {
@@ -232,11 +235,19 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 			}
 
 			if len(failures) > 0 {
+				hookCtx, hookStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+				runLifecycleHook(hookCtx, wf.Lifecycle.GetOnFailure(), wf, os.Stdout, logger)
+				hookStop()
 				setTerminalTitle(workflowTitle(name, subgraph.Nodes))
 				ringTerminalBell()
 				return fmt.Errorf("failed tasks: %v", failures)
 			}
 
+			if graphCompleted {
+				hookCtx, hookStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+				runLifecycleHook(hookCtx, wf.Lifecycle.GetOnSuccess(), wf, os.Stdout, logger)
+				hookStop()
+			}
 			return nil
 		case event := <-events:
 			switch x := event.(type) {
@@ -279,6 +290,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 				if len(pendingTasks) == 0 {
 					logger.Println("✅ exiting because all requested tasks completed and none should be restarted")
+					graphCompleted = true
 					setTerminalTitle(workflowTitle(name, subgraph.Nodes))
 					ringTerminalBell()
 					cancel()
@@ -516,6 +528,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					if err != nil {
 						setNodeStatus(node, "failed", fmt.Sprint(err))
+						runLifecycleHook(ctx, t.GetOnFailure(), wf, out, logger)
 						if t.GetRestartPolicy() != "Never" {
 							restart()
 						}
@@ -523,6 +536,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					}
 
 					setNodeStatus(node, "succeeded", "")
+					runLifecycleHook(ctx, t.GetOnSuccess(), wf, out, logger)
 					if t.GetRestartPolicy() == "Always" {
 						restart()
 					}
@@ -533,5 +547,23 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				panic(fmt.Sprintf("unexpected event: %v", event))
 			}
 		}
+	}
+}
+
+// runLifecycleHook runs the named task as a lifecycle hook, logging any errors.
+// It is a best-effort operation: if the hook task fails, the error is logged
+// but does not affect the triggering task's outcome.
+func runLifecycleHook(ctx context.Context, taskName string, wf *types.Workflow, out io.Writer, logger *log.Logger) {
+	if taskName == "" {
+		return
+	}
+	t, ok := wf.Tasks[taskName]
+	if !ok {
+		logger.Printf("lifecycle hook: task %q not found", taskName)
+		return
+	}
+	p := proc.New(taskName, t, logger, types.Spec(*wf))
+	if err := p.Run(ctx, out, out); err != nil {
+		logger.Printf("lifecycle hook failed: %v", err)
 	}
 }
