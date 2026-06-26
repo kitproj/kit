@@ -65,8 +65,11 @@ func execute(args []string, stdout io.Writer) error {
 	}
 
 	if opts.printVersion {
-		info, _ := debug.ReadBuildInfo()
-		_, _ = fmt.Fprintf(stdout, "%v\n", info.Main.Version)
+		version := "unknown"
+		if info, ok := debug.ReadBuildInfo(); ok {
+			version = info.Main.Version
+		}
+		_, _ = fmt.Fprintf(stdout, "%v\n", version)
 		return nil
 	}
 
