@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"log"
+	"sync"
 )
 
 type logWriter struct {
@@ -10,10 +11,16 @@ type logWriter struct {
 	prefixSuffixProvider func() (string, string)
 	buffer               bytes.Buffer
 	logger               *log.Logger
+	// mu guards buffer: the same writer is used for both stdout and stderr,
+	// which os/exec copies on separate goroutines
+	mu sync.Mutex
 }
 
 func (lw *logWriter) Write(p []byte) (int, error) {
 	prefix, suffix := lw.prefixSuffixProvider()
+
+	lw.mu.Lock()
+	defer lw.mu.Unlock()
 
 	for _, b := range p {
 		if b == '\n' {

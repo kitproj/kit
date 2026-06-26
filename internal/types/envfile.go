@@ -13,21 +13,29 @@ type Envfile Strings
 func (f Envfile) Environ(workingDir string) ([]string, error) {
 	var environ []string
 	for _, e := range f {
-		file, err := os.Open(filepath.Join(workingDir, e))
+		lines, err := readEnvfile(filepath.Join(workingDir, e))
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if !strings.HasPrefix(line, "#") {
-				environ = append(environ, line)
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			return nil, err
-		}
+		environ = append(environ, lines...)
 	}
 	return environ, nil
+}
+
+func readEnvfile(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	var environ []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		environ = append(environ, line)
+	}
+	return environ, scanner.Err()
 }

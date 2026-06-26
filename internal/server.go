@@ -27,7 +27,11 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 	go func() {
 		for event := range events {
 			streams.Range(func(key, value any) bool {
-				value.(chan *TaskNode) <- event
+				// non-blocking: a slow client must not stall the broadcast
+				select {
+				case value.(chan *TaskNode) <- event:
+				default:
+				}
 				return true
 			})
 		}
@@ -78,18 +82,22 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 
 		// return an event stream
 		w.Header().Set("Content-Type", "text/event-stream")
-		for event := range stream {
-			marshal, err := json.Marshal(event)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+		for {
+			select {
+			case <-r.Context().Done():
 				return
+			case event := <-stream:
+				marshal, err := json.Marshal(event)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				_, err = fmt.Fprintf(w, "data: %s\n\n", marshal)
+				if err != nil {
+					return
+				}
+				w.(http.Flusher).Flush()
 			}
-			_, err = fmt.Fprintf(w, "data: %s\n\n", marshal)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.(http.Flusher).Flush()
 		}
 	})
 	mux.HandleFunc("/logs/{task}", func(w http.ResponseWriter, r *http.Request) {
@@ -125,8 +133,12 @@ func StartServer(ctx context.Context, port int, wg *sync.WaitGroup, dag DAG[*Tas
 				return
 			}
 
-			// Sleep for a short duration before checking for new lines
-			time.Sleep(1 * time.Second)
+			// stop tailing when the client disconnects
+			select {
+			case <-r.Context().Done():
+				return
+			case <-time.After(1 * time.Second):
+			}
 
 			// Reset the scanner to continue reading new lines
 			_, err := file.Seek(0, io.SeekCurrent)

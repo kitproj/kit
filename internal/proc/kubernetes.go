@@ -42,6 +42,7 @@ type k8s struct {
 	log        *log.Logger
 	spec       types.Spec
 	name       string
+	podsMu     sync.Mutex
 	pods       []string // namespace/name
 	clientset  kubernetes.Interface
 	restConfig *rest.Config
@@ -280,9 +281,11 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 		podKey := pod.Namespace + "/" + pod.Name
 
+		k.podsMu.Lock()
 		if !slices.Contains(k.pods, podKey) {
 			k.pods = append(k.pods, podKey)
 		}
+		k.podsMu.Unlock()
 
 		running := make(map[string]bool)
 

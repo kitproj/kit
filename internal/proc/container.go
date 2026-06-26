@@ -50,8 +50,13 @@ func (c *container) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to create docker client: %w", err)
 	}
-	defer cli.Close()
 	c.cli = cli
+	// close the client once the context is done rather than when Run returns:
+	// the metrics goroutine keeps using c.cli until ctx is cancelled
+	go func() {
+		<-ctx.Done()
+		cli.Close()
+	}()
 
 	dockerfile := filepath.Join(c.Image, "Dockerfile")
 	id, existingHash, err := c.getContainer(ctx, cli)

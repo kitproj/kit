@@ -21,3 +21,19 @@ func TestDAG_Subgraph(t *testing.T) {
 		t.Fatalf("expected c in subgraph")
 	}
 }
+
+func TestDAG_findCycle(t *testing.T) {
+	d := NewDAG[bool]("")
+	d.AddNode("a", true)
+	d.AddNode("b", true)
+	d.AddNode("c", true)
+	d.AddEdge("a", "b")
+	d.AddEdge("b", "c")
+	if cycle := d.findCycle(); cycle != nil {
+		t.Fatalf("acyclic graph reported cycle: %v", cycle)
+	}
+	d.AddEdge("c", "a") // close the loop
+	if d.findCycle() == nil {
+		t.Fatal("cycle not detected")
+	}
+}

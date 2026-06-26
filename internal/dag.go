@@ -33,6 +33,48 @@ func (d *DAG[Node]) AddEdge(from, to string) {
 	d.Parents[to] = append(d.Parents[to], from)
 }
 
+// findCycle returns the nodes forming a dependency cycle, or nil if the graph is acyclic.
+func (d *DAG[Node]) findCycle() []string {
+	const (
+		unvisited = 0
+		onStack   = 1
+		done      = 2
+	)
+	state := make(map[string]int, len(d.Nodes))
+	var stack []string
+	var visit func(string) []string
+	visit = func(name string) []string {
+		state[name] = onStack
+		stack = append(stack, name)
+		for _, child := range d.Children[name] {
+			switch state[child] {
+			case onStack:
+				// found a back-edge: return the cycle from child to here
+				for i, n := range stack {
+					if n == child {
+						return append(stack[i:], child)
+					}
+				}
+			case unvisited:
+				if cycle := visit(child); cycle != nil {
+					return cycle
+				}
+			}
+		}
+		stack = stack[:len(stack)-1]
+		state[name] = done
+		return nil
+	}
+	for name := range d.Nodes {
+		if state[name] == unvisited {
+			if cycle := visit(name); cycle != nil {
+				return cycle
+			}
+		}
+	}
+	return nil
+}
+
 func (d *DAG[Node]) Subgraph(nodeNames []string) map[string]bool {
 	visited := make(map[string]bool)
 	var visit func(string)

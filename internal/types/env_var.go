@@ -17,15 +17,13 @@ func (v EnvVar) String() (string, error) {
 }
 
 func (v *EnvVar) Unstring(s string) error {
-	parts := strings.Split(s, "=")
-	switch len(parts) {
-	case 2:
-		v.Name = parts[0]
-		v.Value = parts[1]
-		return nil
-	default:
+	parts := strings.SplitN(s, "=", 2)
+	if len(parts) != 2 {
 		return fmt.Errorf("invalid EnvVar string %q", s)
 	}
+	v.Name = parts[0]
+	v.Value = parts[1]
+	return nil
 }
 
 func (v *EnvVar) UnmarshalJSON(data []byte) error {

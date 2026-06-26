@@ -53,8 +53,14 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 	for name, t := range wf.Tasks {
 		dag.AddNode(name, true)
 		for _, dependency := range t.Dependencies {
+			if _, ok := wf.Tasks[dependency]; !ok {
+				return fmt.Errorf("task %q depends on unknown task %q", name, dependency)
+			}
 			dag.AddEdge(dependency, name)
 		}
+	}
+	if cycle := dag.findCycle(); cycle != nil {
+		return fmt.Errorf("dependency cycle detected: %s", strings.Join(cycle, " -> "))
 	}
 	visited := dag.Subgraph(taskNames)
 
@@ -191,12 +197,11 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 	for name, taskNode := range subgraph.Nodes {
 		stalledTime := taskNode.Task.GetStalledTimeout()
 		stallTimers[name] = time.AfterFunc(stalledTime, func() {
-			if taskNode.Phase == "starting" || taskNode.Phase == "running" {
+			if phase := taskNode.getPhase(); phase == "starting" || phase == "running" {
 				// we suffix the message with "starting" so we can differentiate between a task that is starting and one that is running, later on we can change the message to "output received"
 				// and restore the phase to "running" or "starting"
-				taskNode.Message = fmt.Sprintf("no output for %s or more while %s", stalledTime, taskNode.Phase)
-				taskNode.Phase = "stalled"
-				logger.Printf("[%s] %s\n", taskNode.Name, taskNode.Message)
+				taskNode.setStatus("stalled", fmt.Sprintf("no output for %s or more while %s", stalledTime, phase))
+				logger.Printf("[%s] %s\n", taskNode.Name, taskNode.getMessage())
 				statusEvents <- taskNode
 			}
 		})
@@ -210,7 +215,21 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 			logger.Println("waiting for all tasks to complete")
 
+			// keep draining events so task/watcher goroutines blocked on a full
+			// channel can reach wg.Done() instead of deadlocking shutdown
+			drained := make(chan struct{})
+			go func() {
+				for {
+					select {
+					case <-drained:
+						return
+					case <-events:
+					case <-statusEvents:
+					}
+				}
+			}()
 			wg.Wait()
+			close(drained)
 
 			// if any task failed, we will return an error
 			var failures []string
@@ -218,7 +237,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 				color := 30
 				faint := 0
-				switch node.Phase {
+				phase := node.getPhase()
+				switch phase {
 				case "failed":
 					// red
 					color = 31
@@ -228,7 +248,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					faint = 2
 				}
 
-				logger.Printf("\033[%d;%dm[%s] (%s) %s\033[0m\n", faint, color, node.Name, node.Phase, node.Message)
+				logger.Printf("\033[%d;%dm[%s] (%s) %s\033[0m\n", faint, color, node.Name, phase, node.getMessage())
 			}
 
 			if len(failures) > 0 {
@@ -251,8 +271,9 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				}
 
 				for _, node := range subgraph.Nodes {
+					phase := node.getPhase()
 					// Check if task should cause immediate exit
-					if node.Phase == "failed" && node.Task.GetRestartPolicy() == "Never" {
+					if phase == "failed" && node.Task.GetRestartPolicy() == "Never" {
 						logger.Printf("🚫 exiting because task %q failed and should not be restarted", node.Name)
 						cancel()
 						continue
@@ -260,7 +281,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 
 					// Check if task is complete and should be removed from tracking
 					isComplete := false
-					switch node.Phase {
+					switch phase {
 					case "succeeded", "skipped":
 						isComplete = true
 					case "running", "stalled":
@@ -288,7 +309,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 						logger.Println("🔵 all requested tasks are running:")
 						// print a list of running tasks, and their ports
 						for _, node := range subgraph.Nodes {
-							if (node.Phase == "running" || node.Phase == "stalled") && node.Task.Ports != nil {
+							if p := node.getPhase(); (p == "running" || p == "stalled") && node.Task.Ports != nil {
 								for _, port := range node.Task.Ports {
 									logger.Printf(" - %s: http://localhost:%d\n", node.Name, port.HostPort)
 								}
@@ -310,7 +331,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				for _, parentName := range subgraph.Parents[taskName] {
 					parent := subgraph.Nodes[parentName]
 					if parent.blocked() {
-						logger.Printf("task %q is blocked by %q (%s): %s\n", taskName, parentName, parent.Phase, parent.Message)
+						logger.Printf("task %q is blocked by %q (%s): %s\n", taskName, parentName, parent.getPhase(), parent.getMessage())
 						blocked = true
 					}
 				}
@@ -322,7 +343,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 				// we might already be pending, waiting, starting or running this task, so we don't want to start it again
 				node := subgraph.Nodes[taskName]
 
-				node.cancel()
+				node.doCancel()
 				allRunning = false
 
 				// each task is executed in a separate goroutine
@@ -336,7 +357,7 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					ctx, cancel := context.WithCancel(ctx)
 					defer cancel()
 
-					node.cancel = cancel
+					node.setCancel(cancel)
 
 					// send a poison pill to indicate that we've finish and the main loop must check to see if we need to exit
 					defer func() { events <- poisonPill }()
@@ -348,18 +369,17 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					var out io.Writer = &logWriter{
 						logger: logger,
 						prefixSuffixProvider: func() (string, string) {
-							return fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.Phase), "\033[0m"
+							return fmt.Sprintf("%s[%s] (%s)  ", color(node.Name), node.Name, node.getPhase()), "\033[0m"
 						},
 					}
 
 					logger := log.New(out, "", 0)
 
 					setNodeStatus := func(node *TaskNode, phase string, message string) {
-						node.Phase = phase
-						node.Message = message
+						node.setStatus(phase, message)
 						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
 						setTerminalTitle(workflowTitle(name, subgraph.Nodes))
-						logger.Println(node.Message)
+						logger.Println(message)
 						statusEvents <- node
 						events <- poisonPill
 					}
@@ -461,8 +481,8 @@ func RunSubgraph(ctx context.Context, cancel context.CancelFunc, port int, openB
 					// so when we tail the log file, we see the output immediately
 					buf := funcWriter(func(p []byte) (int, error) {
 						stallTimers[node.Name].Reset(node.Task.GetStalledTimeout())
-						if node.Phase == "stalled" {
-							if strings.HasSuffix(node.Message, "starting") {
+						if node.getPhase() == "stalled" {
+							if strings.HasSuffix(node.getMessage(), "starting") {
 								setNodeStatus(node, "starting", "output received")
 							} else {
 								setNodeStatus(node, "running", "output received")
