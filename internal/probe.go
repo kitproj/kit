@@ -31,6 +31,7 @@ func probeLoop(ctx context.Context, probe types.Probe, callback func(ok bool, er
 					if err != nil {
 						return fmt.Errorf("failed to get %q: %w", httpGet.GetURL(), err)
 					}
+					defer resp.Body.Close()
 					if resp.StatusCode >= 300 {
 						data, _ := io.ReadAll(resp.Body)
 						return fmt.Errorf("%s: %q", resp.Status, data)

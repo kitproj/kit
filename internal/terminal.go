@@ -49,7 +49,7 @@ func workflowTitle(name string, nodes map[string]*TaskNode) string {
 	running := 0
 	failures := []string{}
 	for _, node := range nodes {
-		switch node.Phase {
+		switch node.getPhase() {
 		case "failed":
 			failures = append(failures, node.Name)
 		case "running", "stalled":

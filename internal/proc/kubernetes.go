@@ -44,6 +44,7 @@ type k8s struct {
 	log        *log.Logger
 	spec       types.Spec
 	name       string
+	podsMu     sync.Mutex
 	pods       []string // namespace/name
 	clientset  kubernetes.Interface
 	restConfig *rest.Config
@@ -282,9 +283,11 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 
 		podKey := pod.Namespace + "/" + pod.Name
 
+		k.podsMu.Lock()
 		if !slices.Contains(k.pods, podKey) {
 			k.pods = append(k.pods, podKey)
 		}
+		k.podsMu.Unlock()
 
 		running := make(map[string]bool)
 
@@ -443,7 +446,10 @@ func sortUnstructureds(uns []*unstructured.Unstructured) {
 
 func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
 	sum := &types.Metrics{}
-	for _, podKey := range k.pods {
+	k.podsMu.Lock()
+	pods := append([]string(nil), k.pods...)
+	k.podsMu.Unlock()
+	for _, podKey := range pods {
 		parts := strings.SplitN(podKey, "/", 2)
 		namespace := parts[0]
 		podName := parts[1]

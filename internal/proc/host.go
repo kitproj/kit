@@ -40,7 +40,8 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Env = append(environ, os.Environ()...)
+	// spec env takes precedence over the inherited environment (exec is last-wins)
+	cmd.Env = append(os.Environ(), environ...)
 	log := h.log
 	log.Println("starting process")
 	err = cmd.Start()
@@ -53,6 +54,7 @@ func (h *host) Run(ctx context.Context, stdout, stderr io.Writer) error {
 	h.pid = pid
 	pgid, err := syscall.Getpgid(pid)
 	if err != nil {
+		_ = cmd.Process.Kill()
 		return fmt.Errorf("failed get pgid: %w", err)
 	}
 	go func() {
