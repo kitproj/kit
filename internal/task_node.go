@@ -25,14 +25,12 @@ type TaskNode struct {
 	Phase string `json:"phase"`
 	// the message for the task phase, e.g. "exit code 1'
 	Message string `json:"message,omitempty"`
-	// metrics for resource usage tracking
-	Metrics *types.Metrics `json:"metrics,omitempty"`
 	// cancel function
 	cancel func()
 	// mu serializes execution so two instances of a task don't run at once
 	mu *sync.Mutex
-	// status guards the Phase, Message, Metrics and cancel fields, which are
-	// written by task/timer/metrics goroutines and read by the main loop and the server
+	// status guards the Phase, Message and cancel fields, which are
+	// written by task/timer goroutines and read by the main loop and the server
 	status sync.RWMutex
 }
 
@@ -40,12 +38,6 @@ func (n *TaskNode) setStatus(phase, message string) {
 	n.status.Lock()
 	n.Phase = phase
 	n.Message = message
-	n.status.Unlock()
-}
-
-func (n *TaskNode) setMetrics(m *types.Metrics) {
-	n.status.Lock()
-	n.Metrics = m
 	n.status.Unlock()
 }
 
