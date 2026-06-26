@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/kitproj/kit/internal/types"
@@ -28,12 +29,62 @@ type TaskNode struct {
 	Metrics *types.Metrics `json:"metrics,omitempty"`
 	// cancel function
 	cancel func()
-	// a mutex
+	// mu serializes execution so two instances of a task don't run at once
 	mu *sync.Mutex
+	// status guards the Phase, Message, Metrics and cancel fields, which are
+	// written by task/timer/metrics goroutines and read by the main loop and the server
+	status sync.RWMutex
 }
 
-func (n TaskNode) blocked() bool {
-	switch n.Phase {
+func (n *TaskNode) setStatus(phase, message string) {
+	n.status.Lock()
+	n.Phase = phase
+	n.Message = message
+	n.status.Unlock()
+}
+
+func (n *TaskNode) setMetrics(m *types.Metrics) {
+	n.status.Lock()
+	n.Metrics = m
+	n.status.Unlock()
+}
+
+func (n *TaskNode) getPhase() string {
+	n.status.RLock()
+	defer n.status.RUnlock()
+	return n.Phase
+}
+
+func (n *TaskNode) getMessage() string {
+	n.status.RLock()
+	defer n.status.RUnlock()
+	return n.Message
+}
+
+func (n *TaskNode) setCancel(cancel func()) {
+	n.status.Lock()
+	n.cancel = cancel
+	n.status.Unlock()
+}
+
+func (n *TaskNode) doCancel() {
+	n.status.RLock()
+	cancel := n.cancel
+	n.status.RUnlock()
+	cancel()
+}
+
+// MarshalJSON takes the status lock so the phase/message/metrics fields are
+// read consistently while task goroutines may be writing them.
+func (n *TaskNode) MarshalJSON() ([]byte, error) {
+	type alias TaskNode
+	n.status.RLock()
+	defer n.status.RUnlock()
+	return json.Marshal((*alias)(n))
+}
+
+func (n *TaskNode) blocked() bool {
+	switch n.getPhase() {
 	case "running", "stalled":
 		return n.Task.GetType() == types.TaskTypeJob
 	case "succeeded", "skipped":

@@ -95,10 +95,13 @@ func parsePort(s string) uint16 {
 
 func (p Probe) URL() *url.URL {
 	var u *url.URL
-	if p.TCPSocket != nil {
+	switch {
+	case p.TCPSocket != nil:
 		u = p.TCPSocket.URL()
-	} else {
+	case p.HTTPGet != nil:
 		u = p.HTTPGet.URL()
+	default:
+		return &url.URL{}
 	}
 	var x = url.Values{}
 	if p.InitialDelaySeconds > 0 {

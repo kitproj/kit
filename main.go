@@ -51,8 +51,11 @@ func main() {
 	}
 
 	if printVersion {
-		info, _ := debug.ReadBuildInfo()
-		fmt.Printf("%v\n", info.Main.Version)
+		if info, ok := debug.ReadBuildInfo(); ok {
+			fmt.Printf("%v\n", info.Main.Version)
+		} else {
+			fmt.Println("unknown")
+		}
 		os.Exit(0)
 	}
 
