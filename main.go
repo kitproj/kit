@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"syscall"
@@ -22,119 +25,312 @@ func init() {
 	log.SetFlags(0)
 }
 
+const kitDescription = "workflow engine for software development"
+
+type options struct {
+	help           bool
+	printVersion   bool
+	workingDir     string
+	configFile     string
+	configExplicit bool
+	tasksToSkip    string
+	port           int
+	openBrowser    bool
+	rewrite        bool
+	completion     string
+	taskNames      []string
+}
+
 func main() {
-	help := false
-	printVersion := false
-	workingDir := "."
-	configFile := ""
-	tasksToSkip := ""
-	port := -1 // -1 means unspecified, 0 means disabled, >0 means specified
-	openBrowser := false
-	rewrite := false
-	completion := ""
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
 
-	flag.BoolVar(&help, "h", false, "print help and exit")
-	flag.BoolVar(&printVersion, "v", false, "print version and exit")
-	flag.StringVar(&workingDir, "C", ".", "working directory (default current directory)")
-	flag.StringVar(&configFile, "f", "tasks.yaml", "config file (default tasks.yaml)")
-	flag.StringVar(&tasksToSkip, "s", "", "tasks to skip (comma separated)")
-	flag.IntVar(&port, "p", port, "port to start UI on (default 3000, zero disables)")
-	flag.BoolVar(&openBrowser, "b", false, "open the UI in the browser (default false)")
-	flag.BoolVar(&rewrite, "w", false, "rewrite the config file")
-	flag.StringVar(&completion, "completion", "", "generate shell completion script (bash, zsh, fish)")
-	flag.Parse()
-	taskNames := flag.Args()
+func run(args []string, stdout, stderr io.Writer) int {
+	if err := execute(args, stdout); err != nil {
+		_, _ = fmt.Fprintln(stderr, err.Error())
+		return 1
+	}
+	return 0
+}
 
-	if help {
-		flag.Usage()
-		os.Exit(0)
+func execute(args []string, stdout io.Writer) error {
+	opts, flagSet, err := parseOptions(args)
+	if err != nil {
+		return explainFlagError(err)
 	}
 
-	if printVersion {
+	if opts.help {
+		printUsage(flagSet, stdout)
+		return nil
+	}
+
+	if opts.printVersion {
+		version := "unknown"
 		if info, ok := debug.ReadBuildInfo(); ok {
-			fmt.Printf("%v\n", info.Main.Version)
-		} else {
-			fmt.Println("unknown")
+			version = info.Main.Version
 		}
-		os.Exit(0)
+		_, _ = fmt.Fprintf(stdout, "%v\n", version)
+		return nil
 	}
 
-	if completion != "" {
-		if err := printCompletion(completion, configFile); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-			os.Exit(1)
+	if opts.completion != "" {
+		if err := printCompletion(opts.completion, resolveConfigFile(opts.configFile)); err != nil {
+			return explainCompletionError(err)
 		}
-		os.Exit(0)
+		return nil
 	}
 
-	if err := os.Chdir(workingDir); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "failed to change to directory %s: %v\n", workingDir, err)
-		os.Exit(1)
+	previousDir, err := os.Getwd()
+	if err != nil {
+		return err
 	}
-
-	err := func() error {
-
-		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-		defer cancel()
-
-		wf := &types.Workflow{}
-
-		in, err := os.ReadFile(configFile)
-		if err != nil {
-			return fmt.Errorf("failed to read %s: %w", configFile, err)
-		}
-		if err = yaml.UnmarshalStrict(in, wf); err != nil {
-			return fmt.Errorf("failed to parse %s: %w", configFile, err)
-		}
-
-		if rewrite {
-			out, err := yaml.Marshal(wf)
-			if err != nil {
-				return fmt.Errorf("failed to marshal %s: %w", configFile, err)
-			}
-			return os.WriteFile(configFile, out, 0644)
-		}
-
-		// if wf.Port is specified, use that, unless the user has specified a port on the command line
-		if port == -1 {
-			if wf.Port != nil {
-				port = int(*wf.Port)
-			} else {
-				port = 3000 // default port
-			}
-		}
-
-		// split the tasks on comma, but don't end up with a single entry of ""
-		split := strings.Split(tasksToSkip, ",")
-		if len(split) == 1 && split[0] == "" {
-			split = []string{}
-		}
-
-		if len(taskNames) == 0 {
-			for taskName, task := range wf.Tasks {
-				if task.Default {
-					taskNames = []string{taskName}
-					break
-				}
-			}
-		}
-
-		return internal.RunSubgraph(
-			ctx,
-			cancel,
-			port,
-			openBrowser,
-			log.Default(),
-			wf,
-			taskNames,
-			split,
-		)
+	if err := os.Chdir(opts.workingDir); err != nil {
+		return explainWorkingDirError(opts.workingDir, err)
+	}
+	defer func() {
+		_ = os.Chdir(previousDir)
 	}()
 
+	configFile := resolveConfigFile(opts.configFile)
+	configPath, err := filepath.Abs(configFile)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-		os.Exit(1)
+		configPath = configFile
 	}
+	configSource := configFileSource(opts.configExplicit)
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
+	wf := &types.Workflow{}
+
+	in, err := os.ReadFile(configFile)
+	if err != nil {
+		return explainConfigReadError(configPath, configSource, err)
+	}
+	if err = yaml.UnmarshalStrict(in, wf); err != nil {
+		return explainConfigParseError(configPath, configSource, err)
+	}
+
+	printStartup(stdout)
+	printConfig(stdout, configPath, configSource)
+
+	if opts.rewrite {
+		out, err := yaml.Marshal(wf)
+		if err != nil {
+			return explainConfigWriteError(configPath, err)
+		}
+		if err := os.WriteFile(configFile, out, 0644); err != nil {
+			return explainConfigWriteError(configPath, err)
+		}
+		return nil
+	}
+
+	port := opts.port
+	if port == -1 {
+		if wf.Port != nil {
+			port = int(*wf.Port)
+		} else {
+			port = 3000 // default port
+		}
+	}
+
+	// split the tasks on comma, but don't end up with a single entry of ""
+	split := strings.Split(opts.tasksToSkip, ",")
+	if len(split) == 1 && split[0] == "" {
+		split = []string{}
+	}
+
+	taskNames := opts.taskNames
+	if len(taskNames) == 0 {
+		for taskName, task := range wf.Tasks {
+			if task.Default {
+				taskNames = []string{taskName}
+				break
+			}
+		}
+	}
+
+	logger := log.New(stdout, "", 0)
+	return explainRuntimeError(internal.RunSubgraph(
+		ctx,
+		cancel,
+		port,
+		opts.openBrowser,
+		logger,
+		wf,
+		taskNames,
+		split,
+	), configPath)
+}
+
+func parseOptions(args []string) (*options, *flag.FlagSet, error) {
+	opts := &options{workingDir: ".", port: -1}
+	flagSet := flag.NewFlagSet("kit", flag.ContinueOnError)
+	flagSet.SetOutput(io.Discard)
+
+	flagSet.BoolVar(&opts.help, "h", false, "print help and exit")
+	flagSet.BoolVar(&opts.printVersion, "v", false, "print version and exit")
+	flagSet.StringVar(&opts.workingDir, "C", ".", "working directory (default current directory)")
+	flagSet.StringVar(&opts.configFile, "f", "", "config file (default tasks.yaml)")
+	flagSet.StringVar(&opts.tasksToSkip, "s", "", "tasks to skip (comma separated)")
+	flagSet.IntVar(&opts.port, "p", opts.port, "port to start UI on (default 3000, zero disables)")
+	flagSet.BoolVar(&opts.openBrowser, "b", false, "open the UI in the browser (default false)")
+	flagSet.BoolVar(&opts.rewrite, "w", false, "rewrite the config file")
+	flagSet.StringVar(&opts.completion, "completion", "", "generate shell completion script (bash, zsh, fish)")
+	if err := flagSet.Parse(args); err != nil {
+		return nil, flagSet, err
+	}
+	opts.taskNames = flagSet.Args()
+	flagSet.Visit(func(f *flag.Flag) {
+		if f.Name == "f" {
+			opts.configExplicit = true
+		}
+	})
+	return opts, flagSet, nil
+}
+
+func printUsage(flagSet *flag.FlagSet, stdout io.Writer) {
+	previousOutput := flagSet.Output()
+	flagSet.SetOutput(stdout)
+	defer flagSet.SetOutput(previousOutput)
+	flagSet.Usage()
+}
+
+func resolveConfigFile(configFile string) string {
+	if configFile == "" {
+		return "tasks.yaml"
+	}
+	return configFile
+}
+
+func configFileSource(explicit bool) string {
+	if explicit {
+		return "explicit"
+	}
+	return "default"
+}
+
+func printStartup(stdout io.Writer) {
+	if version := buildVersion(); version != "" {
+		_, _ = fmt.Fprintf(stdout, "kit: startup: %s; version=%s\n", kitDescription, version)
+		return
+	}
+	_, _ = fmt.Fprintf(stdout, "kit: startup: %s\n", kitDescription)
+}
+
+func printConfig(stdout io.Writer, configPath, configSource string) {
+	_, _ = fmt.Fprintf(stdout, "kit: config: path=%s source=%s\n", configPath, configSource)
+}
+
+func buildVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	return info.Main.Version
+}
+
+func explainFlagError(err error) error {
+	return explainError(
+		fmt.Sprintf("CLI argument parsing failed: %v", err),
+		"an unsupported flag or invalid flag value was provided",
+		"run `kit -h` to see the supported flags and usage",
+	)
+}
+
+func explainCompletionError(err error) error {
+	return explainError(
+		fmt.Sprintf("completion generation failed: %v", err),
+		"the requested shell is not supported",
+		"pass `--completion bash`, `--completion zsh`, or `--completion fish`",
+	)
+}
+
+func explainWorkingDirError(path string, err error) error {
+	cause := "the directory does not exist or is not accessible"
+	if errors.Is(err, os.ErrPermission) {
+		cause = "kit does not have permission to access the directory"
+	}
+	return explainError(
+		fmt.Sprintf("working directory change failed for %s: %v", path, err),
+		cause,
+		"pass a valid directory with `-C` or run kit from the project root",
+	)
+}
+
+func explainConfigReadError(path, source string, err error) error {
+	cause := "kit could not access the config file"
+	next := fmt.Sprintf("verify %s and retry, or pass `-f /path/to/tasks.yaml`", path)
+	if errors.Is(err, os.ErrNotExist) {
+		cause = "the config file was not found"
+		next = fmt.Sprintf("create %s or pass `-f /path/to/tasks.yaml`", path)
+	} else if errors.Is(err, os.ErrPermission) {
+		cause = "kit does not have permission to read the config file"
+	}
+	return explainError(
+		fmt.Sprintf("config read failed for %s (source=%s): %v", path, source, err),
+		cause,
+		next,
+	)
+}
+
+func explainConfigParseError(path, source string, err error) error {
+	return explainError(
+		fmt.Sprintf("config parse failed for %s (source=%s): %v", path, source, err),
+		"the config file contains invalid YAML or unsupported fields",
+		"fix the config file and retry",
+	)
+}
+
+func explainConfigWriteError(path string, err error) error {
+	return explainError(
+		fmt.Sprintf("config rewrite failed for %s: %v", path, err),
+		"kit could not serialize or write the config file",
+		"check the file permissions and retry",
+	)
+}
+
+func explainRuntimeError(err error, configPath string) error {
+	if err == nil {
+		return nil
+	}
+	message := err.Error()
+	switch {
+	case strings.HasPrefix(message, "task ") && strings.Contains(message, " not found in workflow"):
+		return explainError(
+			fmt.Sprintf("task selection failed: %s", message),
+			"the requested task name is not defined in the loaded workflow",
+			fmt.Sprintf("check the task names in %s and retry", configPath),
+		)
+	case strings.HasPrefix(message, "skipped task ") && strings.Contains(message, " not found in workflow"):
+		return explainError(
+			fmt.Sprintf("task skip selection failed: %s", message),
+			"a task listed in `-s` is not defined in the loaded workflow",
+			fmt.Sprintf("check the task names in %s and retry", configPath),
+		)
+	case strings.Contains(message, " is invalid:"):
+		return explainError(
+			fmt.Sprintf("workflow validation failed: %s", message),
+			"one or more task definitions are invalid",
+			fmt.Sprintf("fix the task definition in %s and retry", configPath),
+		)
+	case strings.HasPrefix(message, "failed tasks:"):
+		return explainError(
+			fmt.Sprintf("workflow run failed: %s", message),
+			"one or more tasks exited with a non-zero status",
+			"inspect the task output above or the logs/ directory and retry",
+		)
+	default:
+		return explainError(
+			fmt.Sprintf("workflow run failed: %s", message),
+			"kit hit an unexpected runtime error while running the workflow",
+			"inspect the task output above and retry",
+		)
+	}
+}
+
+func explainError(summary, cause, next string) error {
+	return fmt.Errorf("kit: error: %s\nkit: cause: %s\nkit: next: %s", summary, cause, next)
 }
 
 func printCompletion(shell, configFile string) error {

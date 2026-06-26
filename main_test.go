@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -111,4 +113,92 @@ tasks:
 	assert.Equal(t, []string{"clean", "build-app", "my_task_123"}, tasks)
 	// Should NOT include AWS_ENDPOINT_URL (has value after colon)
 	// Should NOT include sh, command, watch (4-space indent)
+}
+
+func TestRunStartupPrintsDefaultConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	writeTestConfig(t, filepath.Join(tempDir, "tasks.yaml"), `tasks:
+  job:
+    command: ["true"]
+`)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exitCode := run([]string{"-C", tempDir, "-p", "0", "job"}, stdout, stderr)
+
+	assert.Equal(t, 0, exitCode)
+	assert.Empty(t, stderr.String())
+	assert.Contains(t, stdout.String(), "kit: startup: workflow engine for software development")
+	assert.Contains(t, stdout.String(), "version=")
+	assert.Contains(t, stdout.String(), "kit: config: path="+filepath.Join(tempDir, "tasks.yaml")+" source=default")
+}
+
+func TestRunStartupPrintsExplicitConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "custom.yaml")
+	writeTestConfig(t, configPath, `tasks:
+  job:
+    command: ["true"]
+`)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exitCode := run([]string{"-C", tempDir, "-p", "0", "-f", "custom.yaml", "job"}, stdout, stderr)
+
+	assert.Equal(t, 0, exitCode)
+	assert.Empty(t, stderr.String())
+	assert.Contains(t, stdout.String(), "kit: config: path="+configPath+" source=explicit")
+}
+
+func TestRunFlagErrorIsActionable(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exitCode := run([]string{"-unknown"}, stdout, stderr)
+
+	assert.Equal(t, 1, exitCode)
+	assert.Empty(t, stdout.String())
+	assert.Contains(t, stderr.String(), "kit: error: CLI argument parsing failed")
+	assert.Contains(t, stderr.String(), "kit: cause: an unsupported flag or invalid flag value was provided")
+	assert.Contains(t, stderr.String(), "kit: next: run `kit -h` to see the supported flags and usage")
+}
+
+func TestRunConfigParseErrorIsActionable(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "tasks.yaml")
+	writeTestConfig(t, configPath, "tasks:\n  job: [\n")
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exitCode := run([]string{"-C", tempDir}, stdout, stderr)
+
+	assert.Equal(t, 1, exitCode)
+	assert.Empty(t, stdout.String())
+	assert.Contains(t, stderr.String(), "kit: error: config parse failed for "+configPath+" (source=default)")
+	assert.Contains(t, stderr.String(), "kit: cause: the config file contains invalid YAML or unsupported fields")
+	assert.Contains(t, stderr.String(), "kit: next: fix the config file and retry")
+}
+
+func TestRunWorkflowFailureIsActionable(t *testing.T) {
+	tempDir := t.TempDir()
+	writeTestConfig(t, filepath.Join(tempDir, "tasks.yaml"), `tasks:
+  job:
+    command: ["false"]
+`)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exitCode := run([]string{"-C", tempDir, "-p", "0", "job"}, stdout, stderr)
+
+	assert.Equal(t, 1, exitCode)
+	assert.Contains(t, stdout.String(), "kit: startup: workflow engine for software development")
+	assert.Contains(t, stdout.String(), "kit: config: path="+filepath.Join(tempDir, "tasks.yaml")+" source=default")
+	assert.Contains(t, stderr.String(), "kit: error: workflow run failed: failed tasks: [job]")
+	assert.Contains(t, stderr.String(), "kit: cause: one or more tasks exited with a non-zero status")
+	assert.Contains(t, stderr.String(), "kit: next: inspect the task output above or the logs/ directory and retry")
+}
+
+func writeTestConfig(t *testing.T, path, contents string) {
+	t.Helper()
+	err := os.WriteFile(path, []byte(contents), 0644)
+	assert.NoError(t, err)
 }
