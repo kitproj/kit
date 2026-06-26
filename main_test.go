@@ -187,7 +187,7 @@ func TestRunWorkflowFailureIsActionable(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	exitCode := run([]string{"-C", tempDir, "job"}, stdout, stderr)
+	exitCode := run([]string{"-C", tempDir, "-p", "0", "job"}, stdout, stderr)
 
 	assert.Equal(t, 1, exitCode)
 	assert.Contains(t, stdout.String(), "kit: startup: workflow engine for software development")
