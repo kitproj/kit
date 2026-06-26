@@ -14,11 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -113,7 +111,7 @@ func (k *k8s) Run(ctx context.Context, stdout io.Writer, stderr io.Writer) error
 		return fmt.Errorf("failed to create clientset: %w", err)
 	}
 
-	// Store clientset and config for later use in metrics
+	// Store clientset and config for later use
 	k.clientset = clientset
 	k.restConfig = config
 
@@ -439,79 +437,6 @@ func sortUnstructureds(uns []*unstructured.Unstructured) {
 		// slices.Index will return -1 if the element is not found
 		return slices.Index(order, uns[i].GetKind()) > slices.Index(order, uns[j].GetKind())
 	})
-}
-
-func (k *k8s) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	sum := &types.Metrics{}
-	for _, podKey := range k.pods {
-		parts := strings.SplitN(podKey, "/", 2)
-		namespace := parts[0]
-		podName := parts[1]
-		metrics, err := k.getMetrics(ctx, namespace, podName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get metrics for pod %s: %w", podKey, err)
-		}
-		sum.Mem += metrics.Mem
-	}
-	return sum, nil
-}
-
-func (k *k8s) getMetrics(ctx context.Context, namespace, podName string) (*types.Metrics, error) {
-	// First, get the list of containers in the pod
-	containers, err := k.getContainersInPod(ctx, namespace, podName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get containers for pod %s/%s: %w", namespace, podName, err)
-	}
-
-	totalMemory := uint64(0)
-
-	// Iterate through each container and sum their memory usage
-	for _, containerName := range containers {
-		containerMetrics, err := k.getContainerMetrics(ctx, namespace, podName, containerName)
-		if err != nil {
-			// Log the error but continue with other containers
-			k.log.Printf("failed to get metrics for container %s in pod %s/%s: %v", containerName, namespace, podName, err)
-			continue
-		}
-		totalMemory += containerMetrics.Mem
-	}
-
-	return &types.Metrics{Mem: totalMemory}, nil
-}
-
-func (k *k8s) getContainersInPod(ctx context.Context, namespace, podName string) ([]string, error) {
-	// Use Kubernetes API to get pod details and extract container names
-	pod, err := k.clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get pod %s/%s: %w", namespace, podName, err)
-	}
-
-	var containerNames []string
-	for _, container := range pod.Spec.Containers {
-		containerNames = append(containerNames, container.Name)
-	}
-
-	if len(containerNames) == 0 {
-		return nil, fmt.Errorf("no containers found in pod %s/%s", namespace, podName)
-	}
-
-	return containerNames, nil
-}
-
-func (k *k8s) getContainerMetrics(ctx context.Context, namespace, podName, containerName string) (*types.Metrics, error) {
-	command := metrics.GetProcFSCommand(1) // PID 1
-
-	// Use Kubernetes API to execute command in container
-	output, err := k.execInContainer(ctx, namespace, podName, containerName, command)
-	if err != nil {
-		return nil, fmt.Errorf("failed to exec in container %s/%s/%s: %w", namespace, podName, containerName, err)
-	}
-
-	metrics, err := metrics.ParseProcFSOutput(string(output))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", containerName, err)
-	}
-	return metrics, nil
 }
 
 func (k *k8s) execInContainer(ctx context.Context, namespace, podName, containerName string, command []string) ([]byte, error) {

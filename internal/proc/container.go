@@ -26,7 +26,6 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/nat"
-	"github.com/kitproj/kit/internal/metrics"
 	"github.com/kitproj/kit/internal/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"k8s.io/utils/strings/slices"
@@ -307,24 +306,6 @@ func ignoreNotExist(err error) error {
 	}
 	return err
 
-}
-
-func (c *container) GetMetrics(ctx context.Context) (*types.Metrics, error) {
-	// Initialize Docker client if not already done
-
-	command := metrics.GetProcFSCommand(1) // PID 1
-
-	// Use Docker API for exec instead of command line
-	output, err := c.execInContainer(ctx, command)
-	if err != nil {
-		return nil, fmt.Errorf("docker exec failed for container %s: %w", c.name, err)
-	}
-
-	metrics, err := metrics.ParseProcFSOutput(string(output))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse process metrics for container %s: %w", c.name, err)
-	}
-	return metrics, nil
 }
 
 func (c *container) execInContainer(ctx context.Context, command []string) ([]byte, error) {
