@@ -124,7 +124,7 @@ func TestRunStartupPrintsDefaultConfig(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	exitCode := run([]string{"-C", tempDir, "job"}, stdout, stderr)
+	exitCode := run([]string{"-C", tempDir, "-p", "0", "job"}, stdout, stderr)
 
 	assert.Equal(t, 0, exitCode)
 	assert.Empty(t, stderr.String())
