@@ -72,6 +72,24 @@
       ],
       "title": "HostPath"
     },
+    "Lifecycle": {
+      "properties": {
+        "onSuccess": {
+          "type": "string",
+          "title": "onSuccess",
+          "description": "OnSuccess is the name of the task to run after the task/graph succeeds."
+        },
+        "onFailure": {
+          "type": "string",
+          "title": "onFailure",
+          "description": "OnFailure is the name of the task to run after the task/graph fails."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "title": "Lifecycle",
+      "description": "Lifecycle describes actions that the system should take in response to lifecycle events."
+    },
     "Port": {
       "properties": {
         "containerPort": {
@@ -298,6 +316,11 @@
           "type": "boolean",
           "title": "default",
           "description": "Whether this is the default task to run if no task is specified."
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle",
+          "title": "lifecycle",
+          "description": "Lifecycle describes actions that the system should take in response to task lifecycle events."
         }
       },
       "additionalProperties": false,
@@ -394,6 +417,10 @@
         "envfile": {
           "$ref": "#/$defs/Envfile",
           "title": "envfile"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle",
+          "title": "lifecycle"
         }
       },
       "additionalProperties": false,

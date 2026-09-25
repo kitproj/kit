@@ -90,6 +90,8 @@ type Task struct {
 	Group string `json:"group,omitempty"`
 	// Whether this is the default task to run if no task is specified.
 	Default bool `json:"default,omitempty"`
+	// Lifecycle describes actions that the system should take in response to task lifecycle events.
+	Lifecycle *Lifecycle `json:"lifecycle,omitempty"`
 }
 
 func (t *Task) GetHostPorts() []uint16 {
@@ -215,4 +217,14 @@ func (t *Task) GetStalledTimeout() time.Duration {
 		return t.StalledTimeout.Duration
 	}
 	return 30 * time.Second
+}
+
+// GetOnSuccess returns the name of the task to run when this task succeeds, or empty string if none.
+func (t *Task) GetOnSuccess() string {
+	return t.Lifecycle.GetOnSuccess()
+}
+
+// GetOnFailure returns the name of the task to run when this task fails, or empty string if none.
+func (t *Task) GetOnFailure() string {
+	return t.Lifecycle.GetOnFailure()
 }
